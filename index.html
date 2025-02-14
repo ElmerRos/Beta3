@@ -1,0 +1,512 @@
+ <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Beast Reader (BETA) East New York</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Flatpickr CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS (opcional) -->
+    <link href="styles.css" rel="stylesheet">
+    <style>
+        /* Asegurar que el contenido del modal se ajuste bien en móviles */
+        @media (max-width: 576px) {
+            /* Hacer el modal fullscreen en móviles */
+            .modal-dialog {
+                max-width: 100%;
+                margin: 0;
+                height: 100%;
+            }
+            #preTicket {
+                padding: 0.5rem;
+            }
+            /* Reducir el tamaño de fuente de la tabla */
+            #preTicket table {
+                font-size: 0.75rem;
+            }
+            #preTicket th, #preTicket td {
+                padding: 0.2rem;
+            }
+            /* Ajustar el tamaño del QR code */
+            #qrcode {
+                width: 60px !important;
+                height: 60px !important;
+                margin: 0 auto;
+            }
+            /* Ajustar textos adicionales */
+            .cutoff-time {
+                font-size: 0.65rem;
+            }
+            .ticket-number, .transaction-date {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* El modal */
+        .modal-content {
+            max-height: 90vh;
+            overflow: auto;
+            resize: both; /* Permite redimensionar manualmente */
+            border: 2px solid #00ffff; /* opcional, para ver el contorno */
+        }
+        /* Asegurar que el QR no sea demasiado grande en móviles */
+        #qrcode {
+            width: 128px;
+            height: 128px;
+            margin: 0 auto;
+        }
+
+        /* Ajustar el tamaño de la fuente en la tabla del modal */
+        #preTicket table {
+            font-size: 1rem;
+        }
+        #preTicket th, #preTicket td {
+            border: 1px solid #00ffff;
+            color: #ffffff;
+            padding: 8px; 
+            word-wrap: break-word; 
+            font-size: 1rem;
+        }
+        /* Ajustar el tamaño de la fuente en la tabla del ticket al imprimir */
+        @media print {
+            #preTicket table {
+                font-size: 0.9rem;
+            }
+            #preTicket th, #preTicket td {
+                padding: 0.3rem;
+            }
+        }
+        /* Estilo para resaltar números duplicados */
+        .duplicado {
+            border: 2px solid red;
+            background-color: #ffcccc;
+        }
+        /* Ocultar la hora límite para el track "Venezuela" */
+        .cutoff-time[data-track='Venezuela'] {
+            color: var(--color-fondo);
+        }
+        /* Responsividad mejorada para el ticket */
+        @media (max-width: 600px) {
+            #preTicket table, #preTicket th, #preTicket td {
+                font-size: 1rem;
+            }
+            #preTicket {
+                padding: 10px;
+            }
+            #qrcode {
+                width: 100px;
+                height: 100px;
+            }
+        }
+        /* Asegurarnos de que la tabla no se corte en la imagen */
+        #preTicket {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <h2 class="text-center mb-4">Beast Reader (Cricket) East New York</h2>
+
+        <!-- Formulario principal -->
+        <form id="lotteryForm">
+            <!-- Selección de Fecha -->
+            <div class="row mb-3">
+                <div class="col-md-4 col-sm-6">
+                    <label for="fecha" class="form-label">Fechas de Apuesta:</label>
+                    <input type="text" id="fecha" class="form-control glow-input" placeholder="Selecciona fecha" required>
+                </div>
+            </div>
+
+            <!-- Selección de Tracks -->
+            <div class="mb-4">
+                <label class="form-label">Selecciona los Tracks:</label>
+                <div class="accordion" id="tracksAccordion">
+                    <!-- USA Tracks -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingUSA">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUSA" aria-expanded="false" aria-controls="collapseUSA">
+                                USA
+                            </button>
+                        </h2>
+                        <div id="collapseUSA" class="accordion-collapse collapse" aria-labelledby="headingUSA" data-bs-parent="#tracksAccordion">
+                            <div class="accordion-body">
+                                <!-- Lista de Tracks de USA -->
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="New York Mid Day" id="trackNYMidDay">
+                                        <label class="form-check-label" for="trackNYMidDay">New York Mid Day</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="New York Mid Day"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="New York Evening" id="trackNYEvening">
+                                        <label class="form-check-label" for="trackNYEvening">New York Evening</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="New York Evening"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Georgia Mid Day" id="trackGeorgiaMidDay">
+                                        <label class="form-check-label" for="trackGeorgiaMidDay">Georgia Mid Day</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Georgia Mid Day"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Georgia Evening" id="trackGeorgiaEvening">
+                                        <label class="form-check-label" for="trackGeorgiaEvening">Georgia Evening</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Georgia Evening"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="New Jersey Mid Day" id="trackNJMidDay">
+                                        <label class="form-check-label" for="trackNJMidDay">New Jersey Mid Day</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="New Jersey Mid Day"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="New Jersey Evening" id="trackNJEvening">
+                                        <label class="form-check-label" for="trackNJEvening">New Jersey Evening</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="New Jersey Evening"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Florida Mid Day" id="trackFloridaMidDay">
+                                        <label class="form-check-label" for="trackFloridaMidDay">Florida Mid Day</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Florida Mid Day"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Florida Evening" id="trackFloridaEvening">
+                                        <label class="form-check-label" for="trackFloridaEvening">Florida Evening</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Florida Evening"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Connecticut Mid Day" id="trackConnecticutMidDay">
+                                        <label class="form-check-label" for="trackConnecticutMidDay">Connecticut Mid Day</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Connecticut Mid Day"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Connecticut Evening" id="trackConnecticutEvening">
+                                        <label class="form-check-label" for="trackConnecticutEvening">Connecticut Evening</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Connecticut Evening"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Georgia Night" id="trackGeorgiaNight">
+                                        <label class="form-check-label" for="trackGeorgiaNight">Georgia Night</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Georgia Night"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Pensilvania AM" id="trackPennsylvaniaAM">
+                                        <label class="form-check-label" for="trackPennsylvaniaAM">Pensilvania AM</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Pensilvania AM"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Pensilvania PM" id="trackPennsylvaniaPM">
+                                        <label class="form-check-label" for="trackPennsylvaniaPM">Pensilvania PM</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Pensilvania PM"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Venezuela" id="trackVenezuela">
+                                        <label class="form-check-label" for="trackVenezuela">Venezuela</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Venezuela"></span>
+                                </div>
+
+                                <!-- Nuevos tracks (Brooklyn / Front) -->
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Brooklyn Midday" id="trackBrooklynMidday">
+                                        <label class="form-check-label" for="trackBrooklynMidday">Brooklyn Midday</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Brooklyn Midday"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Brooklyn Evening" id="trackBrooklynEvening">
+                                        <label class="form-check-label" for="trackBrooklynEvening">Brooklyn Evening</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Brooklyn Evening"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Front Midday" id="trackFrontMidday">
+                                        <label class="form-check-label" for="trackFrontMidday">Front Midday</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Front Midday"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Front Evening" id="trackFrontEvening">
+                                        <label class="form-check-label" for="trackFrontEvening">Front Evening</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Front Evening"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Santo Domingo Tracks -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingSD">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSD" aria-expanded="false" aria-controls="collapseSD">
+                                Santo Domingo
+                            </button>
+                        </h2>
+                        <div id="collapseSD" class="accordion-collapse collapse" aria-labelledby="headingSD" data-bs-parent="#tracksAccordion">
+                            <div class="accordion-body">
+                                <!-- Lista de Tracks de Santo Domingo -->
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Real" id="trackReal">
+                                        <label class="form-check-label" for="trackReal">Real</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Real"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Gana mas" id="trackGanamas">
+                                        <label class="form-check-label" for="trackGanamas">Gana más</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Gana mas"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Loteka" id="trackLoteka">
+                                        <label class="form-check-label" for="trackLoteka">Loteka</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Loteka"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Nacional" id="trackNacional">
+                                        <label class="form-check-label" for="trackNacional">Nacional</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Nacional"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Quiniela Pale" id="trackQuinielaPale">
+                                        <label class="form-check-label" for="trackQuinielaPale">Quiniela Pale</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Quiniela Pale"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Primera Día" id="trackPrimeraDia">
+                                        <label class="form-check-label" for="trackPrimeraDia">Primera Día</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Primera Día"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Suerte Día" id="trackSuerteDia">
+                                        <label class="form-check-label" for="trackSuerteDia">Suerte Día</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Suerte Día"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Lotería Real" id="trackLoteriaReal">
+                                        <label class="form-check-label" for="trackLoteriaReal">Lotería Real</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Lotería Real"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Suerte Tarde" id="trackSuerteTarde">
+                                        <label class="form-check-label" for="trackSuerteTarde">Suerte Tarde</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Suerte Tarde"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Lotedom" id="trackLotedom">
+                                        <label class="form-check-label" for="trackLotedom">Lotedom</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Lotedom"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Primera Noche" id="trackPrimeraNoche">
+                                        <label class="form-check-label" for="trackPrimeraNoche">Primera Noche</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Primera Noche"></span>
+                                </div>
+                                <div class="form-check d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <input class="form-check-input track-checkbox" type="checkbox" value="Panama" id="trackPanama">
+                                        <label class="form-check-label" for="trackPanama">Panamá</label>
+                                    </div>
+                                    <span class="cutoff-time" data-track="Panama"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Jugadas -->
+            <div class="table-responsive mb-4">
+                <table class="table table-dark table-bordered glow-table" id="jugadasTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Número Apostado</th>
+                            <th>Tipo de Juego</th>
+                            <th>Straight ($)</th>
+                            <th>Box ($)</th>
+                            <th>Combo ($)</th>
+                            <th>Total ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaJugadas">
+                        <!-- Filas de jugadas se agregarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Botones para Agregar, Eliminar y Resetear -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="button-group">
+                    <button type="button" class="btn btn-primary" id="agregarJugada">
+                        <i class="bi bi-plus-circle"></i> Agregar Jugada
+                    </button>
+                    <button type="button" class="btn btn-danger" id="eliminarJugada">
+                        <i class="bi bi-dash-circle"></i> Eliminar Jugada
+                    </button>
+                    <button type="button" class="btn btn-warning" id="resetForm">
+                        <i class="bi bi-arrow-clockwise"></i> Resetear Formulario
+                    </button>
+                </div>
+                <div class="total-section">
+                    Total de Jugadas: $<span id="totalJugadas">0.00</span>
+                </div>
+            </div>
+
+            <!-- Botón para Generar Ticket -->
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-success btn-lg" id="generarTicket">
+                    <i class="bi bi-ticket-detailed-fill"></i> Generar Ticket
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal de Previsualización de Ticket -->
+    <div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ticketModalLabel">Previsualización del Ticket</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="preTicket" class="p-3">
+                        <h4 class="text-center mb-3">East New York Cricket</h4>
+                        <p>
+                            <strong>Fechas de Apuesta:</strong>
+                            <span id="ticketFecha"></span>
+                        </p>
+                        <p>
+                            <strong>Tracks Seleccionados:</strong>
+                            <span id="ticketTracks"></span>
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Número Apostado</th>
+                                        <th>Modalidad</th>
+                                        <th>Straight ($)</th>
+                                        <th>Box ($)</th>
+                                        <th>Combo ($)</th>
+                                        <th>Total ($)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ticketJugadas">
+                                    <!-- Jugadas se llenan dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="total-section">
+                            Total de Jugadas: $<span id="ticketTotal">0.00</span>
+                        </div>
+                        <div class="ticket-number my-3">
+                            Número de Ticket: <span id="numeroTicket"></span>
+                        </div>
+                        <div class="transaction-date my-3">
+                            Fecha y Hora de Transacción: <span id="ticketTransaccion"></span>
+                        </div>
+                        <div class="barcode text-center">
+                            <div id="qrcode"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- Botón para salir sin confirmar (Editar) -->
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Editar</button>
+                    <!-- Botón para confirmar e imprimir -->
+                    <button type="button" class="btn btn-primary" id="confirmarTicket">
+                        Confirmar e Imprimir
+                    </button>
+                    <!-- Botón para compartir (oculto inicialmente) -->
+                    <button type="button" class="btn btn-info d-none" id="shareTicket">
+                        Compartir Ticket
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliotecas JS al final del body -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Popper.js (para Bootstrap) -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Day.js -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <!-- Day.js Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/customParseFormat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/arraySupport.js"></script>
+    <script>
+        dayjs.extend(dayjs_plugin_customParseFormat);
+        dayjs.extend(dayjs_plugin_arraySupport);
+    </script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Nuestro JS personalizado -->
+    <script src="scripts.js"></script>
+</body>
+</html>
