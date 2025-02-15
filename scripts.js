@@ -1,5 +1,20 @@
- /* scripts.js */
+ // scripts.js
 
+/*
+  Final refinement so that:
+  - Once the user is in the FINAL ticket stage (with QR code + ticket number),
+    the "Edit" button is definitely hidden.
+  - That button only appears in the PREVIEW modal (after "Generate Ticket"),
+    and once "Confirm & Download" is clicked, it gets removed.
+
+  Other existing logic remains:
+   - Confirm button is disabled after first click.
+   - Only the "Share Ticket" remains visible in the final stage.
+   - The user must close the modal manually if they want to return to the form 
+     (or they can press X in the modal header).
+*/
+
+/* Replace with your real SheetDB (or API) endpoint */
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
 let transactionDateTime = '';
@@ -9,159 +24,30 @@ window.ticketImageDataUrl = null;
 
 $(document).ready(function() {
 
-    /************************************
-     * 1) DYNAMICALLY INSERT NEW BUTTONS
-     ************************************/
-
-    // Insert a "Wizard" button next to "Add Play"
-    // and a "Quick Pick" button as well.
-    $(".button-group").append(`
-        <button type="button" class="btn btn-secondary" id="openWizardBtn">
-            <i class="bi bi-magic"></i> Wizard
-        </button>
-        <button type="button" class="btn btn-info" id="openQuickPickBtn">
-            <i class="bi bi-lightning-fill"></i> Quick Pick
-        </button>
-    `);
-
-    /*********************************************
-     * 2) DYNAMICALLY INSERT THE NEW MODALS (HTML)
-     *********************************************/
-    // Wizard Modal
-    const wizardModalHTML = `
-    <div class="modal fade" id="wizardModal" tabindex="-1" aria-labelledby="wizardModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-
-          <div class="modal-header">
-            <h5 class="modal-title" id="wizardModalLabel">Play Wizard</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-
-          <div class="modal-body">
-            <!-- Vertical form with numeric keypad in mind -->
-            <form id="wizardForm">
-              <div class="mb-3">
-                <label for="wizardBetNumber" class="form-label">Bet Number</label>
-                <input type="number" class="form-control" id="wizardBetNumber" placeholder="e.g. 1234" min="0" max="9999" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="wizardStraight" class="form-label">Straight ($)</label>
-                <input type="number" class="form-control" id="wizardStraight" placeholder="e.g. 5" step="1" min="0">
-              </div>
-
-              <div class="mb-3">
-                <label for="wizardBox" class="form-label">Box ($)</label>
-                <input type="number" class="form-control" id="wizardBox" placeholder="e.g. 2" step="0.10" min="0">
-              </div>
-
-              <div class="mb-3">
-                <label for="wizardCombo" class="form-label">Combo ($)</label>
-                <input type="number" class="form-control" id="wizardCombo" placeholder="e.g. 3" step="0.10" min="0">
-              </div>
-            </form>
-          </div>
-
-          <div class="modal-footer">
-            <!-- "Add & Next" to quickly add and clear fields -->
-            <button type="button" class="btn btn-primary" id="wizardAddNextBtn">
-              Add & Next
-            </button>
-            <!-- or user can close wizard -->
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              Close
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </div>
-    `;
-
-    // Quick Pick Modal
-    const quickPickModalHTML = `
-    <div class="modal fade" id="quickPickModal" tabindex="-1" aria-labelledby="quickPickModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-
-          <div class="modal-header">
-            <h5 class="modal-title" id="quickPickModalLabel">Quick Pick</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-
-          <div class="modal-body">
-            <!-- Configure how many random plays and the wagers -->
-            <form id="quickPickForm">
-              <div class="mb-3">
-                <label for="qpCount" class="form-label">Number of Random Plays (max 25)</label>
-                <input type="number" class="form-control" id="qpCount" value="1" min="1" max="25">
-              </div>
-              <div class="mb-3">
-                <label for="qpStraight" class="form-label">Straight ($)</label>
-                <input type="number" class="form-control" id="qpStraight" value="0" step="1" min="0">
-              </div>
-              <div class="mb-3">
-                <label for="qpBox" class="form-label">Box ($)</label>
-                <input type="number" class="form-control" id="qpBox" value="0" step="0.10" min="0">
-              </div>
-              <div class="mb-3">
-                <label for="qpCombo" class="form-label">Combo ($)</label>
-                <input type="number" class="form-control" id="qpCombo" value="0" step="0.10" min="0">
-              </div>
-              <div class="mb-3">
-                <label for="qpDigitLength" class="form-label">Digit Length (2, 3, or 4)</label>
-                <select class="form-select" id="qpDigitLength">
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4" selected>4</option>
-                </select>
-              </div>
-            </form>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" id="generateQuickPickBtn">
-              Generate
-            </button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              Close
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </div>
-    `;
-
-    // Append these modals to the body
-    $("body").append(wizardModalHTML);
-    $("body").append(quickPickModalHTML);
-
-    /**********************************************
-     * 3) ADD A "DELETE" BUTTON IN EACH PLAY ROW
-     *    We'll add an extra column in the table.
-     **********************************************/
-    // Add a new <th> for "Del" in the table header
-    // (We only do this if it doesn't exist yet)
-    const headerRow = $("#jugadasTable thead tr");
-    if (headerRow.find("th.deleteCol").length === 0) {
-        headerRow.append(`<th class="deleteCol">Del</th>`);
-    }
-
-    // We'll modify the addPlayRow() function to include a "Delete" button.
-
-    /************************************************
-     * 4) REMAINING LOGIC: We keep your original code
-     *    and only tweak to support new features.
-     ************************************************/
+    // Initialize Flatpickr
+    flatpickr("#fecha", {
+        mode: "multiple",
+        dateFormat: "m-d-Y",
+        minDate: "today",
+        clickOpens: true,
+        allowInput: false,
+        appendTo: document.body,
+        onReady: function(selectedDates, dateStr, instance) {
+            instance.calendarContainer.style.zIndex = 999999;
+        },
+        onChange: function(selectedDates, dateStr, instance) {
+            selectedDaysCount = selectedDates.length;
+            calculateTotal();
+            storeFormState();
+            disableTracksByTime();
+        }
+    });
 
     let playCount = 0;
     let selectedTracksCount = 0;
     let selectedDaysCount = 0;
     const MAX_PLAYS = 25;
 
-    // Keep your existing cutoffs, betLimits, etc.
     const cutoffTimes = {
         "USA": {
             "New York Mid Day": "14:20",
@@ -175,8 +61,8 @@ $(document).ready(function() {
             "Connecticut Mid Day": "13:30",
             "Connecticut Evening": "22:00",
             "Georgia Night": "22:00",
-            "Pennsylvania AM": "12:45",
-            "Pennsylvania PM": "18:15",
+            "Pensilvania AM": "12:45",
+            "Pensilvania PM": "18:15",
             "Brooklyn Midday": "14:20",
             "Brooklyn Evening": "22:00",
             "Front Midday": "14:20",
@@ -211,190 +97,80 @@ $(document).ready(function() {
         "RD-Pale":       { straight: 20 }
     };
 
-    // Existing doc.ready code:
-    initFlatpickr();
-    addPlayRow(); // start with one row
-    loadFormState();
-    showCutoffTimes();
-    disableTracksByTime();
-    setInterval(disableTracksByTime,60000);
+    /*
+      Force horizontal layout in the final ticket
+    */
+    function fixTicketLayoutForMobile() {
+        $("#preTicket table, #preTicket th, #preTicket td").css("white-space", "nowrap");
+        $("#preTicket").css("overflow-x", "auto");
+    }
 
-    /************************************************
-     * 5) OVERRIDE addPlayRow() to include Del button
-     ************************************************/
-    function addPlayRow(betNumber="", straight="", box="", combo="") {
+    /*
+      Determine the game mode from betNumber + chosen tracks
+    */
+    function determineGameMode(tracks, betNumber) {
+        let mode = "-";
+        const isUSA = tracks.some(t => Object.keys(cutoffTimes.USA).includes(t));
+        const isSD  = tracks.some(t => Object.keys(cutoffTimes["Santo Domingo"]).includes(t));
+        const includesVenezuela = tracks.includes("Venezuela");
+        const length = betNumber.length;
+
+        if (includesVenezuela && isUSA) {
+            if (length === 2) {
+                mode = "Venezuela";
+            } else if (length === 4) {
+                mode = "Venezuela-Pale";
+            }
+        }
+        else if (isUSA && !isSD) {
+            if (length === 4) {
+                mode = "Win 4";
+            } else if (length === 3) {
+                mode = "Pick 3";
+            } else if (length === 2) {
+                mode = "Pulito";
+            }
+        }
+        else if (isSD && !isUSA) {
+            if (length === 2) {
+                mode = "RD-Quiniela";
+            } else if (length === 4) {
+                mode = "RD-Pale";
+            }
+        }
+        return mode;
+    }
+
+    /*
+      Add play row
+    */
+    function addPlayRow() {
         if (playCount >= MAX_PLAYS) {
             alert("You have reached the maximum of 25 plays.");
             return;
         }
         playCount++;
-        const rowHTML = `
+        const rowHTML = 
             <tr>
                 <td>${playCount}</td>
-                <td>
-                  <input type="number" class="form-control betNumber" min="0" max="9999"
-                         value="${betNumber}" required>
-                </td>
+                <td><input type="number" class="form-control betNumber" min="0" max="9999" required></td>
                 <td class="gameMode">-</td>
-                <td>
-                  <input type="number" class="form-control straight" min="0" max="100" step="1"
-                         value="${straight}" placeholder="e.g. 5">
-                </td>
-                <td>
-                  <input type="text" class="form-control box"
-                         value="${box}" placeholder="e.g. 1,2 or 3">
-                </td>
-                <td>
-                  <input type="number" class="form-control combo" min="0" max="50" step="0.10"
-                         value="${combo}" placeholder="e.g. 3.00">
-                </td>
+                <td><input type="number" class="form-control straight" min="0" max="100" step="1" placeholder="e.g. 5"></td>
+                <td><input type="text" class="form-control box" placeholder="e.g. 1,2 or 3"></td>
+                <td><input type="number" class="form-control combo" min="0" max="50" step="0.10" placeholder="e.g. 3.00"></td>
                 <td class="total">0.00</td>
-                <td>
-                  <button type="button" class="btn btn-sm btn-danger deleteRowBtn">
-                    <i class="bi bi-x-circle"></i>
-                  </button>
-                </td>
             </tr>
-        `;
+        ;
         $("#tablaJugadas").append(rowHTML);
         storeFormState();
         $("#tablaJugadas tr:last .betNumber").focus();
     }
 
-    /****************************************************
-     * 6) EVENT HANDLERS FOR THE NEW BUTTONS & MODALS
-     ****************************************************/
+    addPlayRow(); // start with one row
 
-    // Open Wizard
-    $("#openWizardBtn").on("click", function(){
-        // Reset wizard fields
-        $("#wizardBetNumber").val("");
-        $("#wizardStraight").val("");
-        $("#wizardBox").val("");
-        $("#wizardCombo").val("");
-        // Show the wizard modal
-        const wizardModal = new bootstrap.Modal(document.getElementById("wizardModal"));
-        wizardModal.show();
-    });
-
-    // "Add & Next" in Wizard
-    $("#wizardAddNextBtn").on("click", function(){
-        const bn = $("#wizardBetNumber").val().trim();
-        const st = $("#wizardStraight").val().trim();
-        const bx = $("#wizardBox").val().trim();
-        const co = $("#wizardCombo").val().trim();
-
-        if(!bn){
-            alert("Please enter a Bet Number.");
-            return;
-        }
-        // Add to table
-        addPlayRow(bn, st, bx, co);
-
-        // Clear fields for next play
-        $("#wizardBetNumber").val("");
-        $("#wizardStraight").val("");
-        $("#wizardBox").val("");
-        $("#wizardCombo").val("");
-        $("#wizardBetNumber").focus();
-    });
-
-    // Open Quick Pick
-    $("#openQuickPickBtn").on("click", function(){
-        // Reset form fields
-        $("#qpCount").val("1");
-        $("#qpStraight").val("0");
-        $("#qpBox").val("0");
-        $("#qpCombo").val("0");
-        $("#qpDigitLength").val("4");
-        // Show modal
-        const qpModal = new bootstrap.Modal(document.getElementById("quickPickModal"));
-        qpModal.show();
-    });
-
-    // Generate Quick Pick
-    $("#generateQuickPickBtn").on("click", function(){
-        const count = parseInt($("#qpCount").val()) || 1;
-        const straight = parseFloat($("#qpStraight").val()) || 0;
-        const box = parseFloat($("#qpBox").val()) || 0;
-        const combo = parseFloat($("#qpCombo").val()) || 0;
-        const digitLength = parseInt($("#qpDigitLength").val()) || 4;
-
-        if(count < 1 || count > 25){
-            alert("Please select between 1 and 25 random plays.");
-            return;
-        }
-
-        // Check how many plays are currently in the table
-        // to ensure we don't exceed 25 total.
-        const currentPlays = $("#tablaJugadas tr").length;
-        const availableSlots = MAX_PLAYS - currentPlays;
-        if(count > availableSlots){
-            alert(`You already have ${currentPlays} plays. Only ${availableSlots} slots left.`);
-            return;
-        }
-
-        // Generate random plays
-        for(let i=0; i<count; i++){
-            const randNum = generateRandomNumber(digitLength);
-            addPlayRow(randNum, straight, box, combo);
-        }
-
-        // Close the Quick Pick modal
-        const qpModalEl = document.getElementById("quickPickModal");
-        const qpModal = bootstrap.Modal.getInstance(qpModalEl);
-        qpModal.hide();
-    });
-
-    function generateRandomNumber(digits){
-        // Return a random integer with exactly 'digits' length
-        // e.g. digits=3 => from 100 to 999
-        const min = Math.pow(10, digits-1);
-        const max = Math.pow(10, digits) - 1;
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    /***********************************************
-     * 7) DELETE INDIVIDUAL ROW
-     ***********************************************/
-    $("#tablaJugadas").on("click", ".deleteRowBtn", function(){
-        $(this).closest("tr").remove();
-        playCount--;
-        // Reindex the rows
-        $("#tablaJugadas tr").each((i, el) => {
-            $(el).find("td:first").text(i+1);
-        });
-        calculateTotal();
-        storeFormState();
-    });
-
-    /***********************************************
-     * 8) KEEP / ADAPT YOUR EXISTING LOGIC BELOW
-     ***********************************************/
-
-    // Keep the rest of your original code but with minor adjustments
-    // to ensure everything works well with new functionalities:
-
-    function initFlatpickr() {
-        flatpickr("#fecha", {
-            mode: "multiple",
-            dateFormat: "m-d-Y",
-            minDate: "today",
-            clickOpens: true,
-            allowInput: false,
-            appendTo: document.body,
-            onReady: function(selectedDates, dateStr, instance) {
-                instance.calendarContainer.style.zIndex = 999999;
-            },
-            onChange: function(selectedDates, dateStr, instance) {
-                selectedDaysCount = selectedDates.length;
-                calculateTotal();
-                storeFormState();
-                disableTracksByTime();
-            }
-        });
-    }
-
+    /*
+      Calculate total for the entire form
+    */
     function calculateTotal() {
         let sum = 0;
         $(".total").each(function(){
@@ -409,6 +185,9 @@ $(document).ready(function() {
         storeFormState();
     }
 
+    /*
+      Calculate row total
+    */
     function calculateRowTotal(row) {
         const mode = row.find(".gameMode").text();
         const bn   = row.find(".betNumber").val();
@@ -433,6 +212,7 @@ $(document).ready(function() {
         }
 
         let totalVal = 0;
+
         if (mode === "Pulito") {
             if (boxTxt) {
                 const positions = boxTxt.split(",").map(v => v.trim()).filter(Boolean);
@@ -516,7 +296,8 @@ $(document).ready(function() {
         storeFormState();
     }
 
-    // For removing the last row
+    // Buttons
+    $("#agregarJugada").click(() => addPlayRow());
     $("#eliminarJugada").click(() => {
         if (playCount === 0) {
             alert("No plays to remove.");
@@ -529,14 +310,13 @@ $(document).ready(function() {
         });
         calculateTotal();
     });
-
     $("#resetForm").click(() => {
         if (confirm("Are you sure you want to reset the form? This will remove all current plays.")) {
             resetForm();
         }
     });
 
-    // On input in the table
+    // Input event
     $("#tablaJugadas").on("input",".betNumber,.straight,.box,.combo",function(){
         const row = $(this).closest("tr");
         const bn  = row.find(".betNumber").val();
@@ -556,7 +336,7 @@ $(document).ready(function() {
 
     function updatePlaceholders(mode, row) {
         if (betLimits[mode]) {
-            row.find(".straight").attr("placeholder", `Max $${betLimits[mode].straight ?? 100}`)
+            row.find(".straight").attr("placeholder", Max $${betLimits[mode].straight ?? 100})
                                  .prop("disabled", false);
         } else {
             row.find(".straight").attr("placeholder", "e.g. 5.00").prop("disabled", false);
@@ -583,10 +363,10 @@ $(document).ready(function() {
         }
         else if (mode === "Win 4" || mode === "Pick 3") {
             row.find(".box")
-                .attr("placeholder",`Max $${betLimits[mode].box}`)
+                .attr("placeholder",Max $${betLimits[mode].box})
                 .prop("disabled",false);
             row.find(".combo")
-                .attr("placeholder",`Max $${betLimits[mode].combo}`)
+                .attr("placeholder",Max $${betLimits[mode].combo})
                 .prop("disabled",false);
         }
         else {
@@ -602,7 +382,6 @@ $(document).ready(function() {
 
     $(".track-checkbox").change(function(){
         const arr = $(".track-checkbox:checked").map(function(){return $(this).val();}).get();
-        // If user picks only "Venezuela" but no USA track => not allowed
         selectedTracksCount = arr.filter(x => x!=="Venezuela").length || 1;
         calculateTotal();
         disableTracksByTime();
@@ -649,9 +428,7 @@ $(document).ready(function() {
                 }
                 const hh=cf.format("HH");
                 const mm=cf.format("mm");
-                // We only show the hour, e.g. "14:10"
-                // If you want to remove "Cutoff Time:" text, just do:
-                $(this).text(`${hh}:${mm}`);
+                $(this).text(Cutoff Time: ${hh}:${mm});
             }
         });
     }
@@ -676,13 +453,16 @@ $(document).ready(function() {
                 }
                 if(now.isAfter(cf)||now.isSame(cf)){
                     $(this).prop("disabled",true).prop("checked",false);
-                    // We used to style .form-check, now we have .track-btn-label
-                    const label = $(`label[for="${$(this).attr('id')}"]`);
-                    label.css({opacity:0.5, cursor:"not-allowed"});
-                } else {
+                    $(this).closest(".form-check").find(".form-check-label").css({
+                        opacity:0.5,
+                        cursor:"not-allowed"
+                    });
+                }else{
                     $(this).prop("disabled",false);
-                    const label = $(`label[for="${$(this).attr('id')}"]`);
-                    label.css({opacity:1, cursor:"pointer"});
+                    $(this).closest(".form-check").find(".form-check-label").css({
+                        opacity:1,
+                        cursor:"pointer"
+                    });
                 }
             }
         });
@@ -701,8 +481,10 @@ $(document).ready(function() {
     function enableAllTracks(){
         $(".track-checkbox").each(function(){
             $(this).prop("disabled",false);
-            const label = $(`label[for="${$(this).attr('id')}"]`);
-            label.css({opacity:1, cursor:"pointer"});
+            $(this).closest(".form-check").find(".form-check-label").css({
+                opacity:1,
+                cursor:"pointer"
+            });
         });
     }
 
@@ -743,11 +525,18 @@ $(document).ready(function() {
             $("#tablaJugadas").empty();
             data.plays.forEach((p,i)=>{
                 if(i>=MAX_PLAYS)return;
-                addPlayRow(p.betNumber, p.straight, p.box, p.combo);
-                // After row is appended, we need to fix the gameMode & total
-                const row = $("#tablaJugadas tr:last");
-                row.find(".gameMode").text(p.gameMode);
-                row.find(".total").text(p.total);
+                const row=
+                <tr>
+                  <td>${i+1}</td>
+                  <td><input type="number" class="form-control betNumber" required value="${p.betNumber}"></td>
+                  <td class="gameMode">${p.gameMode}</td>
+                  <td><input type="number" class="form-control straight" value="${p.straight}"></td>
+                  <td><input type="text" class="form-control box" value="${p.box}"></td>
+                  <td><input type="number" class="form-control combo" value="${p.combo}"></td>
+                  <td class="total">${p.total}</td>
+                </tr>
+                ;
+                $("#tablaJugadas").append(row);
             });
             if(playCount>MAX_PLAYS){
                 playCount=MAX_PLAYS;
@@ -759,13 +548,15 @@ $(document).ready(function() {
         }
     }
 
+    loadFormState();
+
     $("#lotteryForm").on("reset", function(e){
         if(!isProgrammaticReset && (!e.originalEvent||!$(e.originalEvent.submitter).hasClass("btn-reset"))){
             e.preventDefault();
         }
     });
 
-    // Ticket generation logic remains the same
+    // Generate Ticket => preview
     $("#generarTicket").click(function(){
         const dateVal=$("#fecha").val();
         if(!dateVal){
@@ -803,7 +594,7 @@ $(document).ready(function() {
                             cf=co.subtract(10,"minute");
                         }
                         if(now.isAfter(cf)||now.isSame(cf)){
-                            alert(`The track "${t}" is already closed for today. Choose another track or a future date.`);
+                            alert(The track "${t}" is already closed for today. Choose another track or a future date.);
                             return;
                         }
                     }
@@ -885,7 +676,7 @@ $(document).ready(function() {
         });
         if(!valid){
             const uniqueErr=[...new Set(errors)].join(", ");
-            alert(`Some plays have errors (row(s): ${uniqueErr}). Please fix them before generating the ticket preview.`);
+            alert(Some plays have errors (row(s): ${uniqueErr}). Please fix them before generating the ticket preview.);
             return;
         }
 
@@ -902,7 +693,7 @@ $(document).ready(function() {
             const coVal=parseFloat($(this).find(".combo").val())||0;
             const rowT=parseFloat($(this).find(".total").text())||0;
 
-            const rowHTML=`
+            const rowHTML=
                 <tr>
                     <td>${rowNum}</td>
                     <td>${bn}</td>
@@ -912,7 +703,7 @@ $(document).ready(function() {
                     <td>${coVal>0?coVal.toFixed(2):"-"}</td>
                     <td>${rowT.toFixed(2)}</td>
                 </tr>
-            `;
+            ;
             $("#ticketJugadas").append(rowHTML);
         });
         $("#ticketTotal").text($("#totalJugadas").text());
@@ -934,7 +725,7 @@ $(document).ready(function() {
     $("#confirmarTicket").click(function(){
         const confirmBtn=$(this);
 
-        // Hide the edit button => final stage
+        // Hide the edit button immediately => final stage
         $("#editButton").addClass("d-none");
 
         // Disable confirm so user can't re-click
@@ -984,7 +775,7 @@ $(document).ready(function() {
                 // Download
                 const link=document.createElement("a");
                 link.href=dataUrl;
-                link.download=`ticket_${uniqueTicket}.png`;
+                link.download=ticket_${uniqueTicket}.png;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -999,6 +790,8 @@ $(document).ready(function() {
                     }
                 });
 
+                // window.print(); // commented
+
             })
             .catch(err=>{
                 console.error("Error capturing ticket:",err);
@@ -1006,12 +799,14 @@ $(document).ready(function() {
             })
             .finally(()=>{
                 $(ticketElement).css(originalStyles);
+                // We do NOT re-enable the confirm button => no repeated generation
             });
         },500);
     });
 
     // "Edit" => close modal
     $("#editButton").click(function(){
+        // Return to form => user can fix data
         ticketModal.hide();
     });
 
@@ -1087,7 +882,7 @@ $(document).ready(function() {
         })
         .then(r=>{
             if(!r.ok){
-                throw new Error(\`SheetDB error, status \${r.status}\`);
+                throw new Error(SheetDB error, status ${r.status});
             }
             return r.json();
         })
@@ -1105,42 +900,8 @@ $(document).ready(function() {
         return Math.floor(10000000+Math.random()*90000000).toString();
     }
 
-    function determineGameMode(tracks, betNumber) {
-        let mode = "-";
-        const isUSA = tracks.some(t => Object.keys(cutoffTimes.USA).includes(t));
-        const isSD  = tracks.some(t => Object.keys(cutoffTimes["Santo Domingo"]).includes(t));
-        const includesVenezuela = tracks.includes("Venezuela");
-        const length = betNumber.length;
-
-        if (includesVenezuela && isUSA) {
-            if (length === 2) {
-                mode = "Venezuela";
-            } else if (length === 4) {
-                mode = "Venezuela-Pale";
-            }
-        }
-        else if (isUSA && !isSD) {
-            if (length === 4) {
-                mode = "Win 4";
-            } else if (length === 3) {
-                mode = "Pick 3";
-            } else if (length === 2) {
-                mode = "Pulito";
-            }
-        }
-        else if (isSD && !isUSA) {
-            if (length === 2) {
-                mode = "RD-Quiniela";
-            } else if (length === 4) {
-                mode = "RD-Pale";
-            }
-        }
-        return mode;
-    }
-
-    function fixTicketLayoutForMobile() {
-        $("#preTicket table, #preTicket th, #preTicket td").css("white-space", "nowrap");
-        $("#preTicket").css("overflow-x", "auto");
-    }
+    showCutoffTimes();
+    disableTracksByTime();
+    setInterval(disableTracksByTime,60000);
 
 });
