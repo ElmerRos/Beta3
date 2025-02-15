@@ -150,7 +150,7 @@ $(document).ready(function() {
             return;
         }
         playCount++;
-        const rowHTML = 
+        const rowHTML = `
             <tr>
                 <td>${playCount}</td>
                 <td><input type="number" class="form-control betNumber" min="0" max="9999" required></td>
@@ -160,7 +160,7 @@ $(document).ready(function() {
                 <td><input type="number" class="form-control combo" min="0" max="50" step="0.10" placeholder="e.g. 3.00"></td>
                 <td class="total">0.00</td>
             </tr>
-        ;
+        `;
         $("#tablaJugadas").append(rowHTML);
         storeFormState();
         $("#tablaJugadas tr:last .betNumber").focus();
@@ -336,7 +336,7 @@ $(document).ready(function() {
 
     function updatePlaceholders(mode, row) {
         if (betLimits[mode]) {
-            row.find(".straight").attr("placeholder", Max $${betLimits[mode].straight ?? 100})
+            row.find(".straight").attr("placeholder", `Max $${betLimits[mode].straight ?? 100}`)
                                  .prop("disabled", false);
         } else {
             row.find(".straight").attr("placeholder", "e.g. 5.00").prop("disabled", false);
@@ -363,10 +363,10 @@ $(document).ready(function() {
         }
         else if (mode === "Win 4" || mode === "Pick 3") {
             row.find(".box")
-                .attr("placeholder",Max $${betLimits[mode].box})
+                .attr("placeholder",`Max $${betLimits[mode].box}`)
                 .prop("disabled",false);
             row.find(".combo")
-                .attr("placeholder",Max $${betLimits[mode].combo})
+                .attr("placeholder",`Max $${betLimits[mode].combo}`)
                 .prop("disabled",false);
         }
         else {
@@ -428,7 +428,7 @@ $(document).ready(function() {
                 }
                 const hh=cf.format("HH");
                 const mm=cf.format("mm");
-                $(this).text(Cutoff Time: ${hh}:${mm});
+                $(this).text(`Cutoff Time: ${hh}:${mm}`);
             }
         });
     }
@@ -525,7 +525,7 @@ $(document).ready(function() {
             $("#tablaJugadas").empty();
             data.plays.forEach((p,i)=>{
                 if(i>=MAX_PLAYS)return;
-                const row=
+                const row=`
                 <tr>
                   <td>${i+1}</td>
                   <td><input type="number" class="form-control betNumber" required value="${p.betNumber}"></td>
@@ -535,7 +535,7 @@ $(document).ready(function() {
                   <td><input type="number" class="form-control combo" value="${p.combo}"></td>
                   <td class="total">${p.total}</td>
                 </tr>
-                ;
+                `;
                 $("#tablaJugadas").append(row);
             });
             if(playCount>MAX_PLAYS){
@@ -594,7 +594,7 @@ $(document).ready(function() {
                             cf=co.subtract(10,"minute");
                         }
                         if(now.isAfter(cf)||now.isSame(cf)){
-                            alert(The track "${t}" is already closed for today. Choose another track or a future date.);
+                            alert(`The track "${t}" is already closed for today. Choose another track or a future date.`);
                             return;
                         }
                     }
@@ -676,7 +676,7 @@ $(document).ready(function() {
         });
         if(!valid){
             const uniqueErr=[...new Set(errors)].join(", ");
-            alert(Some plays have errors (row(s): ${uniqueErr}). Please fix them before generating the ticket preview.);
+            alert(`Some plays have errors (row(s): ${uniqueErr}). Please fix them before generating the ticket preview.`);
             return;
         }
 
@@ -693,7 +693,7 @@ $(document).ready(function() {
             const coVal=parseFloat($(this).find(".combo").val())||0;
             const rowT=parseFloat($(this).find(".total").text())||0;
 
-            const rowHTML=
+            const rowHTML=`
                 <tr>
                     <td>${rowNum}</td>
                     <td>${bn}</td>
@@ -703,7 +703,7 @@ $(document).ready(function() {
                     <td>${coVal>0?coVal.toFixed(2):"-"}</td>
                     <td>${rowT.toFixed(2)}</td>
                 </tr>
-            ;
+            `;
             $("#ticketJugadas").append(rowHTML);
         });
         $("#ticketTotal").text($("#totalJugadas").text());
@@ -775,7 +775,7 @@ $(document).ready(function() {
                 // Download
                 const link=document.createElement("a");
                 link.href=dataUrl;
-                link.download=ticket_${uniqueTicket}.png;
+                link.download=`ticket_${uniqueTicket}.png`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -882,7 +882,7 @@ $(document).ready(function() {
         })
         .then(r=>{
             if(!r.ok){
-                throw new Error(SheetDB error, status ${r.status});
+                throw new Error(`SheetDB error, status ${r.status}`);
             }
             return r.json();
         })
