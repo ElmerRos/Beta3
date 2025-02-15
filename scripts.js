@@ -1,17 +1,14 @@
-  // scripts.js
+ /*
+  scripts.js
 
-/*
-  Final refinement so that:
-  - Once the user is in the FINAL ticket stage (with QR code + ticket number),
-    the "Edit" button is definitely hidden.
-  - That button only appears in the PREVIEW modal (after "Generate Ticket"),
-    and once "Confirm & Download" is clicked, it gets removed.
-
-  Other existing logic remains:
-   - Confirm button is disabled after first click.
-   - Only the "Share Ticket" remains visible in the final stage.
-   - The user must close the modal manually if they want to return to the form 
-     (or they can press X in the modal header).
+  Key Changes:
+  - All user-facing text is now in English.
+  - Removed the "Cutoff Time: " prefix when displaying cutoff times.
+  - Everything else remains the same as your original logic, including:
+    - Form validations
+    - Track selection constraints (Venezuela requires a USA track)
+    - Local storage usage
+    - Ticket preview, printing, sharing, etc.
 */
 
 /* Replace with your real SheetDB (or API) endpoint */
@@ -214,12 +211,14 @@ $(document).ready(function() {
         let totalVal = 0;
 
         if (mode === "Pulito") {
+            // Pulito: Straight * (number of positions in .box)
             if (boxTxt) {
                 const positions = boxTxt.split(",").map(v => v.trim()).filter(Boolean);
                 totalVal = stVal * positions.length;
             }
         }
         else if (mode === "Venezuela" || mode.startsWith("RD-")) {
+            // Venezuela, RD-Quiniela, RD-Pale => Only Straight
             totalVal = stVal;
         }
         else if (mode === "Win 4" || mode === "Pick 3") {
@@ -250,7 +249,12 @@ $(document).ready(function() {
     }
 
     function hasBrooklynOrFront(tracks) {
-        const bfSet = new Set(["Brooklyn Midday","Brooklyn Evening","Front Midday","Front Evening"]);
+        const bfSet = new Set([
+            "Brooklyn Midday",
+            "Brooklyn Evening",
+            "Front Midday",
+            "Front Evening"
+        ]);
         return tracks.some(t => bfSet.has(t));
     }
 
@@ -336,46 +340,49 @@ $(document).ready(function() {
 
     function updatePlaceholders(mode, row) {
         if (betLimits[mode]) {
-            row.find(".straight").attr("placeholder", `Max $${betLimits[mode].straight ?? 100}`)
-                                 .prop("disabled", false);
+            row.find(".straight")
+               .attr("placeholder", `Max $${betLimits[mode].straight ?? 100}`)
+               .prop("disabled", false);
         } else {
-            row.find(".straight").attr("placeholder", "e.g. 5.00").prop("disabled", false);
+            row.find(".straight")
+               .attr("placeholder", "e.g. 5.00")
+               .prop("disabled", false);
         }
 
         if (mode === "Pulito") {
             row.find(".box")
-                .attr("placeholder","Positions (1,2,3)?")
-                .prop("disabled",false);
+               .attr("placeholder","Positions (1,2,3)?")
+               .prop("disabled", false);
             row.find(".combo")
-                .attr("placeholder","N/A")
-                .prop("disabled",true)
-                .val("");
+               .attr("placeholder","N/A")
+               .prop("disabled", true)
+               .val("");
         }
         else if (mode === "Venezuela" || mode.startsWith("RD-")) {
             row.find(".box")
-                .attr("placeholder","N/A")
-                .prop("disabled",true)
-                .val("");
+               .attr("placeholder","N/A")
+               .prop("disabled", true)
+               .val("");
             row.find(".combo")
-                .attr("placeholder","N/A")
-                .prop("disabled",true)
-                .val("");
+               .attr("placeholder","N/A")
+               .prop("disabled", true)
+               .val("");
         }
         else if (mode === "Win 4" || mode === "Pick 3") {
             row.find(".box")
-                .attr("placeholder",`Max $${betLimits[mode].box}`)
-                .prop("disabled",false);
+               .attr("placeholder", `Max $${betLimits[mode].box}`)
+               .prop("disabled", false);
             row.find(".combo")
-                .attr("placeholder",`Max $${betLimits[mode].combo}`)
-                .prop("disabled",false);
+               .attr("placeholder", `Max $${betLimits[mode].combo}`)
+               .prop("disabled", false);
         }
         else {
             row.find(".box")
-                .attr("placeholder","e.g. 2.00")
-                .prop("disabled",false);
+               .attr("placeholder","e.g. 2.00")
+               .prop("disabled", false);
             row.find(".combo")
-                .attr("placeholder","e.g. 3.00")
-                .prop("disabled",false);
+               .attr("placeholder","e.g. 3.00")
+               .prop("disabled", false);
         }
         storeFormState();
     }
@@ -428,7 +435,8 @@ $(document).ready(function() {
                 }
                 const hh=cf.format("HH");
                 const mm=cf.format("mm");
-                $(this).text(`Cutoff Time: ${hh}:${mm}`);
+                // Only the time, no prefix
+                $(this).text(`${hh}:${mm}`);
             }
         });
     }
@@ -453,13 +461,13 @@ $(document).ready(function() {
                 }
                 if(now.isAfter(cf)||now.isSame(cf)){
                     $(this).prop("disabled",true).prop("checked",false);
-                    $(this).closest(".form-check").find(".form-check-label").css({
+                    $(this).closest(".track-button-container").find(".track-button").css({
                         opacity:0.5,
                         cursor:"not-allowed"
                     });
                 }else{
                     $(this).prop("disabled",false);
-                    $(this).closest(".form-check").find(".form-check-label").css({
+                    $(this).closest(".track-button-container").find(".track-button").css({
                         opacity:1,
                         cursor:"pointer"
                     });
@@ -481,7 +489,7 @@ $(document).ready(function() {
     function enableAllTracks(){
         $(".track-checkbox").each(function(){
             $(this).prop("disabled",false);
-            $(this).closest(".form-check").find(".form-check-label").css({
+            $(this).closest(".track-button-container").find(".track-button").css({
                 opacity:1,
                 cursor:"pointer"
             });
@@ -594,7 +602,7 @@ $(document).ready(function() {
                             cf=co.subtract(10,"minute");
                         }
                         if(now.isAfter(cf)||now.isSame(cf)){
-                            alert(`The track "${t}" is already closed for today. Choose another track or a future date.`);
+                            alert(`The track "${t}" is already closed for today. Please choose another track or a future date.`);
                             return;
                         }
                     }
@@ -725,7 +733,7 @@ $(document).ready(function() {
     $("#confirmarTicket").click(function(){
         const confirmBtn=$(this);
 
-        // Hide the edit button immediately => final stage
+        // Hide the edit button => final stage
         $("#editButton").addClass("d-none");
 
         // Disable confirm so user can't re-click
@@ -789,8 +797,6 @@ $(document).ready(function() {
                         console.error("Failed to send bet data to SheetDB.");
                     }
                 });
-
-                // window.print(); // commented
 
             })
             .catch(err=>{
