@@ -25,147 +25,6 @@
   />
   <!-- Custom CSS (optional) -->
   <link href="styles.css" rel="stylesheet" />
-
-  <style>
-    /* Temporary inline styles for the new track "button" approach */
-    /* The main neon aesthetics will go in styles.css in the next step. */
-
-    .track-button-container {
-      position: relative;
-      margin-bottom: 0.5rem;
-    }
-    /* Hide the real checkbox */
-    .track-button-container input[type="checkbox"] {
-      display: none;
-    }
-    /* Label as large button */
-    .track-button {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem 1rem;
-      border: 2px solid #00ffff; /* placeholder neon border */
-      border-radius: 8px;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.3s ease;
-      background-color: #1e1e1e;
-      color: #ffffff;
-      /* We'll refine the neon effect in styles.css */
-    }
-    .track-button:hover {
-      background-color: #2a2a2a;
-    }
-    .track-name {
-      font-weight: 600;
-      font-size: 1rem; /* Adjust as needed */
-    }
-    .cutoff-time {
-      margin-left: 1rem;
-      color: #aaaaaa;
-      font-size: 1rem;
-    }
-    /* When the checkbox is checked, change style (for "selected" state) */
-    .track-button-container input[type="checkbox"]:checked + .track-button {
-      background-color: #00ff9b; /* example greenish color when selected */
-      color: #000000;
-    }
-    /* When the checkbox is disabled, show a different style */
-    .track-button-container input[type="checkbox"]:disabled + .track-button {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* The rest of the inline style from your original code remains below */
-
-    @media (max-width: 576px) {
-      /* Make the modal full screen on small devices */
-      .modal-dialog {
-        max-width: 100%;
-        margin: 0;
-        height: 100%;
-      }
-      #preTicket {
-        padding: 0.5rem;
-      }
-      #preTicket table {
-        font-size: 0.75rem;
-      }
-      #preTicket th,
-      #preTicket td {
-        padding: 0.2rem;
-      }
-      #qrcode {
-        width: 60px !important;
-        height: 60px !important;
-        margin: 0 auto;
-      }
-      .cutoff-time {
-        font-size: 0.65rem;
-      }
-      .ticket-number,
-      .transaction-date {
-        font-size: 0.75rem;
-      }
-    }
-
-    .modal-content {
-      max-height: 90vh;
-      overflow: auto;
-      resize: both;
-      border: 2px solid #00ffff;
-    }
-    #qrcode {
-      width: 128px;
-      height: 128px;
-      margin: 0 auto;
-    }
-    #preTicket table {
-      font-size: 1rem;
-    }
-    #preTicket th,
-    #preTicket td {
-      border: 1px solid #00ffff;
-      color: #ffffff;
-      padding: 8px;
-      word-wrap: break-word;
-      font-size: 1rem;
-    }
-    @media print {
-      #preTicket table {
-        font-size: 0.9rem;
-      }
-      #preTicket th,
-      #preTicket td {
-        padding: 0.3rem;
-      }
-    }
-    .duplicado {
-      border: 2px solid red;
-      background-color: #ffcccc;
-    }
-    .cutoff-time[data-track="Venezuela"] {
-      color: var(--color-fondo);
-    }
-    @media (max-width: 600px) {
-      #preTicket table,
-      #preTicket th,
-      #preTicket td {
-        font-size: 1rem;
-      }
-      #preTicket {
-        padding: 10px;
-      }
-      #qrcode {
-        width: 100px;
-        height: 100px;
-      }
-    }
-    #preTicket {
-      max-width: 100%;
-      overflow-x: auto;
-    }
-  </style>
 </head>
 <body>
   <div class="container my-5">
@@ -212,7 +71,7 @@
               data-bs-parent="#tracksAccordion"
             >
               <div class="accordion-body">
-                <!-- Replace the old form-check layout with big buttons -->
+                <!-- Example of big buttons instead of checkboxes -->
                 <div class="track-button-container">
                   <input
                     class="track-checkbox"
@@ -757,11 +616,12 @@
           </thead>
           <tbody id="tablaJugadas">
             <!-- Rows added dynamically -->
+            <!-- Notice: We'll transform the first cell (#) into a button in scripts.js -->
           </tbody>
         </table>
       </div>
 
-      <!-- Buttons: Add, Remove, Reset -->
+      <!-- Buttons: Add, Remove, Reset, and Wizard -->
       <div
         class="d-flex justify-content-between align-items-center mb-4"
       >
@@ -775,10 +635,17 @@
           </button>
           <button
             type="button"
+            class="btn btn-info"
+            id="wizardButton"
+          >
+            <i class="bi bi-magic"></i> Wizard
+          </button>
+          <button
+            type="button"
             class="btn btn-danger"
             id="eliminarJugada"
           >
-            <i class="bi bi-dash-circle"></i> Remove Play
+            <i class="bi bi-dash-circle"></i> Remove Last Play
           </button>
           <button
             type="button"
@@ -896,6 +763,108 @@
             id="shareTicket"
           >
             Share Ticket
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WIZARD MODAL (New) -->
+  <div
+    class="modal fade"
+    id="wizardModal"
+    tabindex="-1"
+    aria-labelledby="wizardModalLabel"
+    aria-hidden="true"
+  >
+    <!-- Full screen on small devices -->
+    <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="wizardModalLabel">
+            Quick Entry Wizard
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <!-- Fields for Bet Number, Straight, Box, Combo -->
+          <div class="mb-3">
+            <label for="wizardBetNumber" class="form-label">Bet Number</label>
+            <input
+              type="number"
+              class="form-control"
+              id="wizardBetNumber"
+              placeholder="2–4 digits"
+              min="0"
+              max="9999"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="wizardStraight" class="form-label">Straight ($)</label>
+            <input
+              type="number"
+              class="form-control"
+              id="wizardStraight"
+              placeholder="e.g. 5"
+              min="0"
+              step="1"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="wizardBox" class="form-label">Box ($)</label>
+            <input
+              type="text"
+              class="form-control"
+              id="wizardBox"
+              placeholder="e.g. 1,2 or 3"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="wizardCombo" class="form-label">Combo ($)</label>
+            <input
+              type="number"
+              class="form-control"
+              id="wizardCombo"
+              placeholder="e.g. 3.00"
+              min="0"
+              step="0.1"
+            />
+          </div>
+          <!-- Could show read-only 'Game Mode' if desired -->
+          <!-- <div class="mb-3">
+            <label class="form-label">Detected Game Mode:</label>
+            <input type="text" class="form-control" id="wizardGameMode" readonly />
+          </div> -->
+        </div>
+        <div class="modal-footer">
+          <!-- A copy of the "Generate Ticket" logic, to go directly from wizard -->
+          <button type="button" class="btn btn-info" id="wizardGenerateTicket">
+            <i class="bi bi-ticket-detailed"></i> Generate Ticket
+          </button>
+          <!-- A button to edit the main form (close wizard + show the table) -->
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="wizardEditMainForm"
+          >
+            Edit Main Form
+          </button>
+          <!-- Add & Next: Insert row to table, then clear fields -->
+          <button type="button" class="btn btn-primary" id="wizardAddNext">
+            <i class="bi bi-check-circle"></i> Add & Next
+          </button>
+          <!-- Close Wizard -->
+          <button
+            type="button"
+            class="btn btn-danger"
+            data-bs-dismiss="modal"
+          >
+            <i class="bi bi-x-circle"></i> Close Wizard
           </button>
         </div>
       </div>
