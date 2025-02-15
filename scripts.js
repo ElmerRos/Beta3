@@ -1,14 +1,7 @@
  /*
-  scripts.js
-
-  Key Changes:
-  - All user-facing text is now in English.
-  - Removed the "Cutoff Time: " prefix when displaying cutoff times.
-  - Everything else remains the same as your original logic, including:
-    - Form validations
-    - Track selection constraints (Venezuela requires a USA track)
-    - Local storage usage
-    - Ticket preview, printing, sharing, etc.
+  scripts.js - Updated to include:
+    1) Wizard Modal logic (Add & Next, etc.)
+    2) Individual row removal by clicking the # button
 */
 
 /* Replace with your real SheetDB (or API) endpoint */
@@ -94,17 +87,11 @@ $(document).ready(function() {
         "RD-Pale":       { straight: 20 }
     };
 
-    /*
-      Force horizontal layout in the final ticket
-    */
     function fixTicketLayoutForMobile() {
         $("#preTicket table, #preTicket th, #preTicket td").css("white-space", "nowrap");
         $("#preTicket").css("overflow-x", "auto");
     }
 
-    /*
-      Determine the game mode from betNumber + chosen tracks
-    */
     function determineGameMode(tracks, betNumber) {
         let mode = "-";
         const isUSA = tracks.some(t => Object.keys(cutoffTimes.USA).includes(t));
@@ -139,17 +126,20 @@ $(document).ready(function() {
     }
 
     /*
-      Add play row
+      Add a play row to the table, returning the newly created <tr>
+      so we can set the fields easily.
+      "rowIndex" is the consecutive # of the play.
     */
-    function addPlayRow() {
-        if (playCount >= MAX_PLAYS) {
-            alert("You have reached the maximum of 25 plays.");
-            return;
-        }
-        playCount++;
+    function addPlayRow(rowIndex) {
         const rowHTML = `
-            <tr>
-                <td>${playCount}</td>
+            <tr data-playIndex="${rowIndex}">
+                <td>
+                  <button type="button"
+                          class="removeRowBtn btn btn-secondary"
+                          data-row="${rowIndex}">
+                    ${rowIndex}
+                  </button>
+                </td>
                 <td><input type="number" class="form-control betNumber" min="0" max="9999" required></td>
                 <td class="gameMode">-</td>
                 <td><input type="number" class="form-control straight" min="0" max="100" step="1" placeholder="e.g. 5"></td>
@@ -159,15 +149,18 @@ $(document).ready(function() {
             </tr>
         `;
         $("#tablaJugadas").append(rowHTML);
-        storeFormState();
-        $("#tablaJugadas tr:last .betNumber").focus();
+        return $("#tablaJugadas tr[data-playIndex='" + rowIndex + "']");
     }
 
-    addPlayRow(); // start with one row
+    function createNewPlayRow() {
+        if (playCount >= MAX_PLAYS) {
+            alert("You have reached the maximum of 25 plays.");
+            return null;
+        }
+        playCount++;
+        return addPlayRow(playCount);
+    }
 
-    /*
-      Calculate total for the entire form
-    */
     function calculateTotal() {
         let sum = 0;
         $(".total").each(function(){
@@ -182,9 +175,6 @@ $(document).ready(function() {
         storeFormState();
     }
 
-    /*
-      Calculate row total
-    */
     function calculateRowTotal(row) {
         const mode = row.find(".gameMode").text();
         const bn   = row.find(".betNumber").val();
@@ -211,14 +201,12 @@ $(document).ready(function() {
         let totalVal = 0;
 
         if (mode === "Pulito") {
-            // Pulito: Straight * (number of positions in .box)
             if (boxTxt) {
                 const positions = boxTxt.split(",").map(v => v.trim()).filter(Boolean);
                 totalVal = stVal * positions.length;
             }
         }
         else if (mode === "Venezuela" || mode.startsWith("RD-")) {
-            // Venezuela, RD-Quiniela, RD-Pale => Only Straight
             totalVal = stVal;
         }
         else if (mode === "Win 4" || mode === "Pick 3") {
@@ -266,7 +254,7 @@ $(document).ready(function() {
         selectedTracksCount = 0;
         selectedDaysCount = 0;
         window.ticketImageDataUrl = null;
-        addPlayRow();
+        createNewPlayRow(); // Start with one row
         $("#totalJugadas").text("0.00");
         showCutoffTimes();
         highlightDuplicates();
@@ -301,17 +289,21 @@ $(document).ready(function() {
     }
 
     // Buttons
-    $("#agregarJugada").click(() => addPlayRow());
+    $("#agregarJugada").click(() => {
+        const row = createNewPlayRow();
+        if(row) {
+            row.find(".betNumber").focus();
+        }
+    });
     $("#eliminarJugada").click(() => {
         if (playCount === 0) {
             alert("No plays to remove.");
             return;
         }
+        // Remove last row
         $("#tablaJugadas tr:last").remove();
         playCount--;
-        $("#tablaJugadas tr").each((i, el) => {
-            $(el).find("td:first").text(i+1);
-        });
+        renumberRows();
         calculateTotal();
     });
     $("#resetForm").click(() => {
@@ -320,7 +312,7 @@ $(document).ready(function() {
         }
     });
 
-    // Input event
+    // For each row changes
     $("#tablaJugadas").on("input",".betNumber,.straight,.box,.combo",function(){
         const row = $(this).closest("tr");
         const bn  = row.find(".betNumber").val();
@@ -337,6 +329,29 @@ $(document).ready(function() {
         calculateRowTotal(row);
         highlightDuplicates();
     });
+
+    // NEW: remove a specific row by clicking the # button
+    $("#tablaJugadas").on("click",".removeRowBtn",function(){
+        const rowIndex = $(this).data("row");
+        // Remove the entire <tr>
+        $(this).closest("tr").remove();
+        playCount--;
+        renumberRows();
+        calculateTotal();
+    });
+
+    function renumberRows(){
+        let i=0;
+        $("#tablaJugadas tr").each(function(){
+            i++;
+            $(this).attr("data-playIndex", i);
+            // Update the button text and data-row
+            $(this).find("button.removeRowBtn").text(i).attr("data-row", i);
+        });
+        // set the global playCount to i
+        playCount = i;
+        storeFormState();
+    }
 
     function updatePlaceholders(mode, row) {
         if (betLimits[mode]) {
@@ -395,6 +410,7 @@ $(document).ready(function() {
     });
 
     const ticketModal = new bootstrap.Modal(document.getElementById("ticketModal"));
+    const wizardModal = new bootstrap.Modal(document.getElementById("wizardModal")); // NEW (WIZARD)
 
     function userChoseToday() {
         const val = $("#fecha").val();
@@ -435,7 +451,6 @@ $(document).ready(function() {
                 }
                 const hh=cf.format("HH");
                 const mm=cf.format("mm");
-                // Only the time, no prefix
                 $(this).text(`${hh}:${mm}`);
             }
         });
@@ -529,30 +544,28 @@ $(document).ready(function() {
             $("#fecha").val(data.dateVal);
             selectedDaysCount=data.selectedDaysCount;
             selectedTracksCount=data.selectedTracksCount;
-            playCount=data.playCount;
+            playCount=0;
             $("#tablaJugadas").empty();
             data.plays.forEach((p,i)=>{
                 if(i>=MAX_PLAYS)return;
-                const row=`
-                <tr>
-                  <td>${i+1}</td>
-                  <td><input type="number" class="form-control betNumber" required value="${p.betNumber}"></td>
-                  <td class="gameMode">${p.gameMode}</td>
-                  <td><input type="number" class="form-control straight" value="${p.straight}"></td>
-                  <td><input type="text" class="form-control box" value="${p.box}"></td>
-                  <td><input type="number" class="form-control combo" value="${p.combo}"></td>
-                  <td class="total">${p.total}</td>
-                </tr>
-                `;
-                $("#tablaJugadas").append(row);
+                const rowIndex = i+1;
+                if(rowIndex>playCount) playCount=rowIndex;
+                const row = addPlayRow(rowIndex);
+                // fill values
+                row.find(".betNumber").val(p.betNumber);
+                row.find(".gameMode").text(p.gameMode);
+                row.find(".straight").val(p.straight);
+                row.find(".box").val(p.box);
+                row.find(".combo").val(p.combo);
+                row.find(".total").text(p.total);
             });
-            if(playCount>MAX_PLAYS){
-                playCount=MAX_PLAYS;
-            }
             calculateTotal();
             showCutoffTimes();
             disableTracksByTime();
             highlightDuplicates();
+        } else {
+            // If no state, create one row
+            createNewPlayRow();
         }
     }
 
@@ -564,8 +577,13 @@ $(document).ready(function() {
         }
     });
 
-    // Generate Ticket => preview
+    // "Generate Ticket" => same logic as before
     $("#generarTicket").click(function(){
+        doGenerateTicket();
+    });
+
+    // Wrap the "Generate Ticket" logic in a function so wizard can call it too
+    function doGenerateTicket(){
         const dateVal=$("#fecha").val();
         if(!dateVal){
             alert("Please select at least one date.");
@@ -615,7 +633,7 @@ $(document).ready(function() {
         const errors=[];
         const rows=$("#tablaJugadas tr");
         rows.each(function(){
-            const rowNum=parseInt($(this).find("td:first").text());
+            const rowNum=parseInt($(this).attr("data-playIndex"));
             const bn=$(this).find(".betNumber").val();
             const gm=$(this).find(".gameMode").text();
             const st=$(this).find(".straight").val();
@@ -692,7 +710,7 @@ $(document).ready(function() {
         $("#ticketJugadas").empty();
         $("#ticketTracks").text(chosenTracks.join(", "));
         rows.each(function(){
-            const rowNum=$(this).find("td:first").text();
+            const rowNum=$(this).attr("data-playIndex");
             const bn=$(this).find(".betNumber").val();
             const gm=$(this).find(".gameMode").text();
             const stVal=parseFloat($(this).find(".straight").val())||0;
@@ -727,26 +745,21 @@ $(document).ready(function() {
         fixTicketLayoutForMobile();
         ticketModal.show();
         storeFormState();
-    });
+    }
 
     // "Confirm & Download"
     $("#confirmarTicket").click(function(){
         const confirmBtn=$(this);
 
-        // Hide the edit button => final stage
         $("#editButton").addClass("d-none");
-
-        // Disable confirm so user can't re-click
         confirmBtn.prop("disabled", true);
 
-        // Generate ticket number
         const uniqueTicket=generateUniqueTicketNumber();
         $("#numeroTicket").text(uniqueTicket);
 
         transactionDateTime=dayjs().format("MM/DD/YYYY hh:mm A");
         $("#ticketTransaccion").text(transactionDateTime);
 
-        // QR code
         $("#qrcode").empty();
         new QRCode(document.getElementById("qrcode"),{
             text:uniqueTicket,
@@ -754,7 +767,6 @@ $(document).ready(function() {
             height:128
         });
 
-        // Show share now
         $("#shareTicket").removeClass("d-none");
 
         fixTicketLayoutForMobile();
@@ -780,7 +792,6 @@ $(document).ready(function() {
                 const dataUrl=canvas.toDataURL("image/png");
                 window.ticketImageDataUrl=dataUrl;
 
-                // Download
                 const link=document.createElement("a");
                 link.href=dataUrl;
                 link.download=`ticket_${uniqueTicket}.png`;
@@ -805,18 +816,14 @@ $(document).ready(function() {
             })
             .finally(()=>{
                 $(ticketElement).css(originalStyles);
-                // We do NOT re-enable the confirm button => no repeated generation
             });
         },500);
     });
 
-    // "Edit" => close modal
     $("#editButton").click(function(){
-        // Return to form => user can fix data
         ticketModal.hide();
     });
 
-    // "Share Ticket"
     $("#shareTicket").click(async function(){
         if(!window.ticketImageDataUrl){
             alert("No ticket image is available to share.");
@@ -853,7 +860,7 @@ $(document).ready(function() {
         const nowISO=dayjs().toISOString();
 
         $("#tablaJugadas tr").each(function(){
-            const rowNum=$(this).find("td:first").text();
+            const rowNum=$(this).attr("data-playIndex");
             const betNumber=$(this).find(".betNumber").val();
             const mode=$(this).find(".gameMode").text();
             const straight=$(this).find(".straight").val();
@@ -909,5 +916,72 @@ $(document).ready(function() {
     showCutoffTimes();
     disableTracksByTime();
     setInterval(disableTracksByTime,60000);
+
+    /* ===========================================
+       ========== WIZARD SECTION ================
+       =========================================== */
+    // 1. Open Wizard
+    $("#wizardButton").click(function(){
+        // Clear current fields in wizard (optional)
+        $("#wizardBetNumber").val("");
+        $("#wizardStraight").val("");
+        $("#wizardBox").val("");
+        $("#wizardCombo").val("");
+        wizardModal.show();
+    });
+
+    // 2. Add & Next
+    $("#wizardAddNext").click(function(){
+        // Attempt to add a new row with the input values
+        const bn = $("#wizardBetNumber").val().trim();
+        const st = $("#wizardStraight").val().trim();
+        const bx = $("#wizardBox").val().trim();
+        const co = $("#wizardCombo").val().trim();
+
+        // Basic validations
+        if(!bn || bn.length<2 || bn.length>4){
+            alert("Bet Number must be 2–4 digits.");
+            return;
+        }
+        if(playCount >= MAX_PLAYS){
+            alert("You have reached the maximum of 25 plays.");
+            return;
+        }
+
+        // Insert a new row
+        const row = createNewPlayRow();
+        if(!row) return; // if we can't create new row
+
+        // Fill the row's fields
+        row.find(".betNumber").val(bn);
+        row.find(".straight").val(st || "");
+        row.find(".box").val(bx || "");
+        row.find(".combo").val(co || "");
+
+        // Trigger input event to set game mode, recalc total, etc.
+        row.find(".betNumber").trigger("input");
+        row.find(".straight").trigger("input");
+        // storeFormState() is called in those flows
+
+        // Clear wizard fields for next
+        $("#wizardBetNumber").val("");
+        $("#wizardStraight").val("");
+        $("#wizardBox").val("");
+        $("#wizardCombo").val("");
+        $("#wizardBetNumber").focus();
+    });
+
+    // 3. Wizard => Generate Ticket
+    $("#wizardGenerateTicket").click(function(){
+        // We can call the same doGenerateTicket() function
+        wizardModal.hide(); 
+        doGenerateTicket();
+    });
+
+    // 4. Wizard => Edit Main Form
+    $("#wizardEditMainForm").click(function(){
+        // Simply hide the wizard modal and let user see the main form
+        wizardModal.hide();
+    });
 
 });
