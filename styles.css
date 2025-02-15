@@ -1,17 +1,17 @@
-    /* styles.css */
-
-/* Estilos Básicos */
+ /* ===========================
+   BASE COLORS & FONTS
+   =========================== */
 :root {
-    --color-fondo: #0a0a0a; /* Fondo oscuro */
+    --color-fondo: #0a0a0a; /* Dark background */
     --color-neon-cian: #00ffff;
     --color-neon-morado: #ff00ff;
     --color-neon-verde: #39ff14;
     --color-texto: #ffffff;
-    --color-placeholder: #cccccc; /* Color tenue para placeholders */
-    --color-fondo-acordeon: #1e1e1e; /* Fondo para acordeón */
-    --color-fondo-acordeon-activo: #00ffff; /* Fondo activo para acordeón */
-    --color-texto-acordeon: #ffffff; /* Color de texto para acordeón */
-    --color-error: #ff00ff; /* Color para resaltar errores */
+    --color-placeholder: #cccccc;
+    --color-fondo-acordeon: #1e1e1e;
+    --color-fondo-acordeon-activo: #00ffff;
+    --color-texto-acordeon: #ffffff;
+    --color-error: #ff00ff;
 }
 
 body {
@@ -20,10 +20,12 @@ body {
     font-family: 'Montserrat', 'Poppins', sans-serif;
     margin: 0;
     padding: 20px;
-    overflow-x: hidden; /* Prevent horizontal scroll */
+    overflow-x: hidden;
 }
 
-/* Contenedor Principal */
+/* ===========================
+   CONTAINER
+   =========================== */
 .container {
     max-width: 1000px;
     margin: 0 auto;
@@ -33,83 +35,162 @@ body {
     box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
 }
 
-/* Títulos */
 h2 {
     text-align: center;
     margin-bottom: 20px;
     color: var(--color-neon-cian);
     text-shadow: 0 0 10px var(--color-neon-cian);
-    font-size: 1.125rem; /* Ajustar tamaño de fuente a ~18px (1.125rem) */
+    font-size: 1.125rem; /* ~18px */
 }
 
-/* Selección de Fecha */
+/* ===========================
+   FLATPICKR INPUT
+   =========================== */
 .glow-input {
     box-shadow: 0 0 10px var(--color-neon-cian);
     transition: box-shadow 0.3s, border-color 0.3s;
 }
-
 .glow-input:focus {
     border-color: var(--color-neon-morado);
     box-shadow: 0 0 15px var(--color-neon-morado);
     outline: none;
 }
 
-/* Selección de Tracks */
+/* ===========================
+   ACCORDION & TRACKS
+   =========================== */
 .form-check-label {
     color: var(--color-texto);
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a ~18px */
+    font-size: 1.125rem;
 }
-
-/* Estilos del Accordion */
+/* Accordion headers */
 .accordion-button {
     background-color: var(--color-fondo-acordeon);
     color: var(--color-texto-acordeon);
     border: 2px solid var(--color-neon-cian);
     transition: background-color 0.3s, color 0.3s;
-    font-size: 1.125rem; /* ~18px */
+    font-size: 1.125rem;
 }
-
 .accordion-button:not(.collapsed) {
     background-color: var(--color-fondo-acordeon-activo);
     color: #000;
 }
-
 .accordion-button:hover {
     background-color: #2a2a2a;
     color: var(--color-neon-cian);
 }
-
 .accordion-body {
     background-color: #1e1e1e;
     color: #ffffff;
     border: 1px solid var(--color-neon-cian);
 }
-
 .accordion-header {
     background-color: var(--color-fondo-acordeon);
 }
-
 .accordion-item {
     background-color: var(--color-fondo-acordeon);
     border: none;
 }
-
 .accordion-button::after {
     filter: brightness(0) invert(1);
 }
-
-/* Indicador de Hora Límite */
+/* Minimally dim for cut-off time if not replaced in script */
 .cutoff-time {
-    font-size: 1.125rem; /* ~18px */
-    color: #aaaaaa; /* Color tenue */
+    font-size: 1.125rem;
+    color: #aaaaaa;
 }
 
-/* Tabla de Jugadas */
+/* ===========================
+   NEW: TRACK BUTTONS SQUARE
+   =========================== */
+
+/* Contenedor de cada Track */
+.track-button-container {
+    display: inline-block; /* Permite que se acomoden uno al lado del otro */
+    width: 150px;         /* Tamaño fijo para simular un botón cuadrado */
+    height: 150px;
+    margin: 0.5rem;
+    vertical-align: top;  /* Alinear en la parte superior al apilar */
+    position: relative;
+}
+
+/* Ocultamos el checkbox real */
+.track-button-container input[type="checkbox"] {
+    display: none;
+}
+
+/* Label como botón grande y cuadrado */
+.track-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    border: 2px solid var(--color-neon-cian);
+    border-radius: 10px; /* puedes poner 0 si quieres esquinas totalmente cuadradas */
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    text-align: center;
+    padding: 0.5rem;
+}
+
+/* Efecto hover */
+.track-button:hover {
+    background-color: #2a2a2a;
+}
+
+/* Estado checked (cuando se selecciona el track) */
+.track-button-container input[type="checkbox"]:checked + .track-button {
+    background-color: #00ff9b; /* un tono verde */
+    color: #000000;
+}
+
+/* Deshabilitado (hora límite pasada) */
+.track-button-container input[type="checkbox"]:disabled + .track-button {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Nombre del Track en grande */
+.track-button .track-name {
+    font-weight: 700;
+    font-size: 1.3rem; /* Más grande para mejor visibilidad */
+    margin-bottom: 0.4rem;
+}
+
+/* Hora de corte un poco más pequeña */
+.track-button .cutoff-time {
+    font-size: 1.1rem;
+    color: #cccccc; /* Gris claro */
+}
+
+/* Ajuste responsive para pantallas muy pequeñas */
+@media (max-width: 576px) {
+    .track-button-container {
+        width: 120px;
+        height: 120px;
+        margin: 0.25rem;
+    }
+    .track-button .track-name {
+        font-size: 1.1rem;
+    }
+    .track-button .cutoff-time {
+        font-size: 1rem;
+    }
+}
+
+/* ===========================
+   TABLE OF PLAYS
+   =========================== */
 .table-dark {
     box-shadow: 0 0 10px var(--color-neon-cian);
 }
-
-.table-bordered th, .table-bordered td {
+.table-bordered th,
+.table-bordered td {
     border: 1px solid var(--color-neon-cian);
 }
 
@@ -117,59 +198,63 @@ h2 {
     background-color: #1e1e1e;
     color: var(--color-neon-cian);
     text-shadow: 0 0 5px var(--color-neon-cian);
-    font-size: 1.125rem; /* ~18px */
+    font-size: 1.125rem;
 }
-
 .table-dark td {
-    font-size: 1.125rem; /* ~18px */
+    font-size: 1.125rem;
 }
 
-/* Botones */
+/* ===========================
+   BUTTONS
+   =========================== */
 .btn {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.125rem; /* ~18px */
+    font-size: 1.125rem;
 }
-
 .btn-primary {
     background-color: var(--color-neon-cian);
     color: #000;
     box-shadow: 0 0 10px var(--color-neon-cian);
 }
-
 .btn-primary:hover {
     background-color: #00cccc;
     box-shadow: 0 0 20px var(--color-neon-cian);
     transform: scale(1.05);
 }
-
 .btn-danger {
     background-color: #ff0044;
     color: #fff;
     box-shadow: 0 0 10px #ff0044;
-    min-width: 150px; /* Incremento de ancho */
+    min-width: 150px;
 }
-
 .btn-danger:hover {
     background-color: #cc0033;
     box-shadow: 0 0 20px #ff0044;
     transform: scale(1.05);
 }
-
+.btn-warning {
+    color: #000;
+    background-color: #ffcb00;
+    box-shadow: 0 0 10px #ffcb00;
+}
+.btn-warning:hover {
+    background-color: #e0b300;
+    box-shadow: 0 0 20px #ffcb00;
+    transform: scale(1.05);
+}
 .btn-success {
     background-color: var(--color-neon-verde);
     color: #000;
     box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
     animation: pulse 2s infinite;
 }
-
 .btn-success:hover {
     transform: scale(1.02);
 }
-
 @keyframes pulse {
     0% {
         box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
@@ -182,205 +267,175 @@ h2 {
     }
 }
 
-/* Botones Alineados */
+/* Button Groups */
 .button-group {
     display: flex;
     gap: 10px;
 }
-
 .button-group .btn {
     flex: 1;
 }
 
-/* Modal */
+/* ===========================
+   MODAL
+   =========================== */
 .modal-content {
-    background-color: #0a0a0a; /* Fondo oscuro */
-    color: #ffffff; /* Texto blanco */
+    background-color: #0a0a0a;
+    color: #ffffff;
     box-shadow: 0 0 20px var(--color-neon-cian);
     max-height: 90vh;
     overflow: auto;
-    resize: both; /* Permite redimensionar el modal manualmente */
-    border: 2px solid #00ffff; /* Opcional: para visualizar los bordes */
+    resize: both;
+    border: 2px solid #00ffff;
 }
-
-.modal-header, .modal-footer {
+.modal-header,
+.modal-footer {
     border-bottom: 1px solid var(--color-neon-cian);
     border-top: 1px solid var(--color-neon-cian);
 }
-
 .modal-title {
     color: var(--color-neon-cian);
 }
-
 .btn-close-white {
     filter: brightness(0) invert(1);
 }
-
-/* QR Code */
 #qrcode {
     margin: 0 auto;
     width: 128px;
     height: 128px;
 }
 
-/* Placeholder con límite de apuesta */
+/* ===========================
+   PLACEHOLDER & RESPONSIVE
+   =========================== */
 input::placeholder {
     color: var(--color-placeholder);
-    opacity: 1; /* Firefox */
+    opacity: 1;
 }
-
-input:-ms-input-placeholder { /* Internet Explorer 10-11 */
+input:-ms-input-placeholder {
+    color: var(--color-placeholder);
+}
+input::-ms-input-placeholder {
     color: var(--color-placeholder);
 }
 
-input::-ms-input-placeholder { /* Microsoft Edge */
-    color: var(--color-placeholder);
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
     .container {
         padding: 10px;
     }
-
     h2 {
         font-size: 1.5em;
     }
-
     .btn {
         padding: 8px 16px;
-        font-size: 1.125rem; /* ~18px */
+        font-size: 1.125rem;
     }
-
     .table-responsive {
         overflow-x: auto;
     }
-
     .accordion-button {
-        font-size: 1.125rem; 
+        font-size: 1.125rem;
     }
-
     .cutoff-time {
-        font-size: 1.125rem; 
+        font-size: 1.125rem;
     }
-
     .form-check-label {
-        font-size: 1.125rem; 
+        font-size: 1.125rem;
     }
 }
 
-/* Estilos para impresión */
+/* ===========================
+   PRINT STYLES
+   =========================== */
 @media print {
-    /* Ocultar todo el contenido por defecto */
     body * {
         visibility: hidden;
     }
-
-    /* Mostrar solo el ticket */
-    #preTicket, #preTicket * {
+    #preTicket,
+    #preTicket * {
         visibility: visible;
     }
-
-    /* Posicionar el ticket en la parte superior */
     #preTicket {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-    }
-
-    #preTicket {
-        background-color: #0a0a0a; /* Fondo oscuro */
-        color: #ffffff; /* Texto blanco */
-    }
-
-    /* Opcional: Ajustar tamaño de fuente si es necesario */
-    #preTicket {
+        background-color: #0a0a0a;
+        color: #ffffff;
         font-size: 12pt;
     }
 }
 
-/* Estilos para el Contenedor del Ticket */
+/* ===========================
+   TICKET CONTAINER
+   =========================== */
 #preTicket {
-    background-color: #0a0a0a; /* Fondo oscuro */
-    color: #ffffff; /* Texto blanco */
+    background-color: #0a0a0a;
+    color: #ffffff;
     padding: 20px;
     border-radius: 10px;
-    overflow-x: auto; /* Add horizontal scroll if necessary */
+    overflow-x: auto;
     max-width: 100%;
-    overflow-y: visible; /* Asegurar que no haya scroll vertical */
+    overflow-y: visible;
 }
-
 #preTicket h4 {
-    color: #00ffff; /* Color de título */
+    color: #00ffff;
     text-shadow: 0 0 5px #00ffff;
-    font-size: 1.5rem; /* ~24px */
+    font-size: 1.5rem;
 }
-
-/* Tabla del Ticket */
 #preTicket table {
     background-color: #1e1e1e;
     width: 100%;
-    table-layout: fixed; /* Previene overflow excesivo */
-    font-size: 1.125rem; 
+    table-layout: fixed;
+    font-size: 1.125rem;
 }
-
-#preTicket th, #preTicket td {
+#preTicket th,
+#preTicket td {
     border: 1px solid #00ffff;
     color: #ffffff;
-    padding: 6px; 
-    word-wrap: break-word; 
-    font-size: 0.9rem; 
-    white-space: nowrap; 
-    overflow: hidden; 
+    padding: 6px;
+    word-wrap: break-word;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
 }
-
-/* Ajustar Anchos de las Columnas en el Ticket */
-#preTicket th:nth-child(1) { /* Número de Jugada */
-    width: 10%; 
+#preTicket th:nth-child(1) {
+    width: 10%;
 }
-
-#preTicket th:nth-child(2), /* Bet Number */
-#preTicket th:nth-child(4), /* Straight ($) */
-#preTicket th:nth-child(5), /* Box ($) */
-#preTicket th:nth-child(6), /* Combo ($) */
-#preTicket th:nth-child(7)  /* Total ($) */
-{
-    width: 12%; 
+#preTicket th:nth-child(2),
+#preTicket th:nth-child(4),
+#preTicket th:nth-child(5),
+#preTicket th:nth-child(6),
+#preTicket th:nth-child(7) {
+    width: 12%;
 }
-
-#preTicket th:nth-child(3) { /* Modalidad */
+#preTicket th:nth-child(3) {
     width: 20%;
 }
-
-/* Ajustar Tamaño de la Fuente en las Celdas para Coherencia */
 #preTicket td {
     font-size: 0.9rem;
     padding: 6px;
 }
-
-/* Clase para resaltar campos duplicados */
 .duplicado {
-    background-color: #ffff99; 
+    background-color: #ffff99;
     border: 2px solid #ffeb3b;
 }
-
-/* Clase para resaltar campos con errores */
 .error-field {
-    background-color: var(--color-neon-morado) !important; 
-    border: 2px solid var(--color-neon-cian) !important; 
+    background-color: var(--color-neon-morado) !important;
+    border: 2px solid var(--color-neon-cian) !important;
 }
-
-/* Ocultar la hora límite para el track "Venezuela" cambiando el color del texto */
+/* Hide cutoff time for Venezuela track */
 .cutoff-time[data-track='Venezuela'] {
     color: var(--color-fondo);
 }
 
-/* Responsividad Mejorada para el Ticket */
+/* For smaller screens */
 @media (max-width: 600px) {
-    #preTicket table, #preTicket th, #preTicket td {
-        font-size: 0.9rem; 
+    #preTicket table,
+    #preTicket th,
+    #preTicket td {
+        font-size: 0.9rem;
         white-space: nowrap;
     }
     #preTicket {
@@ -391,66 +446,27 @@ input::-ms-input-placeholder { /* Microsoft Edge */
         width: 100px;
         height: 100px;
     }
-    #preTicket th, #preTicket td {
-        font-size: 0.8rem; 
+    #preTicket th,
+    #preTicket td {
+        font-size: 0.8rem;
     }
 }
-
-/* Evitar que la tabla se corte en la imagen capturada */
-#preTicket {
-    max-width: 100%;
-    overflow-x: auto;
-}
-
-/* =========================================
-   (Ajuste final) 
-   - Mismo ancho para Número Apostado, Straight, Box y Combo
-   - Para aprovechar mejor el espacio
-   ========================================= */
-#tablaJugadas input.numeroApostado,
-#tablaJugadas input.straight,
-#tablaJugadas input.box,
-#tablaJugadas input.combo {
-    width: 120px;     /* Ajusta si prefieres más/menos */
-    min-width: 120px; 
-}
-
-/* =========================================
-   Mantener formato amplio en móviles
-   ========================================= */
-@media (max-width: 576px) {
-    #preTicket table {
-        font-size: 1rem !important; 
-        white-space: nowrap !important; 
-    }
-    #preTicket th, #preTicket td {
-        padding: 0.5rem !important; 
-    }
-    #preTicket {
-        overflow-x: auto !important;
-    }
-}
-
-/* 
-   =========================================
-   OVERRIDE: Forzar "aspecto desktop" en móvil
-   para que siempre sea ancho y scroll-h
-   =========================================
-*/
+/* Force wide "desktop" look on small screens: optional approach */
 @media (max-width: 768px) {
     #preTicket {
-        width: 1200px !important;     /* Fijar ancho grande */
-        max-width: none !important;   /* Quitar cualquier limitación */
-        margin: 0 auto !important;    /* Centrar en pantallas anchas */
-        overflow-x: auto !important;  /* Scroll horizontal si no cabe */
+        width: 1200px !important;
+        max-width: none !important;
+        margin: 0 auto !important;
+        overflow-x: auto !important;
     }
     #preTicket table {
         min-width: 1200px !important;
         table-layout: fixed !important;
         white-space: nowrap !important;
     }
-    #preTicket th, #preTicket td {
-        font-size: 1rem !important; /* No reducir demasiado */
+    #preTicket th,
+    #preTicket td {
+        font-size: 1rem !important;
         text-overflow: ellipsis;
     }
 }
