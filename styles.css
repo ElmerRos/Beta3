@@ -2,7 +2,7 @@
    BASE COLORS & FONTS
    =========================== */
 :root {
-    --color-fondo: #0a0a0a; /* Dark background */
+    --color-fondo: #0a0a0a; /* Dark background general */
     --color-neon-cian: #00ffff;
     --color-neon-morado: #ff00ff;
     --color-neon-verde: #39ff14;
@@ -100,7 +100,7 @@ h2 {
 }
 
 /* ===========================
-   TRACK BUTTONS (FUTURISTIC)
+   TRACK BUTTONS (3D EFFECT)
    =========================== */
 .track-button-container {
     display: inline-block;
@@ -116,20 +116,7 @@ h2 {
     display: none;
 }
 
-/* Keyframes para el pulso neón */
-@keyframes neonPulse {
-    0% {
-        box-shadow: 0 0 10px var(--color-neon-cian), 0 0 20px var(--color-neon-cian) inset;
-    }
-    50% {
-        box-shadow: 0 0 20px var(--color-neon-cian), 0 0 30px var(--color-neon-cian) inset;
-    }
-    100% {
-        box-shadow: 0 0 10px var(--color-neon-cian), 0 0 20px var(--color-neon-cian) inset;
-    }
-}
-
-/* Botón con pulso + ripple */
+/* Botón con estilo 3D + efecto ripple (suave) */
 .track-button {
     position: relative;
     display: flex;
@@ -138,21 +125,21 @@ h2 {
     align-items: center;
     width: 100%;
     height: 100%;
-    border: 2px solid var(--color-neon-cian);
+    border: 1px solid #444; /* Borde gris oscuro */
     border-radius: 10px;
     cursor: pointer;
     user-select: none;
-    background-color: #1e1e1e;
+    background: linear-gradient(#555, #333); /* degradado gris oscuro */
     color: #ffffff;
     text-align: center;
     padding: 0.5rem;
     overflow: hidden; /* Para que el ripple no se salga */
-    /* Pulso continuo + transición */
-    animation: neonPulse 2s infinite;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* Sombra 3D: la parte "baja" */
+    box-shadow: 0 5px #111;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Efecto "ripple": pseudo-elemento */
+/* Efecto “ripple” más sutil */
 .track-button::before {
     content: "";
     position: absolute;
@@ -160,33 +147,36 @@ h2 {
     left: 50%;
     width: 0;
     height: 0;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
     transition: width 0.4s, height 0.4s;
 }
 
-/* Hover: agrandar un poco */
+/* Hover: el botón se “eleva” un poco */
 .track-button:hover {
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 7px #111;
 }
 
-/* Active: hundir + disparar ripple */
+/* Al presionar (active): se “hunde” */
 .track-button:active {
-    transform: scale(0.95);
+    transform: translateY(2px);
+    box-shadow: 0 3px #111; /* la sombra se reduce */
 }
 .track-button:active::before {
     width: 250px; /* Ajustar al tamaño del botón */
     height: 250px;
 }
 
-/* Estado CHECKED: color verde c/ su glow */
+/* CHECKED: otro color + sutil 3D */
 .track-button-container input[type="checkbox"]:checked + .track-button {
-    background-color: #00ff9b; /* un verde neón */
-    color: #000000;
-    box-shadow: 0 0 10px #00ff9b, 0 0 20px #00ff9b inset;
-    animation: none; /* O puedes darle otra animación si lo deseas */
+    background: linear-gradient(#ffd966, #d1a824); /* Dorado */
+    color: #000;
+    border: 1px solid #777;
+    box-shadow: 0 5px #666;
+    transform: none;
 }
 
 /* Ajustes de tamaño del texto interno */
@@ -236,7 +226,7 @@ h2 {
 }
 
 /* ===========================
-   BUTTONS
+   BUTTONS (FORM)
    =========================== */
 .btn {
     padding: 10px 20px;
