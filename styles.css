@@ -1,4 +1,6 @@
- /* styles.css */
+ /* =========================================
+   styles.css
+   ========================================= */
 
 /* Estilos Básicos */
 :root {
@@ -39,7 +41,58 @@ h2 {
     margin-bottom: 20px;
     color: var(--color-neon-cian);
     text-shadow: 0 0 10px var(--color-neon-cian);
-    font-size: 1.125rem; /* Ajustar tamaño de fuente a ~18px (1.125rem) */
+    font-size: 1.125rem; /* ~18px */
+}
+
+/* ========================================
+   TRACK BUTTONS (Futuristic Look)
+   ======================================== */
+.track-btn-label {
+    display: inline-block;
+    width: 100%;
+    background: linear-gradient(45deg, var(--color-neon-cian), var(--color-neon-morado));
+    color: #000;
+    font-weight: 700;
+    padding: 12px 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+    /* Neon glow */
+    box-shadow: 0 0 10px var(--color-neon-cian);
+}
+
+/* Hover effect for track buttons */
+.track-btn-label:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px var(--color-neon-cian);
+}
+
+/* Disabled (cutoff) */
+.track-checkbox:disabled + .track-btn-label {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+    background: #333;
+    color: #aaa;
+}
+
+/* Checked (selected) state */
+.track-checkbox:checked + .track-btn-label {
+    background: linear-gradient(45deg, var(--color-neon-verde), var(--color-neon-cian));
+    color: #000;
+    box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+}
+
+/* Indicador de Hora Límite dentro del botón */
+.track-btn-label .cutoff-time {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 1rem;
+    color: #222; /* Slightly darker to stand out on bright background */
+    font-weight: normal;
 }
 
 /* Selección de Fecha */
@@ -52,12 +105,6 @@ h2 {
     border-color: var(--color-neon-morado);
     box-shadow: 0 0 15px var(--color-neon-morado);
     outline: none;
-}
-
-/* Selección de Tracks */
-.form-check-label {
-    color: var(--color-texto);
-    font-size: 1.125rem; /* Aumentar tamaño de fuente a ~18px */
 }
 
 /* Estilos del Accordion */
@@ -96,12 +143,6 @@ h2 {
 
 .accordion-button::after {
     filter: brightness(0) invert(1);
-}
-
-/* Indicador de Hora Límite */
-.cutoff-time {
-    font-size: 1.125rem; /* ~18px */
-    color: #aaaaaa; /* Color tenue */
 }
 
 /* Tabla de Jugadas */
@@ -150,7 +191,7 @@ h2 {
     background-color: #ff0044;
     color: #fff;
     box-shadow: 0 0 10px #ff0044;
-    min-width: 150px; /* Incremento de ancho */
+    min-width: 150px; /* ancho mayor */
 }
 
 .btn-danger:hover {
@@ -182,7 +223,7 @@ h2 {
     }
 }
 
-/* Botones Alineados */
+/* Button group layout */
 .button-group {
     display: flex;
     gap: 10px;
@@ -192,7 +233,24 @@ h2 {
     flex: 1;
 }
 
-/* Modal */
+/* Extra styling for the "Wizard" and "Quick Pick" buttons */
+.btn-secondary#openWizardBtn,
+.btn-info#openQuickPickBtn {
+    min-width: 150px;
+}
+
+/* Delete Row Button */
+.deleteRowBtn {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    border-radius: 3px;
+    box-shadow: none;
+    margin: 0 auto;
+    display: block;
+}
+
+/* =============== MODALS =============== */
+
 .modal-content {
     background-color: #0a0a0a; /* Fondo oscuro */
     color: #ffffff; /* Texto blanco */
@@ -216,171 +274,180 @@ h2 {
     filter: brightness(0) invert(1);
 }
 
-/* QR Code */
+/* Wizard & Quick Pick Inputs */
+#wizardModal .form-control,
+#quickPickModal .form-control {
+    background-color: #1e1e1e;
+    color: #fff;
+    border: 2px solid var(--color-neon-cian);
+    box-shadow: 0 0 5px var(--color-neon-cian);
+    transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+#wizardModal .form-control:focus,
+#quickPickModal .form-control:focus {
+    border-color: var(--color-neon-morado);
+    box-shadow: 0 0 10px var(--color-neon-morado);
+    outline: none;
+}
+
+/* Adjust label styling inside Wizard & Quick Pick modals */
+#wizardModal label,
+#quickPickModal label {
+    font-weight: 600;
+    color: var(--color-neon-cian);
+}
+
+/* Make wizard/quick pick modals more spacious */
+#wizardModal .modal-body,
+#quickPickModal .modal-body {
+    padding: 20px;
+}
+
+/* Keypad concept (if you add a custom keypad):
+   Example placeholders for future expansions:
+   .numeric-keypad { ... }
+   .numeric-keypad button { ... }
+*/
+
+/* =========================================
+   QR Code
+   ========================================= */
 #qrcode {
     margin: 0 auto;
     width: 128px;
     height: 128px;
 }
 
-/* Placeholder con límite de apuesta */
+/* Placeholder color */
 input::placeholder {
     color: var(--color-placeholder);
     opacity: 1; /* Firefox */
 }
 
-input:-ms-input-placeholder { /* Internet Explorer 10-11 */
+input:-ms-input-placeholder { /* IE 10-11 */
     color: var(--color-placeholder);
 }
 
-input::-ms-input-placeholder { /* Microsoft Edge */
+input::-ms-input-placeholder { /* Edge */
     color: var(--color-placeholder);
 }
 
-/* Responsive Design */
+/* ================== Responsive ================== */
 @media (max-width: 768px) {
     .container {
         padding: 10px;
     }
-
     h2 {
         font-size: 1.5em;
     }
-
     .btn {
         padding: 8px 16px;
         font-size: 1.125rem; /* ~18px */
     }
-
     .table-responsive {
         overflow-x: auto;
     }
-
     .accordion-button {
         font-size: 1.125rem; 
     }
-
     .cutoff-time {
-        font-size: 1.125rem; 
-    }
-
-    .form-check-label {
         font-size: 1.125rem; 
     }
 }
 
-/* Estilos para impresión */
 @media print {
     /* Ocultar todo el contenido por defecto */
     body * {
         visibility: hidden;
     }
-
     /* Mostrar solo el ticket */
     #preTicket, #preTicket * {
         visibility: visible;
     }
-
-    /* Posicionar el ticket en la parte superior */
     #preTicket {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-    }
-
-    #preTicket {
-        background-color: #0a0a0a; /* Fondo oscuro */
-        color: #ffffff; /* Texto blanco */
-    }
-
-    /* Opcional: Ajustar tamaño de fuente si es necesario */
-    #preTicket {
+        background-color: #0a0a0a;
+        color: #ffffff;
         font-size: 12pt;
     }
 }
 
-/* Estilos para el Contenedor del Ticket */
+/* Ticket Container */
 #preTicket {
-    background-color: #0a0a0a; /* Fondo oscuro */
-    color: #ffffff; /* Texto blanco */
+    background-color: #0a0a0a;
+    color: #ffffff;
     padding: 20px;
     border-radius: 10px;
-    overflow-x: auto; /* Add horizontal scroll if necessary */
+    overflow-x: auto;
     max-width: 100%;
-    overflow-y: visible; /* Asegurar que no haya scroll vertical */
+    overflow-y: visible;
 }
 
 #preTicket h4 {
-    color: #00ffff; /* Color de título */
+    color: #00ffff;
     text-shadow: 0 0 5px #00ffff;
-    font-size: 1.5rem; /* ~24px */
+    font-size: 1.5rem;
 }
 
-/* Tabla del Ticket */
+/* Ticket Table */
 #preTicket table {
     background-color: #1e1e1e;
     width: 100%;
-    table-layout: fixed; /* Previene overflow excesivo */
-    font-size: 1.125rem; 
+    table-layout: fixed;
+    font-size: 1.125rem;
 }
 
 #preTicket th, #preTicket td {
     border: 1px solid #00ffff;
     color: #ffffff;
-    padding: 6px; 
-    word-wrap: break-word; 
-    font-size: 0.9rem; 
-    white-space: nowrap; 
-    overflow: hidden; 
+    padding: 6px;
+    word-wrap: break-word;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Ajustar Anchos de las Columnas en el Ticket */
-#preTicket th:nth-child(1) { /* Número de Jugada */
-    width: 10%; 
+/* Column widths in ticket */
+#preTicket th:nth-child(1) {
+    width: 10%;
 }
-
-#preTicket th:nth-child(2), /* Bet Number */
-#preTicket th:nth-child(4), /* Straight ($) */
-#preTicket th:nth-child(5), /* Box ($) */
-#preTicket th:nth-child(6), /* Combo ($) */
-#preTicket th:nth-child(7)  /* Total ($) */
-{
-    width: 12%; 
+#preTicket th:nth-child(2),
+#preTicket th:nth-child(4),
+#preTicket th:nth-child(5),
+#preTicket th:nth-child(6),
+#preTicket th:nth-child(7) {
+    width: 12%;
 }
-
-#preTicket th:nth-child(3) { /* Modalidad */
+#preTicket th:nth-child(3) {
     width: 20%;
 }
 
-/* Ajustar Tamaño de la Fuente en las Celdas para Coherencia */
-#preTicket td {
-    font-size: 0.9rem;
-    padding: 6px;
-}
-
-/* Clase para resaltar campos duplicados */
+/* Duplicates highlight */
 .duplicado {
     background-color: #ffff99; 
     border: 2px solid #ffeb3b;
 }
 
-/* Clase para resaltar campos con errores */
+/* Error fields highlight */
 .error-field {
     background-color: var(--color-neon-morado) !important; 
     border: 2px solid var(--color-neon-cian) !important; 
 }
 
-/* Ocultar la hora límite para el track "Venezuela" cambiando el color del texto */
+/* Hide cutoff time for Venezuela */
 .cutoff-time[data-track='Venezuela'] {
     color: var(--color-fondo);
 }
 
-/* Responsividad Mejorada para el Ticket */
+/* Responsive for ticket */
 @media (max-width: 600px) {
     #preTicket table, #preTicket th, #preTicket td {
-        font-size: 0.9rem; 
+        font-size: 0.9rem;
         white-space: nowrap;
     }
     #preTicket {
@@ -392,57 +459,36 @@ input::-ms-input-placeholder { /* Microsoft Edge */
         height: 100px;
     }
     #preTicket th, #preTicket td {
-        font-size: 0.8rem; 
+        font-size: 0.8rem;
     }
 }
 
-/* Evitar que la tabla se corte en la imagen capturada */
 #preTicket {
     max-width: 100%;
     overflow-x: auto;
 }
 
-/* =========================================
-   (Ajuste final) 
-   - Mismo ancho para Número Apostado, Straight, Box y Combo
-   - Para aprovechar mejor el espacio
-   ========================================= */
-#tablaJugadas input.numeroApostado,
-#tablaJugadas input.straight,
-#tablaJugadas input.box,
-#tablaJugadas input.combo {
-    width: 120px;     /* Ajusta si prefieres más/menos */
-    min-width: 120px; 
-}
-
-/* =========================================
-   Mantener formato amplio en móviles
-   ========================================= */
+/* Keep wide format on small screens */
 @media (max-width: 576px) {
     #preTicket table {
-        font-size: 1rem !important; 
-        white-space: nowrap !important; 
+        font-size: 1rem !important;
+        white-space: nowrap !important;
     }
     #preTicket th, #preTicket td {
-        padding: 0.5rem !important; 
+        padding: 0.5rem !important;
     }
     #preTicket {
         overflow-x: auto !important;
     }
 }
 
-/* 
-   =========================================
-   OVERRIDE: Forzar "aspecto desktop" en móvil
-   para que siempre sea ancho y scroll-h
-   =========================================
-*/
+/* Force "desktop look" in mobile */
 @media (max-width: 768px) {
     #preTicket {
-        width: 1200px !important;     /* Fijar ancho grande */
-        max-width: none !important;   /* Quitar cualquier limitación */
-        margin: 0 auto !important;    /* Centrar en pantallas anchas */
-        overflow-x: auto !important;  /* Scroll horizontal si no cabe */
+        width: 1200px !important;
+        max-width: none !important;
+        margin: 0 auto !important;
+        overflow-x: auto !important;
     }
     #preTicket table {
         min-width: 1200px !important;
@@ -450,7 +496,16 @@ input::-ms-input-placeholder { /* Microsoft Edge */
         white-space: nowrap !important;
     }
     #preTicket th, #preTicket td {
-        font-size: 1rem !important; /* No reducir demasiado */
+        font-size: 1rem !important;
         text-overflow: ellipsis;
     }
+}
+
+/* Table row inputs */
+#tablaJugadas input.numeroApostado,
+#tablaJugadas input.straight,
+#tablaJugadas input.box,
+#tablaJugadas input.combo {
+    width: 120px;
+    min-width: 120px;
 }
