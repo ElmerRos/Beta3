@@ -57,10 +57,6 @@ h2 {
 /* ===========================
    ACCORDION & TRACKS
    =========================== */
-.form-check-label {
-  color: var(--color-texto);
-  font-size: 1.125rem;
-}
 .accordion-button {
   background-color: var(--color-fondo-acordeon);
   color: var(--color-texto-acordeon);
@@ -95,6 +91,10 @@ h2 {
   font-size: 1.125rem;
   color: #aaaaaa;
 }
+
+/* ===========================
+   TRACK BUTTONS (3D + Ripple)
+   =========================== */
 .track-button-container {
   display: inline-block;
   width: 150px;
@@ -106,6 +106,8 @@ h2 {
 .track-button-container input[type="checkbox"] {
   display: none;
 }
+
+/* Botón con estilo 3D + ripple */
 .track-button {
   position: relative;
   display: flex;
@@ -114,27 +116,52 @@ h2 {
   align-items: center;
   width: 100%;
   height: 100%;
-  border: 2px solid var(--color-neon-cian);
   border-radius: 10px;
   cursor: pointer;
   user-select: none;
-  background-color: #1e1e1e;
-  color: #ffffff;
   text-align: center;
+
+  /* Efecto 3D principal */
+  background: linear-gradient(#555, #333);
+  color: #ffffff;
+  box-shadow: 0 5px #111;
+  border: 1px solid #444;
+
+  /* Animaciones */
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s;
+  overflow: hidden; /* Para el ripple */
   padding: 0.5rem;
-  transition: all 0.3s ease;
 }
+
+/* Hover: se eleva un poco */
 .track-button:hover {
-  background-color: #2a2a2a;
+  transform: translateY(-2px);
+  box-shadow: 0 7px #111;
+  background: linear-gradient(#666, #444);
 }
-.track-button-container input[type="checkbox"]:checked + .track-button {
-  background-color: #00ff9b;
-  color: #000000;
+
+/* Al hacer click => hundimiento + ripple */
+.track-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 3px #111;
 }
-.track-button-container input[type="checkbox"]:disabled + .track-button {
-  opacity: 0.5;
-  cursor: not-allowed;
+.track-button::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+  pointer-events: none;
 }
+.track-button:active::before {
+  width: 250px;
+  height: 250px;
+}
+
+/* Texto y subtexto */
 .track-button .track-name {
   font-weight: 700;
   font-size: 1.1rem;
@@ -143,6 +170,20 @@ h2 {
 .track-button .cutoff-time {
   font-size: 1rem;
   color: #cccccc;
+}
+
+/* Estado CHECKED => color dorado */
+.track-button-container input[type="checkbox"]:checked + .track-button {
+  background: linear-gradient(#ffd966, #d1a824);
+  color: #000;
+  box-shadow: 0 5px #666;
+  transform: none;
+}
+
+/* Disabled => opaco */
+.track-button-container input[type="checkbox"]:disabled + .track-button {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ===========================
@@ -167,7 +208,7 @@ h2 {
   vertical-align: middle;
 }
 
-/* Editable inputs within table cells */
+/* Editable inputs */
 .table-dark td .form-control {
   background: #333333;
   color: #fff;
@@ -183,7 +224,7 @@ h2 {
 }
 
 /* ===========================
-   BUTTONS (general)
+   BUTTONS
    =========================== */
 .btn {
   padding: 10px 20px;
@@ -262,7 +303,7 @@ h2 {
   flex: 1;
 }
 
-/* BOTÓN ROJO para remover jugadas (en la 1ra col) */
+/* BOTÓN ROJO para remover jugadas (1ra col) */
 .btnRemovePlay {
   background-color: #ff0044 !important;
   color: #fff !important;
@@ -306,18 +347,8 @@ h2 {
 }
 
 /* ===========================
-   PLACEHOLDER & RESPONSIVE
+   RESPONSIVE & PRINT
    =========================== */
-input::placeholder {
-  color: var(--color-placeholder);
-  opacity: 1;
-}
-input:-ms-input-placeholder {
-  color: var(--color-placeholder);
-}
-input::-ms-input-placeholder {
-  color: var(--color-placeholder);
-}
 @media (max-width: 768px) {
   .container {
     padding: 10px;
@@ -333,10 +364,6 @@ input::-ms-input-placeholder {
     overflow-x: auto;
   }
 }
-
-/* ===========================
-   PRINT STYLES
-   =========================== */
 @media print {
   body * {
     visibility: hidden;
@@ -418,7 +445,6 @@ input::-ms-input-placeholder {
 .cutoff-time[data-track='Venezuela'] {
   color: var(--color-fondo);
 }
-
 @media (max-width: 600px) {
   #preTicket table,
   #preTicket th,
@@ -458,7 +484,7 @@ input::-ms-input-placeholder {
   }
 }
 
-/* Fix for Bet Dates color in ticket */
+/* Fijar color de Bet Dates en ticket */
 #ticketFecha {
   color: #ffffff !important;
 }
@@ -466,7 +492,7 @@ input::-ms-input-placeholder {
 /* ===========================
    WIZARD
    =========================== */
-/* For wizard fields, we can keep them a bit narrower: */
+/* Campos un poco más compactos */
 #wizardBetNumber,
 #wizardStraight,
 #wizardCombo {
@@ -478,7 +504,7 @@ input::-ms-input-placeholder {
   text-align: center;
 }
 
-/* Candaditos in wizard: */
+/* Candaditos */
 .lockBtn {
   font-size: 0.8rem;
   padding: 0.3rem 0.4rem;
@@ -489,7 +515,7 @@ input::-ms-input-placeholder {
   background-color: #333;
 }
 
-/* Wizard table (#wizardTable) styling: */
+/* Wizard table (#wizardTable) */
 #wizardTable thead th {
   background-color: #1e1e1e;
   color: var(--color-neon-cian);
