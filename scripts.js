@@ -1,15 +1,12 @@
  /* 
   scripts.js
   ----------------------------------------------------------------
-  Esta versión supera las 1100 líneas, combinando tu lógica estable 
-  previa + las novedades:
-
-  1) Botón “Permute” => redistribución de dígitos, no sólo reorder.
-  2) Resaltar betNumbers repetidos (clase .duplicado => fondo amarillo).
-  3) Resaltar errores en color morado claro (clase .error-field).
-
-  El resto de funciones (RoundDown, QuickPick, localStorage, 
-  GenerateTicket, etc.) se mantienen.
+  Versión corregida ~1100+ líneas con:
+   1) doGenerateTicket, RoundDown, QuickPick, localStorage, etc.
+   2) Permute (nuevo) => redistribuir dígitos en Wizard
+   3) Resaltar duplicados (fondo amarillo .duplicado)
+   4) Resaltar errores (fondo morado .error-field)
+   5) Se re-agrega function calculateMainTotal() para evitar ReferenceError.
 */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -111,7 +108,7 @@ $(document).ready(function() {
     },
     onChange: function(selectedDates, dateStr, instance) {
       selectedDaysCount = selectedDates.length;
-      calculateMainTotal();
+      calculateMainTotal();    // <--- REQUIRES this function
       storeFormState();
       disableTracksByTime();
     }
@@ -124,7 +121,7 @@ $(document).ready(function() {
     const arr = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
-    // Minimizamos la parte de "Venezuela" (no cuenta en multiplicador)
+    // Minimizar la parte de "Venezuela" (no cuenta en multiplicador)
     selectedTracksCount = arr.filter(x => x !== "Venezuela").length || 1;
     calculateMainTotal();
     disableTracksByTime();
@@ -147,7 +144,7 @@ $(document).ready(function() {
     playCount--;
     renumberMainRows();
     calculateMainTotal();
-    highlightDuplicatesInMain(); // recheck duplicates
+    highlightDuplicatesInMain(); 
   });
 
   $("#tablaJugadas").on("click",".removeMainBtn",function(){
@@ -211,6 +208,7 @@ $(document).ready(function() {
     storeFormState();
   }
 
+  // Recalcula 1 fila
   function recalcMainRow($row){
     const bn = $row.find(".betNumber").val().trim();
     const gm = determineGameMode(bn);
@@ -222,7 +220,29 @@ $(document).ready(function() {
 
     const rowTotal = calculateRowTotal(bn, gm, stVal, bxVal, coVal);
     $row.find(".total").text(rowTotal);
-    calculateMainTotal();
+    calculateMainTotal();  // <--- also needed
+  }
+
+  /* =========================================================
+     function calculateMainTotal
+     (Missing in prior code => restored here)
+  ========================================================= */
+  function calculateMainTotal(){
+    let sum=0;
+    // suma los totales
+    $("#tablaJugadas tr").each(function(){
+      const totalCell= $(this).find(".total").text();
+      const val= parseFloat(totalCell)||0;
+      sum+= val;
+    });
+    // multiplica por # tracks y # dias
+    if(selectedDaysCount===0){
+      sum=0;
+    } else {
+      sum = sum * selectedTracksCount * selectedDaysCount;
+    }
+    $("#totalJugadas").text( sum.toFixed(2) );
+    storeFormState();
   }
 
   /* =========================================================
@@ -286,12 +306,12 @@ $(document).ready(function() {
   function calcCombos(str){
     const freq = {};
     for(let c of str){
-      freq[c] = (freq[c] || 0) + 1;
+      freq[c] = (freq[c]||0)+1;
     }
     const factorial = n => n<=1 ? 1 : n*factorial(n-1);
     let denom=1;
     for(let k in freq){
-      denom *= factorial(freq[k]);
+      denom*= factorial(freq[k]);
     }
     return factorial(str.length)/denom;
   }
@@ -452,11 +472,9 @@ $(document).ready(function() {
     let valid=true;
     const errors=[];
     rows.each(function(){
-      $(this).find(".betNumber,.straight,.box,.combo").removeClass("error-field"); // remove old
+      $(this).find(".betNumber,.straight,.box,.combo").removeClass("error-field"); 
     });
 
-    let duplicatesMap={}; // to track repeated in doGenerateTicket?
-    // though we already highlight, but let's keep consistent
     rows.each(function(){
       const rowIndex = parseInt($(this).attr("data-playIndex"));
       const bn = $(this).find(".betNumber").val().trim();
@@ -466,17 +484,14 @@ $(document).ready(function() {
       const co = $(this).find(".combo").val();
       const betNumField = $(this).find(".betNumber");
 
-      // check duplicates quickly
-      if(!duplicatesMap[bn]) duplicatesMap[bn]=0;
-      duplicatesMap[bn]++;
-
-      // basic checks
       let errorHere = false;
+      // BN val
       if(!bn || bn.length<2 || bn.length>4){
         errorHere=true;
         errors.push(rowIndex);
         betNumField.addClass("error-field");
       }
+      // Brooklyn/Front => BN=3
       if(hasBrooklynOrFront(chosenTracks) && bn.length!==3){
         errorHere=true;
         errors.push(rowIndex);
@@ -487,6 +502,7 @@ $(document).ready(function() {
         errors.push(rowIndex);
         $(this).find(".gameMode").addClass("error-field");
       }
+      // Modo
       if(["Venezuela","Venezuela-Pale","Pulito","RD-Quiniela","RD-Pale"].includes(gm)){
         if(!st || parseFloat(st)<=0){
           errorHere=true;
@@ -970,7 +986,7 @@ $(document).ready(function() {
     for(let i=0;i<len;i++){
       if(firstNum[i]!==lastNum[i]) diffPos.push(i);
     }
-    // all differ => produce 10 lines => 000..999
+    // all differ => produce 000..999 => 10 jugadas
     if(diffPos.length===len){
       for(let d=0; d<10; d++){
         let bn=(""+d).repeat(len);
@@ -1025,10 +1041,10 @@ $(document).ready(function() {
     }
     // gather digits
     let allDigits=[];
-    let lengths=[]; // store length of each BN
+    let lengths=[]; 
 
     rows.each(function(){
-      const bn=$(this).find("td").eq(1).text().trim(); // Bet Number
+      const bn=$(this).find("td").eq(1).text().trim(); 
       lengths.push(bn.length);
       for(let c of bn) allDigits.push(c);
     });
@@ -1045,7 +1061,6 @@ $(document).ready(function() {
       const subset= allDigits.slice(idx, idx+needed);
       idx+= needed;
       const newBN= subset.join("");
-      // recalc game mode
       const gm= determineGameMode(newBN);
       const stTd = $(this).find("td").eq(3).text().trim();
       const bxTd = $(this).find("td").eq(4).text().trim();
@@ -1192,4 +1207,4 @@ $(document).ready(function() {
     $(".track-checkbox").trigger("change");
   }
 
-});
+}); // doc ready ends
