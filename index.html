@@ -50,8 +50,11 @@
       <div class="mb-4">
         <label class="form-label">Select Tracks:</label>
         <div class="accordion" id="tracksAccordion">
-
-          <!-- USA TRACKS -->
+          <!--
+             ================================
+             Sección USA TRACKS
+             ================================
+          -->
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingUSA">
               <button
@@ -382,7 +385,11 @@
             </div>
           </div>
 
-          <!-- Santo Domingo TRACKS -->
+          <!--
+             ================================
+             Sección Santo Domingo TRACKS
+             ================================
+          -->
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingSD">
               <button
@@ -790,7 +797,12 @@
     </div>
   </div>
 
-  <!-- WIZARD MODAL (Quick Entry + Quick Pick + Round Down) -->
+  <!-- 
+       =================================
+       WIZARD MODAL (Quick Entry)
+       =================================
+       MOD CHANGES START
+  -->
   <div
     class="modal fade"
     id="wizardModal"
@@ -801,21 +813,24 @@
     <!-- Fullscreen on small devices -->
     <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
       <div class="modal-content">
+        <!-- Encabezado con "Close Window" rojo en top-right -->
         <div class="modal-header">
           <h5 class="modal-title" id="wizardModalLabel">Quick Entry Wizard</h5>
+          <!-- Reemplazamos la "btn-close" default por un botón rojo -->
           <button
             type="button"
-            class="btn-close"
+            class="btn btn-danger"
             data-bs-dismiss="modal"
             aria-label="Close"
-          ></button>
+          >
+            Close Window
+          </button>
         </div>
 
         <div class="modal-body">
-          <!-- Row #1: Bet Number + Add & Next  (LEFT),   4 Buttons Stacked (RIGHT) -->
-          <div class="row">
-            <!-- Left: Bet Number + Add & Next => aligned top -->
-            <div class="col-12 col-lg-6 d-flex align-items-start mb-3">
+          <!-- FILA 1: Bet Number (izq) + Add & Next, sin botón en la derecha -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
               <div class="me-2">
                 <label for="wizardBetNumber" class="form-label"
                   >Bet Number</label
@@ -825,6 +840,7 @@
                   class="form-control"
                   id="wizardBetNumber"
                   placeholder="2–4 digits"
+                  style="width: 180px;"
                 />
               </div>
               <div>
@@ -837,102 +853,116 @@
                 </button>
               </div>
             </div>
+            <div class="col-12 col-lg-6"></div>
+          </div>
 
-            <!-- Right: 4 stacked buttons, with bigger vertical spacing -->
-            <div class="col-12 col-lg-6 d-flex flex-column align-items-end">
+          <!-- FILA 2: Straight + candado (izq) / Add Main (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardStraight" class="form-label">Straight</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="number"
+                    step="1"
+                    class="form-control"
+                    id="wizardStraight"
+                    placeholder="e.g. 5"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="straight"
+                    id="lockStraight"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <!-- Renombrado: "Add All to Main" => "Add Main" -->
               <button
                 type="button"
-                class="btn btn-warning mb-4"
+                class="btn btn-warning"
                 id="wizardAddAllToMain"
               >
                 <i class="bi bi-hdd-fill"></i> Add Main
               </button>
+            </div>
+          </div>
+
+          <!-- FILA 3: Box (izq) / Generate (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardBox" class="form-label">Box</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="wizardBox"
+                    placeholder="e.g. 1,2 or 3"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="box"
+                    id="lockBox"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <!-- Renombrado: "Generate Ticket" => "Generate" -->
               <button
                 type="button"
-                class="btn btn-success mb-4"
+                class="btn btn-success"
                 id="wizardGenerateTicket"
               >
                 <i class="bi bi-ticket-detailed"></i> Generate
               </button>
+            </div>
+          </div>
+
+          <!-- FILA 4: Combo (izq) / Edit Main (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardCombo" class="form-label">Combo</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="number"
+                    step="0.1"
+                    class="form-control"
+                    id="wizardCombo"
+                    placeholder="e.g. 3.00"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="combo"
+                    id="lockCombo"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <!-- Renombrado: "Edit Main Form" => "Edit Main" -->
               <button
                 type="button"
-                class="btn btn-secondary mb-4"
+                class="btn btn-secondary"
                 id="wizardEditMainForm"
               >
                 <i class="bi bi-pencil-square"></i> Edit Main
               </button>
-              <button
-                type="button"
-                class="btn btn-danger"
-                data-bs-dismiss="modal"
-              >
-                <i class="bi bi-x-circle"></i> Close Window
-              </button>
-            </div>
-          </div>
-
-          <!-- Row #2: Straight / Box / Combo -->
-          <div class="row mb-3">
-            <div class="col-12 col-lg-4">
-              <label for="wizardStraight" class="form-label">Straight</label>
-              <div class="d-flex align-items-center">
-                <input
-                  type="number"
-                  step="1"
-                  class="form-control"
-                  id="wizardStraight"
-                  placeholder="e.g. 5"
-                />
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary ms-1 lockBtn"
-                  data-field="straight"
-                  id="lockStraight"
-                >
-                  <i class="bi bi-unlock"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="col-12 col-lg-4">
-              <label for="wizardBox" class="form-label">Box</label>
-              <div class="d-flex align-items-center">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="wizardBox"
-                  placeholder="e.g. 1,2 or 3"
-                />
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary ms-1 lockBtn"
-                  data-field="box"
-                  id="lockBox"
-                >
-                  <i class="bi bi-unlock"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="col-12 col-lg-4">
-              <label for="wizardCombo" class="form-label">Combo</label>
-              <div class="d-flex align-items-center">
-                <input
-                  type="number"
-                  step="0.1"
-                  class="form-control"
-                  id="wizardCombo"
-                  placeholder="e.g. 3.00"
-                />
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary ms-1 lockBtn"
-                  data-field="combo"
-                  id="lockCombo"
-                >
-                  <i class="bi bi-unlock"></i>
-                </button>
-              </div>
             </div>
           </div>
 
@@ -991,7 +1021,7 @@
               >
                 Quick Pick
               </button>
-              <!-- "Permute" button -->
+              <!-- "Shuffle" renombrado a "Permute" -->
               <button
                 type="button"
                 class="btn btn-info"
@@ -1042,6 +1072,7 @@
       </div>
     </div>
   </div>
+  <!-- MOD CHANGES END -->
 
   <!-- JS Libraries at the end -->
   <!-- jQuery -->
