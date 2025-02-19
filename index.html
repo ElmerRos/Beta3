@@ -812,10 +812,10 @@
         </div>
 
         <div class="modal-body">
-          <!-- Row for "Add & Next" on the left, and the 4 big buttons stacked vertically on the right -->
-          <div class="row mb-3">
-            <!-- Left side: Add & Next -->
-            <div class="col-12 col-lg-6 d-flex align-items-end">
+          <!-- Row #1: Bet Number + Add & Next  (LEFT),   4 Buttons Stacked (RIGHT) -->
+          <div class="row">
+            <!-- Left: Bet Number + Add & Next => aligned top -->
+            <div class="col-12 col-lg-6 d-flex align-items-start mb-3">
               <div class="me-2">
                 <label for="wizardBetNumber" class="form-label"
                   >Bet Number</label
@@ -838,40 +838,40 @@
               </div>
             </div>
 
-            <!-- Right side: 4 stacked buttons, aligned to the right -->
+            <!-- Right: 4 stacked buttons, with bigger vertical spacing -->
             <div class="col-12 col-lg-6 d-flex flex-column align-items-end">
               <button
                 type="button"
-                class="btn btn-warning mb-2"
+                class="btn btn-warning mb-4"
                 id="wizardAddAllToMain"
               >
-                <i class="bi bi-hdd-fill"></i> Add All to Main
+                <i class="bi bi-hdd-fill"></i> Add Main
               </button>
               <button
                 type="button"
-                class="btn btn-success mb-2"
+                class="btn btn-success mb-4"
                 id="wizardGenerateTicket"
               >
-                <i class="bi bi-ticket-detailed"></i> Generate Ticket
+                <i class="bi bi-ticket-detailed"></i> Generate
               </button>
               <button
                 type="button"
-                class="btn btn-secondary mb-2"
+                class="btn btn-secondary mb-4"
                 id="wizardEditMainForm"
               >
-                <i class="bi bi-pencil-square"></i> Edit Main Form
+                <i class="bi bi-pencil-square"></i> Edit Main
               </button>
               <button
                 type="button"
                 class="btn btn-danger"
                 data-bs-dismiss="modal"
               >
-                <i class="bi bi-x-circle"></i> Close Wizard
+                <i class="bi bi-x-circle"></i> Close Window
               </button>
             </div>
           </div>
 
-          <!-- Fields: Straight / Box / Combo + candados (will be sized via CSS) -->
+          <!-- Row #2: Straight / Box / Combo -->
           <div class="row mb-3">
             <div class="col-12 col-lg-4">
               <label for="wizardStraight" class="form-label">Straight</label>
@@ -1002,7 +1002,7 @@
             </div>
           </div>
 
-          <!-- Round Down Section (no explanatory paragraph) -->
+          <!-- Round Down Section -->
           <div class="border p-2 mb-3">
             <h6>Round Down</h6>
             <div class="row mb-2">
@@ -1054,7 +1054,7 @@
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
   ></script>
-  <!-- Flatpickr JS (Modern Theme) -->
+  <!-- Flatpickr JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script
     href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
