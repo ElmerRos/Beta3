@@ -1,12 +1,14 @@
  /* 
   scripts.js
   ----------------------------------------------------------------
-  Versión corregida ~1100+ líneas con:
-   1) doGenerateTicket, RoundDown, QuickPick, localStorage, etc.
-   2) Permute (nuevo) => redistribuir dígitos en Wizard
-   3) Resaltar duplicados (fondo amarillo .duplicado)
-   4) Resaltar errores (fondo morado .error-field)
-   5) Se re-agrega function calculateMainTotal() para evitar ReferenceError.
+  Versión ~1100+ líneas con:
+   1) Round Down, Quick Pick, localStorage, “Permute” en Wizard, 
+   2) Resaltar duplicados (clase .duplicado),
+   3) Resaltar errores (clase .error-field),
+   4) Selecciona automáticamente el día de hoy (defaultDate: [ new Date() ]),
+   5) Zoom mayor (scale=2.0) en onOpen del Flatpickr.
+
+  ¡Sin perder el resto de la lógica!
 */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -90,7 +92,7 @@ $(document).ready(function() {
     mode: "multiple",
     dateFormat: "m-d-Y",
     minDate: "today",
-    // Para que aparezca seleccionado "hoy"
+    // Para que aparezca seleccionado "hoy" en la interfaz
     defaultDate: [ new Date() ],
     clickOpens: true,
     allowInput: false,
@@ -98,9 +100,9 @@ $(document).ready(function() {
     onReady: function(selectedDates, dateStr, instance) {
       instance.calendarContainer.style.zIndex = 999999;
     },
-    // Efecto zoom
+    // Efecto zoom => más notorio (scale=2.0)
     onOpen: function() {
-      this.calendarContainer.style.transform = 'scale(1.2)';
+      this.calendarContainer.style.transform = 'scale(2.0)';
       this.calendarContainer.style.transformOrigin = 'top left';
     },
     onClose: function() {
@@ -108,7 +110,7 @@ $(document).ready(function() {
     },
     onChange: function(selectedDates, dateStr, instance) {
       selectedDaysCount = selectedDates.length;
-      calculateMainTotal();    // <--- REQUIRES this function
+      calculateMainTotal();
       storeFormState();
       disableTracksByTime();
     }
@@ -220,12 +222,11 @@ $(document).ready(function() {
 
     const rowTotal = calculateRowTotal(bn, gm, stVal, bxVal, coVal);
     $row.find(".total").text(rowTotal);
-    calculateMainTotal();  // <--- also needed
+    calculateMainTotal();  
   }
 
   /* =========================================================
      function calculateMainTotal
-     (Missing in prior code => restored here)
   ========================================================= */
   function calculateMainTotal(){
     let sum=0;
@@ -277,7 +278,6 @@ $(document).ready(function() {
   function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
     if(!bn || gm==="-") return "0.00";
     const st = parseFloat(stVal) || 0;
-    let box=0;
     const combo = parseFloat(coVal)||0;
 
     if(gm==="Pulito"){
