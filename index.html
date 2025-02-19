@@ -8,9 +8,9 @@
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
-  <!-- Flatpickr CSS -->
+  <!-- Flatpickr CSS (with a modern theme) -->
   <link
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
     rel="stylesheet"
   />
   <!-- Bootstrap Icons -->
@@ -801,52 +801,21 @@
     <!-- Fullscreen on small devices -->
     <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
       <div class="modal-content">
-
-        <!-- Move bottom buttons to top-right -->
         <div class="modal-header">
           <h5 class="modal-title" id="wizardModalLabel">Quick Entry Wizard</h5>
-          <div class="ms-auto d-flex flex-row align-items-center" id="wizardHeaderButtons">
-            <button
-              type="button"
-              class="btn btn-warning me-2"
-              id="wizardAddAllToMain"
-            >
-              <i class="bi bi-hdd-fill"></i> Add All to Main
-            </button>
-            <button
-              type="button"
-              class="btn btn-success me-2"
-              id="wizardGenerateTicket"
-            >
-              <i class="bi bi-ticket-detailed"></i> Generate Ticket
-            </button>
-            <button
-              type="button"
-              class="btn btn-secondary me-2"
-              id="wizardEditMainForm"
-            >
-              <i class="bi bi-pencil-square"></i> Edit Main Form
-            </button>
-            <button
-              type="button"
-              class="btn btn-danger me-2"
-              data-bs-dismiss="modal"
-            >
-              <i class="bi bi-x-circle"></i> Close Wizard
-            </button>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
         </div>
 
         <div class="modal-body">
-          <!-- Manual Entry (Bet Number + Add & Next + Straight/Box/Combo + candados) -->
+          <!-- Row for "Add & Next" AND the other 4 big buttons, aligned to right -->
           <div class="row mb-3">
             <div class="col-12 col-lg-6 d-flex align-items-end">
+              <!-- Manual Entry (Bet Number + Add & Next) -->
               <div class="me-2">
                 <label for="wizardBetNumber" class="form-label"
                   >Bet Number</label
@@ -869,7 +838,42 @@
               </div>
             </div>
 
-            <div class="col-12 col-lg-2">
+            <!-- The 4 big Wizard buttons aligned to right -->
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end mt-3 mt-lg-0">
+              <button
+                type="button"
+                class="btn btn-warning me-2"
+                id="wizardAddAllToMain"
+              >
+                <i class="bi bi-hdd-fill"></i> Add All to Main
+              </button>
+              <button
+                type="button"
+                class="btn btn-success me-2"
+                id="wizardGenerateTicket"
+              >
+                <i class="bi bi-ticket-detailed"></i> Generate Ticket
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary me-2"
+                id="wizardEditMainForm"
+              >
+                <i class="bi bi-pencil-square"></i> Edit Main Form
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                data-bs-dismiss="modal"
+              >
+                <i class="bi bi-x-circle"></i> Close Wizard
+              </button>
+            </div>
+          </div>
+
+          <!-- Fields: Straight / Box / Combo + candados (bigger in CSS) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-4">
               <label for="wizardStraight" class="form-label">Straight</label>
               <div class="d-flex align-items-center">
                 <input
@@ -890,7 +894,7 @@
               </div>
             </div>
 
-            <div class="col-12 col-lg-2">
+            <div class="col-12 col-lg-4">
               <label for="wizardBox" class="form-label">Box</label>
               <div class="d-flex align-items-center">
                 <input
@@ -910,7 +914,7 @@
               </div>
             </div>
 
-            <div class="col-12 col-lg-2">
+            <div class="col-12 col-lg-4">
               <label for="wizardCombo" class="form-label">Combo</label>
               <div class="d-flex align-items-center">
                 <input
@@ -987,7 +991,7 @@
               >
                 Quick Pick
               </button>
-              <!-- Renamed from "Shuffle Plays" to "Permute" -->
+              <!-- "Permute" button -->
               <button
                 type="button"
                 class="btn btn-info"
@@ -998,7 +1002,7 @@
             </div>
           </div>
 
-          <!-- Round Down Section (paragraph removed) -->
+          <!-- Round Down Section (no explanatory paragraph) -->
           <div class="border p-2 mb-3">
             <h6>Round Down</h6>
             <div class="row mb-2">
@@ -1035,8 +1039,6 @@
           </div>
 
         </div>
-        <!-- (No modal-footer; all wizard controls moved to top) -->
-
       </div>
     </div>
   </div>
