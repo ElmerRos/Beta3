@@ -55,6 +55,55 @@ h2 {
 }
 
 /* ===========================
+   CUSTOM FLATPICKR OVERRIDES
+   =========================== */
+/* For a more intense "zoom" and neon style: */
+.flatpickr-calendar {
+  background: #111 !important; /* dark background for the popup */
+  border: 2px solid var(--color-neon-cian) !important;
+  box-shadow: 0 0 30px var(--color-neon-cian) !important;
+  color: #fff !important;
+  transform-origin: top center !important;
+  transition: transform 0.3s ease !important;
+}
+.flatpickr-calendar.open {
+  transform: scale(1.4) !important; /* bigger zoom factor */
+}
+/* Month/Year */
+.flatpickr-months .flatpickr-month {
+  background: transparent !important;
+  color: var(--color-neon-cian) !important;
+}
+.flatpickr-months .flatpickr-month .cur-year,
+.flatpickr-months .flatpickr-month .flatpickr-monthDropdown-months {
+  color: var(--color-neon-verde) !important;
+}
+/* Weekdays row */
+.flatpickr-weekdays {
+  background: #222 !important;
+  color: var(--color-neon-cian) !important;
+}
+/* Days => default state */
+.flatpickr-day {
+  background: #111 !important;
+  color: #ccc !important;
+  border: none !important;
+}
+.flatpickr-day:hover {
+  background: var(--color-neon-cian) !important;
+  color: #000 !important;
+}
+/* Selected day => neon */
+.flatpickr-day.selected {
+  background: var(--color-neon-cian) !important;
+  color: #000 !important;
+}
+/* Today highlight */
+.flatpickr-day.today {
+  border: 1px solid var(--color-neon-cian) !important;
+}
+
+/* ===========================
    ACCORDION & TRACKS
    =========================== */
 .accordion-button {
@@ -504,15 +553,19 @@ h2 {
   text-align: center;
 }
 
-/* Candaditos */
+/* Candaditos => 3 veces más grandes que antes */
 .lockBtn {
-  font-size: 0.8rem;
-  padding: 0.3rem 0.4rem;
+  font-size: 2.4rem; /* 3x mayor que 0.8rem */
+  padding: 0.9rem 1.2rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .lockBtn:hover {
   background-color: #333;
+  transform: scale(1.05);
 }
 
 /* Wizard table (#wizardTable) */
