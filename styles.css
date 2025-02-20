@@ -1,5 +1,5 @@
  /* ===========================
-   BASE COLORS & FONTS
+   1) BASE COLORS & FONTS
    =========================== */
 :root {
   --color-fondo: #0a0a0a; /* Dark background */
@@ -12,6 +12,7 @@
   --color-fondo-acordeon-activo: #00ffff;
   --color-texto-acordeon: #ffffff;
   --color-error: #ff00ff;
+  --calendarGlass: rgba(255, 255, 255, 0.05);
 }
 
 body {
@@ -23,7 +24,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Container principal */
 .container {
   max-width: 1000px;
   margin: 0 auto;
@@ -42,7 +42,7 @@ h2 {
 }
 
 /* ===========================
-   FLATPICKR INPUT
+   2) FLATPICKR INPUT + CALENDAR
    =========================== */
 .glow-input {
   box-shadow: 0 0 10px var(--color-neon-cian);
@@ -54,57 +54,72 @@ h2 {
   outline: none;
 }
 
-/* ===========================
-   CUSTOM FLATPICKR OVERRIDES
-   =========================== */
-/* For a more intense "zoom" and neon style: */
+/* 
+   CALENDARIO TIPO "GLASS/NEÓN" 
+   en sintonía con tu app
+*/
 .flatpickr-calendar {
-  background: #111 !important; /* dark background for the popup */
-  border: 2px solid var(--color-neon-cian) !important;
-  box-shadow: 0 0 30px var(--color-neon-cian) !important;
-  color: #fff !important;
-  transform-origin: top center !important;
-  transition: transform 0.3s ease !important;
+  background: var(--color-fondo);
+  color: #fff;
+  border: 2px solid var(--color-neon-cian);
+  box-shadow: 0 0 30px var(--color-neon-cian);
+  transform-origin: top center;
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border-radius: 0.5rem;
+  transition: transform 0.3s ease;
 }
 .flatpickr-calendar.open {
-  transform: scale(1.4) !important; /* bigger zoom factor */
+  transform: scale(1.35); /* Zoom mayor */
 }
-/* Month/Year */
-.flatpickr-months .flatpickr-month {
-  background: transparent !important;
-  color: var(--color-neon-cian) !important;
+
+/* Barra superior: mes-año */
+.flatpickr-months {
+  background: var(--calendarGlass);
+  border-bottom: 1px solid var(--color-neon-cian);
 }
 .flatpickr-months .flatpickr-month .cur-year,
-.flatpickr-months .flatpickr-month .flatpickr-monthDropdown-months {
-  color: var(--color-neon-verde) !important;
+.flatpickr-months .flatpickr-monthDropdown-months {
+  color: var(--color-neon-verde);
+  font-weight: bold;
 }
+.flatpickr-months .flatpickr-months .flatpickr-next-month,
+.flatpickr-months .flatpickr-months .flatpickr-prev-month {
+  color: var(--color-neon-cian);
+}
+
 /* Weekdays row */
 .flatpickr-weekdays {
-  background: #222 !important;
-  color: var(--color-neon-cian) !important;
+  background: var(--calendarGlass);
+  color: var(--color-neon-cian);
 }
-/* Days => default state */
+.flatpickr-weekday {
+  font-weight: 600;
+}
+
+/* Días del calendario */
+.flatpickr-days {
+  background: #111; /* Contraste */
+}
 .flatpickr-day {
-  background: #111 !important;
-  color: #ccc !important;
-  border: none !important;
+  color: #bbb;
+  border-radius: 0.25rem;
+  transition: background 0.2s;
 }
-.flatpickr-day:hover {
-  background: var(--color-neon-cian) !important;
-  color: #000 !important;
+.flatpickr-day.today {
+  border: 1px solid var(--color-neon-cian) !important;
 }
-/* Selected day => neon */
 .flatpickr-day.selected {
   background: var(--color-neon-cian) !important;
   color: #000 !important;
 }
-/* Today highlight */
-.flatpickr-day.today {
-  border: 1px solid var(--color-neon-cian) !important;
+.flatpickr-day:hover:not(.selected):not(.disabled) {
+  background: var(--color-neon-morado) !important;
+  color: #000 !important;
 }
 
 /* ===========================
-   ACCORDION & TRACKS
+   3) ACCORDION & TRACKS
    =========================== */
 .accordion-button {
   background-color: var(--color-fondo-acordeon);
@@ -142,7 +157,7 @@ h2 {
 }
 
 /* ===========================
-   TRACK BUTTONS (3D + Ripple)
+   4) TRACK BUTTONS (3D + Ripple)
    =========================== */
 .track-button-container {
   display: inline-block;
@@ -236,7 +251,7 @@ h2 {
 }
 
 /* ===========================
-   TABLES
+   5) TABLES
    =========================== */
 .table-dark {
   box-shadow: 0 0 10px var(--color-neon-cian);
@@ -273,7 +288,7 @@ h2 {
 }
 
 /* ===========================
-   BUTTONS
+   6) BUTTONS
    =========================== */
 .btn {
   padding: 10px 20px;
@@ -370,7 +385,7 @@ h2 {
 }
 
 /* ===========================
-   MODAL
+   7) MODAL
    =========================== */
 .modal-content {
   background-color: #0a0a0a;
@@ -396,7 +411,7 @@ h2 {
 }
 
 /* ===========================
-   RESPONSIVE & PRINT
+   8) RESPONSIVE & PRINT
    =========================== */
 @media (max-width: 768px) {
   .container {
@@ -433,7 +448,7 @@ h2 {
 }
 
 /* ===========================
-   TICKET CONTAINER
+   9) TICKET CONTAINER
    =========================== */
 #preTicket {
   background-color: #0a0a0a;
@@ -483,17 +498,19 @@ h2 {
   font-size: 0.9rem;
   padding: 6px;
 }
+.cutoff-time[data-track='Venezuela'] {
+  color: var(--color-fondo);
+}
+
 .duplicado {
-  background-color: #ffff99;
-  border: 2px solid #ffeb3b;
+  background-color: #ffff99 !important; /* Amarillo para duplicados */
+  border: 2px solid #ffe600 !important;
 }
 .error-field {
   background-color: var(--color-neon-morado) !important;
   border: 2px solid var(--color-neon-cian) !important;
 }
-.cutoff-time[data-track='Venezuela'] {
-  color: var(--color-fondo);
-}
+
 @media (max-width: 600px) {
   #preTicket table,
   #preTicket th,
@@ -539,9 +556,8 @@ h2 {
 }
 
 /* ===========================
-   WIZARD
+   10) WIZARD
    =========================== */
-/* Campos un poco más compactos */
 #wizardBetNumber,
 #wizardStraight,
 #wizardCombo {
@@ -553,9 +569,9 @@ h2 {
   text-align: center;
 }
 
-/* Candaditos => 3 veces más grandes que antes */
+/* Candaditos => 3 veces más grandes */
 .lockBtn {
-  font-size: 2.4rem; /* 3x mayor que 0.8rem */
+  font-size: 2.4rem; /* triplicado */
   padding: 0.9rem 1.2rem;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.2s;
@@ -568,7 +584,6 @@ h2 {
   transform: scale(1.05);
 }
 
-/* Wizard table (#wizardTable) */
 #wizardTable thead th {
   background-color: #1e1e1e;
   color: var(--color-neon-cian);
