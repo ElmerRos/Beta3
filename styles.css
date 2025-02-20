@@ -12,9 +12,9 @@
   --color-fondo-acordeon-activo: #00ffff;
   --color-texto-acordeon: #ffffff;
   --color-error: #ff00ff;
-  --calendarGlass: rgba(255, 255, 255, 0.05);
 }
 
+/* Fondo general + tipografía */
 body {
   background-color: var(--color-fondo);
   color: var(--color-texto);
@@ -24,6 +24,7 @@ body {
   overflow-x: hidden;
 }
 
+/* Contenedor principal */
 .container {
   max-width: 1000px;
   margin: 0 auto;
@@ -33,6 +34,7 @@ body {
   box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
 }
 
+/* Título principal */
 h2 {
   text-align: center;
   margin-bottom: 20px;
@@ -42,8 +44,10 @@ h2 {
 }
 
 /* ===========================
-   2) FLATPICKR INPUT + CALENDAR
+   2) FLATPICKR INPUT
+   (Revirtiendo a un estilo sencillo/clásico)
    =========================== */
+/* Mantén tu input con halo “glow” */
 .glow-input {
   box-shadow: 0 0 10px var(--color-neon-cian);
   transition: box-shadow 0.3s, border-color 0.3s;
@@ -53,70 +57,7 @@ h2 {
   box-shadow: 0 0 15px var(--color-neon-morado);
   outline: none;
 }
-
-/* 
-   CALENDARIO TIPO "GLASS/NEÓN" 
-   en sintonía con tu app
-*/
-.flatpickr-calendar {
-  background: var(--color-fondo);
-  color: #fff;
-  border: 2px solid var(--color-neon-cian);
-  box-shadow: 0 0 30px var(--color-neon-cian);
-  transform-origin: top center;
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border-radius: 0.5rem;
-  transition: transform 0.3s ease;
-}
-.flatpickr-calendar.open {
-  transform: scale(1.35); /* Zoom mayor */
-}
-
-/* Barra superior: mes-año */
-.flatpickr-months {
-  background: var(--calendarGlass);
-  border-bottom: 1px solid var(--color-neon-cian);
-}
-.flatpickr-months .flatpickr-month .cur-year,
-.flatpickr-months .flatpickr-monthDropdown-months {
-  color: var(--color-neon-verde);
-  font-weight: bold;
-}
-.flatpickr-months .flatpickr-months .flatpickr-next-month,
-.flatpickr-months .flatpickr-months .flatpickr-prev-month {
-  color: var(--color-neon-cian);
-}
-
-/* Weekdays row */
-.flatpickr-weekdays {
-  background: var(--calendarGlass);
-  color: var(--color-neon-cian);
-}
-.flatpickr-weekday {
-  font-weight: 600;
-}
-
-/* Días del calendario */
-.flatpickr-days {
-  background: #111; /* Contraste */
-}
-.flatpickr-day {
-  color: #bbb;
-  border-radius: 0.25rem;
-  transition: background 0.2s;
-}
-.flatpickr-day.today {
-  border: 1px solid var(--color-neon-cian) !important;
-}
-.flatpickr-day.selected {
-  background: var(--color-neon-cian) !important;
-  color: #000 !important;
-}
-.flatpickr-day:hover:not(.selected):not(.disabled) {
-  background: var(--color-neon-morado) !important;
-  color: #000 !important;
-}
+/* No sobreescribimos .flatpickr-day, etc. => usará el estilo por defecto de la librería */
 
 /* ===========================
    3) ACCORDION & TRACKS
@@ -196,14 +137,11 @@ h2 {
   overflow: hidden; /* Para el ripple */
   padding: 0.5rem;
 }
-
-/* Hover: se eleva un poco */
 .track-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 7px #111;
   background: linear-gradient(#666, #444);
 }
-
 /* Al hacer click => hundimiento + ripple */
 .track-button:active {
   transform: translateY(2px);
@@ -224,8 +162,6 @@ h2 {
   width: 250px;
   height: 250px;
 }
-
-/* Texto y subtexto */
 .track-button .track-name {
   font-weight: 700;
   font-size: 1.1rem;
@@ -235,16 +171,12 @@ h2 {
   font-size: 1rem;
   color: #cccccc;
 }
-
-/* Estado CHECKED => color dorado */
 .track-button-container input[type="checkbox"]:checked + .track-button {
   background: linear-gradient(#ffd966, #d1a824);
   color: #000;
   box-shadow: 0 5px #666;
   transform: none;
 }
-
-/* Disabled => opaco */
 .track-button-container input[type="checkbox"]:disabled + .track-button {
   opacity: 0.5;
   cursor: not-allowed;
@@ -502,15 +434,25 @@ h2 {
   color: var(--color-fondo);
 }
 
+/* 
+   -> Cambiamos el color de texto
+      en duplicados a #000 (negro)
+*/
 .duplicado {
-  background-color: #ffff99 !important; /* Amarillo para duplicados */
+  background-color: #ffff99 !important; /* Amarillo */
   border: 2px solid #ffe600 !important;
+  color: #000 !important; /* Texto negro para legibilidad */
 }
+
+/* 
+   -> Errores en morado 
+*/
 .error-field {
   background-color: var(--color-neon-morado) !important;
   border: 2px solid var(--color-neon-cian) !important;
 }
 
+/* Ajustes responsive ticket */
 @media (max-width: 600px) {
   #preTicket table,
   #preTicket th,
