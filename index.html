@@ -1,117 +1,34 @@
- <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Beast Reader ElmeRos</title>
-
+  <title>Beast Reader (BETA) East New York</title>
   <!-- Bootstrap CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
-
-  <!-- Flatpickr CSS (modern theme) -->
+  <!-- Flatpickr CSS (with a modern theme) -->
   <link
     href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
     rel="stylesheet"
   />
-
   <!-- Bootstrap Icons -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
   />
-
   <!-- Google Fonts -->
   <link
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap"
     rel="stylesheet"
   />
-
   <!-- Custom CSS -->
   <link href="styles.css" rel="stylesheet" />
-
-  <!-- =====================
-       INTRO.JS (Tutorial)
-  ===================== -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/intro.js/minified/introjs.min.css"
-  />
-  <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
-
-  <!-- =====================
-       Forzar Estilos Intro.js
-       (Evitar texto invisible)
-  ===================== -->
-  <style>
-    .introjs-tooltip {
-      color: #000 !important;
-      background-color: #fff !important;
-      border: 2px solid #444 !important; 
-      border-radius: 8px;
-      padding: 10px !important;
-    }
-    .introjs-arrow {
-      border-color: #fff !important;
-    }
-    .introjs-tooltiptitle {
-      color: #000 !important;
-      font-weight: bold;
-    }
-    .introjs-tooltiptext {
-      color: #000 !important;
-    }
-    .introjs-button, .introjs-skipbutton, .introjs-donebutton {
-      background-color: #0088ff !important;
-      color: #fff !important;
-      border-radius: 4px !important;
-      padding: 6px 12px !important;
-      margin: 2px !important;
-      border: none !important;
-      font-weight: 600;
-    }
-  </style>
 </head>
 <body>
   <div class="container my-5">
-
-    <!-- Encabezado con título y 3 botones para tutoriales E, S, C -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="text-center">Beast Reader ElmeRos</h2>
-      <div class="d-flex gap-2">
-        <!-- Botón en inglés (azul) -->
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="helpEnglish"
-          style="font-weight: bold;"
-          aria-label="English Tutorial"
-        >
-          E
-        </button>
-        <!-- Botón en español (verde) -->
-        <button
-          type="button"
-          class="btn btn-success"
-          id="helpSpanish"
-          style="font-weight: bold;"
-          aria-label="Tutorial en Español"
-        >
-          S
-        </button>
-        <!-- Botón en creole haitiano (morado) -->
-        <button
-          type="button"
-          class="btn btn-secondary"
-          id="helpCreole"
-          style="font-weight: bold; background-color:#6f42c1; border-color:#5a379d;"
-          aria-label="Kreyòl Ayisyen"
-        >
-          C
-        </button>
-      </div>
-    </div>
+    <h2 class="text-center mb-4">Beast Reader (Cricket) East New York</h2>
 
     <!-- Main Form -->
     <form id="lotteryForm">
@@ -133,8 +50,11 @@
       <div class="mb-4">
         <label class="form-label">Select Tracks:</label>
         <div class="accordion" id="tracksAccordion">
-
-          <!-- =========== USA TRACKS =========== -->
+          <!--
+             ================================
+             Sección USA TRACKS
+             ================================
+          -->
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingUSA">
               <button
@@ -291,7 +211,10 @@
                     value="Connecticut Mid Day"
                     id="trackConnecticutMidDay"
                   />
-                  <label class="track-button" for="trackConnecticutMidDay">
+                  <label
+                    class="track-button"
+                    for="trackConnecticutMidDay"
+                  >
                     <span class="track-name">Connecticut Mid Day</span>
                     <span
                       class="cutoff-time"
@@ -307,7 +230,10 @@
                     value="Connecticut Evening"
                     id="trackConnecticutEvening"
                   />
-                  <label class="track-button" for="trackConnecticutEvening">
+                  <label
+                    class="track-button"
+                    for="trackConnecticutEvening"
+                  >
                     <span class="track-name">Connecticut Evening</span>
                     <span
                       class="cutoff-time"
@@ -339,7 +265,10 @@
                     value="Pensilvania AM"
                     id="trackPennsylvaniaAM"
                   />
-                  <label class="track-button" for="trackPennsylvaniaAM">
+                  <label
+                    class="track-button"
+                    for="trackPennsylvaniaAM"
+                  >
                     <span class="track-name">Pensilvania AM</span>
                     <span
                       class="cutoff-time"
@@ -355,7 +284,10 @@
                     value="Pensilvania PM"
                     id="trackPennsylvaniaPM"
                   />
-                  <label class="track-button" for="trackPennsylvaniaPM">
+                  <label
+                    class="track-button"
+                    for="trackPennsylvaniaPM"
+                  >
                     <span class="track-name">Pensilvania PM</span>
                     <span
                       class="cutoff-time"
@@ -387,7 +319,10 @@
                     value="Brooklyn Midday"
                     id="trackBrooklynMidday"
                   />
-                  <label class="track-button" for="trackBrooklynMidday">
+                  <label
+                    class="track-button"
+                    for="trackBrooklynMidday"
+                  >
                     <span class="track-name">Brooklyn Midday</span>
                     <span
                       class="cutoff-time"
@@ -403,7 +338,10 @@
                     value="Brooklyn Evening"
                     id="trackBrooklynEvening"
                   />
-                  <label class="track-button" for="trackBrooklynEvening">
+                  <label
+                    class="track-button"
+                    for="trackBrooklynEvening"
+                  >
                     <span class="track-name">Brooklyn Evening</span>
                     <span
                       class="cutoff-time"
@@ -447,7 +385,11 @@
             </div>
           </div>
 
-          <!-- =========== SANTO DOMINGO TRACKS =========== -->
+          <!--
+             ================================
+             Sección Santo Domingo TRACKS
+             ================================
+          -->
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingSD">
               <button
@@ -478,10 +420,7 @@
                   />
                   <label class="track-button" for="trackReal">
                     <span class="track-name">Real</span>
-                    <span
-                      class="cutoff-time"
-                      data-track="Real"
-                    ></span>
+                    <span class="cutoff-time" data-track="Real"></span>
                   </label>
                 </div>
                 <!-- Gana mas -->
@@ -540,7 +479,10 @@
                     value="Quiniela Pale"
                     id="trackQuinielaPale"
                   />
-                  <label class="track-button" for="trackQuinielaPale">
+                  <label
+                    class="track-button"
+                    for="trackQuinielaPale"
+                  >
                     <span class="track-name">Quiniela Pale</span>
                     <span
                       class="cutoff-time"
@@ -588,7 +530,10 @@
                     value="Lotería Real"
                     id="trackLoteriaReal"
                   />
-                  <label class="track-button" for="trackLoteriaReal">
+                  <label
+                    class="track-button"
+                    for="trackLoteriaReal"
+                  >
                     <span class="track-name">Lotería Real</span>
                     <span
                       class="cutoff-time"
@@ -604,7 +549,10 @@
                     value="Suerte Tarde"
                     id="trackSuerteTarde"
                   />
-                  <label class="track-button" for="trackSuerteTarde">
+                  <label
+                    class="track-button"
+                    for="trackSuerteTarde"
+                  >
                     <span class="track-name">Suerte Tarde</span>
                     <span
                       class="cutoff-time"
@@ -636,7 +584,10 @@
                     value="Primera Noche"
                     id="trackPrimeraNoche"
                   />
-                  <label class="track-button" for="trackPrimeraNoche">
+                  <label
+                    class="track-button"
+                    for="trackPrimeraNoche"
+                  >
                     <span class="track-name">Primera Noche</span>
                     <span
                       class="cutoff-time"
@@ -723,10 +674,7 @@
           </button>
         </div>
         <!-- Make total text bigger -->
-        <div
-          class="total-section"
-          style="font-size:1.25rem;"
-        >
+        <div class="total-section" style="font-size:1.25rem;">
           Total Plays: $
           <span id="totalJugadas">0.00</span>
         </div>
@@ -768,7 +716,7 @@
         </div>
         <div class="modal-body">
           <div id="preTicket" class="p-3">
-            <h4 class="text-center mb-3">ElmeRos Ticket</h4>
+            <h4 class="text-center mb-3">East New York Cricket</h4>
             <p>
               <strong>Bet Dates:</strong>
               <span id="ticketFecha"></span>
@@ -849,7 +797,12 @@
     </div>
   </div>
 
-  <!-- =============== WIZARD MODAL =============== -->
+  <!-- 
+       =================================
+       WIZARD MODAL (Quick Entry)
+       =================================
+       MOD CHANGES START
+  -->
   <div
     class="modal fade"
     id="wizardModal"
@@ -857,10 +810,13 @@
     aria-labelledby="wizardModalLabel"
     aria-hidden="true"
   >
+    <!-- Fullscreen on small devices -->
     <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
       <div class="modal-content">
+        <!-- Encabezado con "Close Window" rojo en top-right -->
         <div class="modal-header">
           <h5 class="modal-title" id="wizardModalLabel">Quick Entry Wizard</h5>
+          <!-- Reemplazamos la "btn-close" default por un botón rojo -->
           <button
             type="button"
             class="btn btn-danger"
@@ -872,7 +828,7 @@
         </div>
 
         <div class="modal-body">
-          <!-- FILA 1: Bet Number + Add & Next -->
+          <!-- FILA 1: Bet Number (izq) + Add & Next, sin botón en la derecha -->
           <div class="row mb-3">
             <div class="col-12 col-lg-6 d-flex align-items-end">
               <div class="me-2">
@@ -900,7 +856,7 @@
             <div class="col-12 col-lg-6"></div>
           </div>
 
-          <!-- FILA 2: Straight + lock / Add Main -->
+          <!-- FILA 2: Straight + candado (izq) / Add Main (der) -->
           <div class="row mb-3">
             <div class="col-12 col-lg-6 d-flex align-items-end">
               <div>
@@ -926,6 +882,7 @@
               </div>
             </div>
             <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <!-- Renombrado: "Add All to Main" => "Add Main" -->
               <button
                 type="button"
                 class="btn btn-warning"
@@ -936,7 +893,7 @@
             </div>
           </div>
 
-          <!-- FILA 3: Box / Generate -->
+          <!-- FILA 3: Box (izq) / Generate (der) -->
           <div class="row mb-3">
             <div class="col-12 col-lg-6 d-flex align-items-end">
               <div>
@@ -961,6 +918,7 @@
               </div>
             </div>
             <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <!-- Renombrado: "Generate Ticket" => "Generate" -->
               <button
                 type="button"
                 class="btn btn-success"
@@ -971,7 +929,7 @@
             </div>
           </div>
 
-          <!-- FILA 4: Combo / Edit Main -->
+          <!-- FILA 4: Combo (izq) / Edit Main (der) -->
           <div class="row mb-3">
             <div class="col-12 col-lg-6 d-flex align-items-end">
               <div>
@@ -997,6 +955,7 @@
               </div>
             </div>
             <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <!-- Renombrado: "Edit Main Form" => "Edit Main" -->
               <button
                 type="button"
                 class="btn btn-secondary"
@@ -1062,6 +1021,7 @@
               >
                 Quick Pick
               </button>
+              <!-- "Shuffle" renombrado a "Permute" -->
               <button
                 type="button"
                 class="btn btn-info"
@@ -1112,7 +1072,7 @@
       </div>
     </div>
   </div>
-
+  <!-- MOD CHANGES END -->
 
   <!-- JS Libraries at the end -->
   <!-- jQuery -->
@@ -1127,6 +1087,9 @@
   ></script>
   <!-- Flatpickr JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
+  ></script>
   <!-- QRCode.js -->
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
@@ -1144,200 +1107,7 @@
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
   ></script>
-
-  <!-- Our custom JS => scripts.js -->
+  <!-- Our custom JS -->
   <script src="scripts.js"></script>
-
-  <!-- Bloque final con los tutorialSteps en 3 idiomas y transiciones Wizard -->
-  <script>
-  // =========== TUTORIAL STEPS (ENG, ESP, CREOLE) ===========
-
-  // Ajustamos con textos detallados. 
-  // El primer 'onbeforechange' abre wizard, y más adelante cerramos wizard.
-
-  const tutorialStepsEN = [
-    {
-      element: "#fecha",
-      intro: "Bet Dates: 'Today' is automatically selected, so no need to tap. You can add more days or remove the default if you want future bets.",
-      position: "bottom"
-    },
-    {
-      element: "#tracksAccordion",
-      intro: "Tracks: Expand 'USA' or 'Santo Domingo' to pick your draws. For 'Venezuela' mode, also check 'Venezuela' plus any USA track.",
-      position: "top"
-    },
-    {
-      element: "#tablaJugadas",
-      intro: "Main Table: Each row is a bet. Fill Bet Number, Straight, Box, Combo, and the system calculates your total automatically.",
-      position: "top"
-    },
-    {
-      element: "#agregarJugada",
-      intro: "Add Play: Create a new row for a manual bet.",
-      position: "bottom"
-    },
-    {
-      element: "#eliminarJugada",
-      intro: "Remove Last Play: If you made a mistake, remove the most recent row.",
-      position: "bottom"
-    },
-    {
-      element: "#resetForm",
-      intro: "Reset Form: Clears all data (tracks, plays, totals) so you start fresh.",
-      position: "bottom"
-    },
-    {
-      element: "#wizardButton",
-      intro: "Wizard: A quick-entry window for random or repeated wagers. Click Next to open it automatically.",
-      position: "bottom",
-      onbeforechange: () => {
-        $("#wizardButton").trigger("click");
-      }
-    },
-    {
-      element: "#wizardModal",
-      intro: "Welcome to Quick Entry Wizard. Add lines manually or generate them. Let's see each section.",
-      position: "top"
-    },
-    {
-      element: "#wizardBetNumber",
-      intro: "Bet Number: 2–4 digits, or 5 with dash/x for Pale. Then press 'Add & Next.'",
-      position: "top"
-    },
-    {
-      element: "#wizardStraight",
-      intro: "Straight: Enter your wager. Lock it if you want the same amount on every new line.",
-      position: "top"
-    },
-    {
-      element: "#wizardBox",
-      intro: "Box: If your bet includes a box portion, put it here. You can also lock it.",
-      position: "top"
-    },
-    {
-      element: "#wizardCombo",
-      intro: "Combo: Another type of wager. Lock it to apply the same combo to all subsequent entries.",
-      position: "top"
-    },
-    {
-      element: "#wizardAddAllToMain",
-      intro: "Add Main: Send your newly created lines to the main form. If you close the wizard without adding, they're lost.",
-      position: "left"
-    },
-    {
-      element: "#btnGenerateQuickPick",
-      intro: "Quick Pick: Instantly generate random plays for a chosen game mode.",
-      position: "top"
-    },
-    {
-      element: "#btnPermute",
-      intro: "Permute: Shuffle digits among existing lines for new combos.",
-      position: "top"
-    },
-    {
-      element: "#btnGenerateRoundDown",
-      intro: "Round Down: Create a sequence of 10 lines by varying digits from a first to a last number.",
-      position: "top"
-    },
-    {
-      element: "#wizardGenerateTicket",
-      intro: "Generate: Jump straight to the Ticket Preview from here.",
-      position: "left"
-    },
-    {
-      element: "#wizardEditMainForm",
-      intro: "Edit Main: Return to the main form if you want to see your lines or adjust something.",
-      position: "left"
-    },
-    {
-      element: "#wizardModal",
-      intro: "We'll now close the Wizard. Next, we can finalize the ticket in the main form if desired.",
-      position: "top",
-      onbeforechange: () => {
-        $("#wizardModal").modal("hide");
-      }
-    },
-    {
-      element: "#generarTicket",
-      intro: "Generate Ticket: Once lines are set, see a final preview, confirm, print, or share your ticket.",
-      position: "bottom"
-    },
-    {
-      element: "#totalJugadas",
-      intro: "Total Plays: The total cost of your wagers, multiplied by selected tracks and dates.",
-      position: "left"
-    }
-  ];
-
-  const tutorialStepsES = [
-    {
-      element: "#fecha",
-      intro: "Fechas: 'Hoy' se selecciona en automático, así no tienes que tocar nada. Puedes añadir más días o eliminar el de hoy si deseas apostar a futuro.",
-      position: "bottom"
-    },
-    {
-      element: "#tracksAccordion",
-      intro: "Tracks: Despliega 'USA' o 'Santo Domingo' para elegir tus loterías. Para modo 'Venezuela', marca también 'Venezuela' y un track de USA.",
-      position: "top"
-    },
-    {
-      element: "#tablaJugadas",
-      intro: "Tabla Principal: Cada fila es una jugada. Llena 'Bet Number', 'Straight', 'Box', 'Combo', y el total se calcula automáticamente.",
-      position: "top"
-    },
-    {
-      element: "#agregarJugada",
-      intro: "Add Play: Crea una nueva fila para ingresar una jugada manual.",
-      position: "bottom"
-    },
-    {
-      element: "#eliminarJugada",
-      intro: "Remove Last Play: Si te equivocaste, quita la última jugada agregada.",
-      position: "bottom"
-    },
-    {
-      element: "#resetForm",
-      intro: "Reset Form: Limpia todos los datos (tracks, jugadas, total) para empezar de cero.",
-      position: "bottom"
-    },
-    {
-      element: "#wizardButton",
-      intro: "Wizard: Una ventana de entrada rápida para jugadas aleatorias o repetidas. Haz clic en Siguiente para abrirlo.",
-      position: "bottom",
-      onbeforechange: () => {
-        $("#wizardButton").trigger("click");
-      }
-    },
-    {
-      element: "#wizardModal",
-      intro: "Bienvenido al Wizard. Puedes agregar jugadas manualmente o generarlas. Veamos cada sección.",
-      position: "top"
-    },
-    {
-      element: "#wizardBetNumber",
-      intro: "Bet Number: 2–4 dígitos, o 5 si lleva guion/x para Pale. Luego 'Add & Next'.",
-      position: "top"
-    },
-    {
-      element: "#wizardStraight",
-      intro: "Straight: Monto directo de apuesta. Si lo bloqueas, usarás el mismo en cada nueva jugada.",
-      position: "top"
-    },
-    {
-      element: "#wizardBox",
-      intro: "Box: Si tu jugada lleva box, aquí. También se puede bloquear.",
-      position: "top"
-    },
-    {
-      element: "#wizardCombo",
-      intro: "Combo: Otro tipo de apuesta. Al bloquearlo, se mantiene en cada jugada nueva.",
-      position: "top"
-    },
-    {
-      element: "#wizardAddAllToMain",
-      intro: "Add Main: Para que las jugadas queden en el formulario principal. Si cierras sin añadir, se pierden.",
-      position: "left"
-    },
-    {
-      element: "#btnGenerateQuickPick",
-      intro: "Quick Pick: Genera jugadas aleatorias según un modo de juego y cuántas jugadas
+</body>
+</html>
