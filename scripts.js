@@ -1,14 +1,18 @@
  /* 
   scripts.js
   ----------------------------------------------------------------
-  Versión ~1100+ líneas con:
-   1) Round Down, Quick Pick, localStorage, “Permute” en Wizard, 
-   2) Resaltar duplicados (clase .duplicado),
-   3) Resaltar errores (clase .error-field),
-   4) Selecciona automáticamente el día de hoy (defaultDate: [ new Date() ]),
-   5) Zoom mayor (scale=2.0) en onOpen del Flatpickr,
-   6) Ajustes de lógica para “Ven” y “Pale-Ven”, “Pale-RD”,
-   7) Campos numéricos en straight y combo.
+  ~1100+ líneas con:
+   1) Lógica para “Pale-Ven” / “Pale-RD” (con ‘-’ o ‘x’),
+   2) Campos numéricos (straight, combo),
+   3) Corrección en el Wizard (aceptar largo=5 para betNumber),
+   4) Tutorial con Intro.js (botón “?” que inicia pasos).
+
+  NOTA: Requiere que en index.html tengas:
+    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
+    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+
+  y un botón con id="helpButton" (ej. <button id="helpButton">?</button>)
+  para iniciar el tutorial.
 */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -92,7 +96,7 @@ $(document).ready(function() {
     mode: "multiple",
     dateFormat: "m-d-Y",
     minDate: "today",
-    defaultDate: [ new Date() ], // Selecciona el día de hoy por defecto
+    defaultDate: [ new Date() ], 
     clickOpens: true,
     allowInput: false,
     appendTo: document.body,
@@ -122,7 +126,6 @@ $(document).ready(function() {
     const arr = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
-    // Minimiza la parte de "Venezuela" (no suma multiplicador)
     selectedTracksCount = arr.filter(x => x !== "Venezuela").length || 1;
     calculateMainTotal();
     disableTracksByTime();
@@ -172,7 +175,7 @@ $(document).ready(function() {
     playCount++;
     const rowIndex = playCount;
 
-    // Campos 'straight' y 'combo' ahora numéricos
+    // straight y combo => numéricos
     const rowHTML = `
       <tr data-playIndex="${rowIndex}">
         <td>
@@ -244,10 +247,11 @@ $(document).ready(function() {
   }
 
   /* =========================================================
-     determineGameMode => Ajustes Pale-Ven y Pale-RD
+     determineGameMode => Pale logic + length up to 5
   ========================================================= */
   function determineGameMode(bn){
-    if(!bn) return "-";
+    // Permitimos hasta 5 caracteres, p.ej "22-50" => length=5
+    if(!bn || bn.length<2 || bn.length>5) return "-";
 
     const tracks = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
@@ -258,12 +262,11 @@ $(document).ready(function() {
 
     // 1) Venezuela + USA => Ven o Pale-Ven
     if(includesVen && isUSA){
-      // Checamos patrones
       // 2 dígitos => "Ven"
       if(/^\d{2}$/.test(bn)) {
         return "Ven";
       }
-      // xx-xX-xx => "Pale-Ven" (p.ej. 22x50, 35-20)
+      // xx-xX-xx => "Pale-Ven" (22x50, 22-50)
       if(/^\d{2}[-xX]\d{2}$/.test(bn)) {
         return "Pale-Ven";
       }
@@ -274,9 +277,8 @@ $(document).ready(function() {
       return "-";
     }
 
-    // 2) USA (pero sin Santo Domingo)
+    // 2) USA (sin Santo Domingo)
     if(isUSA && !isSD){
-      // La lógica anterior
       if(bn.length===4) return "Win 4";
       if(bn.length===3) return "Pick 3";
       if(bn.length===2) return "Pulito";
@@ -285,7 +287,7 @@ $(document).ready(function() {
 
     // 3) Santo Domingo (sin USA)
     if(isSD && !isUSA){
-      // 2 dígitos => "RD-Quiniela"
+      // 2 díg => "RD-Quiniela"
       if(/^\d{2}$/.test(bn)) {
         return "RD-Quiniela";
       }
@@ -293,22 +295,18 @@ $(document).ready(function() {
       if(/^\d{2}[-xX]\d{2}$/.test(bn)) {
         return "Pale-RD";
       }
-      // Si antes era length=4 => "RD-Pale", ahora requiere dash => sino => "?"
-      // Podrías poner un fallback a "-" si no encaja
       return "-";
     }
 
-    // 4) Si nada coincide, devolvemos "-"
+    // 4) Caso por defecto
     return "-";
   }
 
   function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
     if(!bn || gm==="-") return "0.00";
-
     const st = parseFloat(stVal)||0;
     const combo = parseFloat(coVal)||0;
 
-    // "Pulito"
     if(gm==="Pulito"){
       if(bxVal){
         const positions = bxVal.split(",").map(x=>x.trim()).filter(Boolean);
@@ -316,11 +314,9 @@ $(document).ready(function() {
       }
       return "0.00";
     }
-    // "Ven", "Pale-Ven" o "RD-Quiniela", "Pale-RD"
     if(gm==="Ven" || gm.startsWith("RD-") || gm==="Pale-Ven" || gm==="Pale-RD"){
       return st.toFixed(2);
     }
-    // "Win 4", "Pick 3"
     if(gm==="Win 4" || gm==="Pick 3"){
       const numericBox = parseFloat(bxVal)||0;
       const combosCount = calcCombos(bn);
@@ -328,7 +324,7 @@ $(document).ready(function() {
       return total.toFixed(2);
     }
     else {
-      // Por si quedaba algún caso
+      // fallback
       const numericBox = parseFloat(bxVal)||0;
       let total= st+ numericBox + combo;
       return total.toFixed(2);
@@ -808,7 +804,7 @@ $(document).ready(function() {
       const raw=getTrackCutoff(val);
       if(raw){
         let co=dayjs(raw,"HH:mm");
-        let cf=co.isAfter(dayjs("21:30","HH:mm"))?dayjs("22:00","HH:mm"):co.subtract(10,"minute");
+        let cf=co.isAfter(dayjs("21:30","HH:mm"))? dayjs("22:00","HH:mm"):co.subtract(10,"minute");
         if(now.isSame(cf)||now.isAfter(cf)){
           $(this).prop("checked",false).prop("disabled",true);
           $(this).closest(".track-button-container").find(".track-button").css({
@@ -899,20 +895,21 @@ $(document).ready(function() {
     }
   });
 
-  // Rehacemos wizard => straight + combo => numeric
+  // Ajustar wizard => numeric
   $("#wizardStraight").attr({ type:"number", step:"1" });
   $("#wizardCombo").attr({ type:"number", step:"0.01" });
 
-  // Add & Next en Wizard
+  // Add & Next (Wizard)
   $("#wizardAddNext").click(function(){
     const bn=$("#wizardBetNumber").val().trim();
-    if(bn.length<2||bn.length>4){
-      alert("Bet Number must be 2-4 digits.");
+    // Aceptar longitud hasta 5 para "22-50"
+    if(bn.length<2 || bn.length>5){
+      alert("Bet Number must be 2-5 chars (including dash or x).");
       return;
     }
     const gm=determineGameMode(bn);
     if(gm==="-"){
-      alert(`Cannot determine game mode for number ${bn}. Check tracks or length.`);
+      alert(`Cannot determine game mode for number "${bn}". Check tracks or format.`);
       return;
     }
     let stVal = lockedFields.straight? $("#wizardStraight").val().trim() : $("#wizardStraight").val().trim();
@@ -1024,7 +1021,6 @@ $(document).ready(function() {
     for(let i=0;i<len;i++){
       if(firstNum[i]!==lastNum[i]) diffPos.push(i);
     }
-    // all differ => produce 000..999 => 10 jugadas
     if(diffPos.length===len){
       for(let d=0; d<10; d++){
         let bn=(""+d).repeat(len);
@@ -1042,7 +1038,6 @@ $(document).ready(function() {
       highlightDuplicatesInWizard();
       return;
     }
-    // exactly 1 pos differ => vary that digit 0..9
     if(diffPos.length===1){
       const pos= diffPos[0];
       const prefix= firstNum.split("");
@@ -1237,4 +1232,58 @@ $(document).ready(function() {
     $(".track-checkbox").trigger("change");
   }
 
-});
+  /* =========================================================
+     TUTORIAL CON INTRO.JS
+  ========================================================= */
+  // Asume que en tu index.html tienes un botón con id="helpButton" => <?>
+  // y has cargado intro.js
+  $("#helpButton").click(function(){
+    startTutorial();
+  });
+
+  function startTutorial(){
+    introJs()
+      .setOptions({
+        steps: [
+          {
+            element: "#fecha",
+            intro: "Aquí seleccionas la(s) fecha(s) para tus jugadas.",
+            position: "right"
+          },
+          {
+            element: "#tracksAccordion",
+            intro: "Elige uno o varios tracks donde jugar.",
+            position: "right"
+          },
+          {
+            element: "#agregarJugada",
+            intro: "Con este botón agregas filas para introducir tus jugadas manualmente.",
+            position: "bottom"
+          },
+          {
+            element: "#wizardButton",
+            intro: "O puedes usar el Wizard para jugadas rápidas, Quick Pick, etc.",
+            position: "bottom"
+          },
+          {
+            element: "#tablaJugadas",
+            intro: "Aquí se muestran tus jugadas. Completa Bet Number, Straight, Box, Combo.",
+            position: "top"
+          },
+          {
+            element: "#generarTicket",
+            intro: "Cuando hayas terminado, presiona 'Generate Ticket' para ver la vista previa.",
+            position: "bottom"
+          }
+        ],
+        showProgress: true,
+        showBullets: false,
+        exitOnOverlayClick: false,
+        nextLabel: "Siguiente",
+        prevLabel: "Anterior",
+        doneLabel: "¡Listo!"
+      })
+      .start();
+  }
+
+}); // doc ready ends
