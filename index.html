@@ -9,21 +9,25 @@
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
-  <!-- Flatpickr CSS (with a modern theme) -->
+
+  <!-- Flatpickr CSS (modern theme) -->
   <link
     href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
     rel="stylesheet"
   />
+
   <!-- Bootstrap Icons -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
   />
+
   <!-- Google Fonts -->
   <link
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap"
     rel="stylesheet"
   />
+
   <!-- Custom CSS -->
   <link href="styles.css" rel="stylesheet" />
 
@@ -35,6 +39,39 @@
     href="https://unpkg.com/intro.js/minified/introjs.min.css"
   />
   <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+
+  <!-- =====================
+       Forzar Estilos Intro.js
+       (Evitar texto invisible)
+  ===================== -->
+  <style>
+    .introjs-tooltip {
+      color: #000 !important;
+      background-color: #fff !important;
+      border: 2px solid #444 !important; 
+      border-radius: 8px;
+      padding: 10px !important;
+    }
+    .introjs-arrow {
+      border-color: #fff !important;
+    }
+    .introjs-tooltiptitle {
+      color: #000 !important;
+      font-weight: bold;
+    }
+    .introjs-tooltiptext {
+      color: #000 !important;
+    }
+    .introjs-button, .introjs-skipbutton, .introjs-donebutton {
+      background-color: #0088ff !important;
+      color: #fff !important;
+      border-radius: 4px !important;
+      padding: 6px 12px !important;
+      margin: 2px !important;
+      border: none !important;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
   <div class="container my-5">
@@ -96,9 +133,8 @@
       <div class="mb-4">
         <label class="form-label">Select Tracks:</label>
         <div class="accordion" id="tracksAccordion">
-          <!-- ================================
-               Sección USA TRACKS
-          ================================ -->
+
+          <!-- =========== USA TRACKS =========== -->
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingUSA">
               <button
@@ -119,7 +155,7 @@
               data-bs-parent="#tracksAccordion"
             >
               <div class="accordion-body">
-                <!-- Ejemplo: New York Mid Day -->
+                <!-- New York Mid Day -->
                 <div class="track-button-container">
                   <input
                     class="track-checkbox"
@@ -151,15 +187,267 @@
                     ></span>
                   </label>
                 </div>
-
-                <!-- ... Resto de tracks de USA ... -->
+                <!-- Georgia Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Mid Day"
+                    id="trackGeorgiaMidDay"
+                  />
+                  <label class="track-button" for="trackGeorgiaMidDay">
+                    <span class="track-name">Georgia Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Georgia Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Georgia Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Evening"
+                    id="trackGeorgiaEvening"
+                  />
+                  <label class="track-button" for="trackGeorgiaEvening">
+                    <span class="track-name">Georgia Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Georgia Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- New Jersey Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New Jersey Mid Day"
+                    id="trackNJMidDay"
+                  />
+                  <label class="track-button" for="trackNJMidDay">
+                    <span class="track-name">New Jersey Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="New Jersey Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- New Jersey Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New Jersey Evening"
+                    id="trackNJEvening"
+                  />
+                  <label class="track-button" for="trackNJEvening">
+                    <span class="track-name">New Jersey Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="New Jersey Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Florida Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Florida Mid Day"
+                    id="trackFloridaMidDay"
+                  />
+                  <label class="track-button" for="trackFloridaMidDay">
+                    <span class="track-name">Florida Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Florida Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Florida Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Florida Evening"
+                    id="trackFloridaEvening"
+                  />
+                  <label class="track-button" for="trackFloridaEvening">
+                    <span class="track-name">Florida Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Florida Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Connecticut Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Connecticut Mid Day"
+                    id="trackConnecticutMidDay"
+                  />
+                  <label class="track-button" for="trackConnecticutMidDay">
+                    <span class="track-name">Connecticut Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Connecticut Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Connecticut Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Connecticut Evening"
+                    id="trackConnecticutEvening"
+                  />
+                  <label class="track-button" for="trackConnecticutEvening">
+                    <span class="track-name">Connecticut Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Connecticut Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Georgia Night -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Night"
+                    id="trackGeorgiaNight"
+                  />
+                  <label class="track-button" for="trackGeorgiaNight">
+                    <span class="track-name">Georgia Night</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Georgia Night"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Pensilvania AM -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Pensilvania AM"
+                    id="trackPennsylvaniaAM"
+                  />
+                  <label class="track-button" for="trackPennsylvaniaAM">
+                    <span class="track-name">Pensilvania AM</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Pensilvania AM"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Pensilvania PM -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Pensilvania PM"
+                    id="trackPennsylvaniaPM"
+                  />
+                  <label class="track-button" for="trackPennsylvaniaPM">
+                    <span class="track-name">Pensilvania PM</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Pensilvania PM"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Venezuela -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Venezuela"
+                    id="trackVenezuela"
+                  />
+                  <label class="track-button" for="trackVenezuela">
+                    <span class="track-name">Venezuela</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Venezuela"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Brooklyn Midday -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Brooklyn Midday"
+                    id="trackBrooklynMidday"
+                  />
+                  <label class="track-button" for="trackBrooklynMidday">
+                    <span class="track-name">Brooklyn Midday</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Brooklyn Midday"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Brooklyn Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Brooklyn Evening"
+                    id="trackBrooklynEvening"
+                  />
+                  <label class="track-button" for="trackBrooklynEvening">
+                    <span class="track-name">Brooklyn Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Brooklyn Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Front Midday -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Front Midday"
+                    id="trackFrontMidday"
+                  />
+                  <label class="track-button" for="trackFrontMidday">
+                    <span class="track-name">Front Midday</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Front Midday"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Front Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Front Evening"
+                    id="trackFrontEvening"
+                  />
+                  <label class="track-button" for="trackFrontEvening">
+                    <span class="track-name">Front Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Front Evening"
+                    ></span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- ================================
-               Sección Santo Domingo TRACKS
-          ================================ -->
+          <!-- =========== SANTO DOMINGO TRACKS =========== -->
           <div class="accordion-item">
             <h2 class="accordion-header" id="headingSD">
               <button
@@ -180,7 +468,7 @@
               data-bs-parent="#tracksAccordion"
             >
               <div class="accordion-body">
-                <!-- Ejemplo: Real -->
+                <!-- Real -->
                 <div class="track-button-container">
                   <input
                     class="track-checkbox"
@@ -196,8 +484,182 @@
                     ></span>
                   </label>
                 </div>
-
-                <!-- ... Resto de tracks de Santo Domingo ... -->
+                <!-- Gana mas -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Gana mas"
+                    id="trackGanamas"
+                  />
+                  <label class="track-button" for="trackGanamas">
+                    <span class="track-name">Gana más</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Gana mas"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Loteka -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Loteka"
+                    id="trackLoteka"
+                  />
+                  <label class="track-button" for="trackLoteka">
+                    <span class="track-name">Loteka</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Loteka"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Nacional -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Nacional"
+                    id="trackNacional"
+                  />
+                  <label class="track-button" for="trackNacional">
+                    <span class="track-name">Nacional</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Nacional"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Quiniela Pale -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Quiniela Pale"
+                    id="trackQuinielaPale"
+                  />
+                  <label class="track-button" for="trackQuinielaPale">
+                    <span class="track-name">Quiniela Pale</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Quiniela Pale"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Primera Día -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Primera Día"
+                    id="trackPrimeraDia"
+                  />
+                  <label class="track-button" for="trackPrimeraDia">
+                    <span class="track-name">Primera Día</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Primera Día"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Suerte Día -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Suerte Día"
+                    id="trackSuerteDia"
+                  />
+                  <label class="track-button" for="trackSuerteDia">
+                    <span class="track-name">Suerte Día</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Suerte Día"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Lotería Real -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Lotería Real"
+                    id="trackLoteriaReal"
+                  />
+                  <label class="track-button" for="trackLoteriaReal">
+                    <span class="track-name">Lotería Real</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Lotería Real"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Suerte Tarde -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Suerte Tarde"
+                    id="trackSuerteTarde"
+                  />
+                  <label class="track-button" for="trackSuerteTarde">
+                    <span class="track-name">Suerte Tarde</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Suerte Tarde"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Lotedom -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Lotedom"
+                    id="trackLotedom"
+                  />
+                  <label class="track-button" for="trackLotedom">
+                    <span class="track-name">Lotedom</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Lotedom"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Primera Noche -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Primera Noche"
+                    id="trackPrimeraNoche"
+                  />
+                  <label class="track-button" for="trackPrimeraNoche">
+                    <span class="track-name">Primera Noche</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Primera Noche"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Panama -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Panama"
+                    id="trackPanama"
+                  />
+                  <label class="track-button" for="trackPanama">
+                    <span class="track-name">Panamá</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Panama"
+                    ></span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -387,11 +849,7 @@
     </div>
   </div>
 
-  <!-- 
-       =================================
-       WIZARD MODAL (Quick Entry)
-       =================================
-  -->
+  <!-- =============== WIZARD MODAL =============== -->
   <div
     class="modal fade"
     id="wizardModal"
@@ -399,7 +857,6 @@
     aria-labelledby="wizardModalLabel"
     aria-hidden="true"
   >
-    <!-- Fullscreen on small devices -->
     <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -656,6 +1113,7 @@
     </div>
   </div>
 
+
   <!-- JS Libraries at the end -->
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -690,124 +1148,110 @@
   <!-- Our custom JS => scripts.js -->
   <script src="scripts.js"></script>
 
-  <!-- Bloque final con los tutorialSteps en 3 idiomas + fix default date -->
+  <!-- Bloque final con los tutorialSteps en 3 idiomas y transiciones Wizard -->
   <script>
-  // ===========================
-  // Ajuste para Flatpickr => setDate hoy
-  // ===========================
-  // Insertamos un pequeño fix al onReady de Flatpickr para que asigne la fecha actual al input
-  document.addEventListener('DOMContentLoaded', function() {
-    // Esperamos a que scripts.js defina el flatpickr
-    // Sobrescribimos onReady
-    if (typeof flatpickr === 'function') {
-      const original = flatpickr;
-      // al final scripts.js llama flatpickr("#fecha",{ ... })
-      // interceptamos su config para forzar setDate
-      // (solo si no se hace ya)
-    }
-  });
+  // =========== TUTORIAL STEPS (ENG, ESP, CREOLE) ===========
 
-  // ===========================
-  // 1) ARRAYS DE PASOS (INGLÉS, ESPAÑOL, CREOLE)
-  // ===========================
+  // Ajustamos con textos detallados. 
+  // El primer 'onbeforechange' abre wizard, y más adelante cerramos wizard.
+
   const tutorialStepsEN = [
     {
       element: "#fecha",
-      intro: "Bet Dates: 'Today' is automatically selected, so you don't need to tap. You can add more days, or remove the default day if you want future bets.",
+      intro: "Bet Dates: 'Today' is automatically selected, so no need to tap. You can add more days or remove the default if you want future bets.",
       position: "bottom"
     },
     {
       element: "#tracksAccordion",
-      intro: "Tracks: The list is split in 'USA' or 'Santo Domingo'. Expand each to see available draws. If you plan to play the 'Venezuela' mode, check 'Venezuela' plus at least one USA track.",
+      intro: "Tracks: Expand 'USA' or 'Santo Domingo' to pick your draws. For 'Venezuela' mode, also check 'Venezuela' plus any USA track.",
       position: "top"
     },
     {
       element: "#tablaJugadas",
-      intro: "Main Table: You can add rows with 'Add Play' and fill Bet Number, Straight, Box, and Combo. The system calculates your total automatically.",
+      intro: "Main Table: Each row is a bet. Fill Bet Number, Straight, Box, Combo, and the system calculates your total automatically.",
       position: "top"
     },
     {
       element: "#agregarJugada",
-      intro: "Click here to add a new row for manual input of a bet.",
+      intro: "Add Play: Create a new row for a manual bet.",
       position: "bottom"
     },
     {
       element: "#eliminarJugada",
-      intro: "Remove Last Play: If you made a mistake, remove the most recent row you added.",
+      intro: "Remove Last Play: If you made a mistake, remove the most recent row.",
       position: "bottom"
     },
     {
       element: "#resetForm",
-      intro: "Reset Form: Clears everything (tracks, plays, total) so you can start fresh.",
+      intro: "Reset Form: Clears all data (tracks, plays, totals) so you start fresh.",
       position: "bottom"
     },
     {
       element: "#wizardButton",
-      intro: "Wizard: This Quick Entry window is faster for random numbers or repeated wagers. Click Next to open the Wizard.",
+      intro: "Wizard: A quick-entry window for random or repeated wagers. Click Next to open it automatically.",
       position: "bottom",
       onbeforechange: () => {
-        // simula clic
         $("#wizardButton").trigger("click");
       }
     },
     {
       element: "#wizardModal",
-      intro: "Welcome to the Quick Entry Wizard. You can manually add lines or generate random ones. We'll see each part now.",
+      intro: "Welcome to Quick Entry Wizard. Add lines manually or generate them. Let's see each section.",
       position: "top"
     },
     {
       element: "#wizardBetNumber",
-      intro: "Bet Number: Type 2–4 digits (or 5 with a dash/x). Then press 'Add & Next' to queue it below.",
+      intro: "Bet Number: 2–4 digits, or 5 with dash/x for Pale. Then press 'Add & Next.'",
       position: "top"
     },
     {
       element: "#wizardStraight",
-      intro: "Straight: Enter your wager. If you lock it, each new line uses the same Straight automatically.",
+      intro: "Straight: Enter your wager. Lock it if you want the same amount on every new line.",
       position: "top"
     },
     {
       element: "#wizardBox",
-      intro: "Box: If your play includes a box portion, put it here. You can also lock it if needed.",
+      intro: "Box: If your bet includes a box portion, put it here. You can also lock it.",
       position: "top"
     },
     {
       element: "#wizardCombo",
-      intro: "Combo: Another type of wager. Locking it means the same Combo for every new line.",
+      intro: "Combo: Another type of wager. Lock it to apply the same combo to all subsequent entries.",
       position: "top"
     },
     {
       element: "#wizardAddAllToMain",
-      intro: "Add Main: Once you've created your lines, you must add them to the main form or they'll be lost upon closing the Wizard.",
+      intro: "Add Main: Send your newly created lines to the main form. If you close the wizard without adding, they're lost.",
       position: "left"
     },
     {
       element: "#btnGenerateQuickPick",
-      intro: "Quick Pick: Generate random plays automatically, picking a Game Mode and how many lines you want.",
+      intro: "Quick Pick: Instantly generate random plays for a chosen game mode.",
       position: "top"
     },
     {
       element: "#btnPermute",
-      intro: "Permute: Takes all digits from existing lines and shuffles them around for new combos.",
+      intro: "Permute: Shuffle digits among existing lines for new combos.",
       position: "top"
     },
     {
       element: "#btnGenerateRoundDown",
-      intro: "Round Down: Creates a block of 10 lines by varying digits from First Number to Last Number sequentially.",
+      intro: "Round Down: Create a sequence of 10 lines by varying digits from a first to a last number.",
       position: "top"
     },
     {
       element: "#wizardGenerateTicket",
-      intro: "Generate: Skip the main form and open a Ticket Preview directly from the Wizard.",
+      intro: "Generate: Jump straight to the Ticket Preview from here.",
       position: "left"
     },
     {
       element: "#wizardEditMainForm",
-      intro: "Edit Main: Closes the Wizard and returns to your main table if you want to check or edit anything.",
+      intro: "Edit Main: Return to the main form if you want to see your lines or adjust something.",
       position: "left"
     },
     {
       element: "#wizardModal",
-      intro: "We'll close the Wizard now. Next step is generating your final Ticket from the main form if you wish.",
+      intro: "We'll now close the Wizard. Next, we can finalize the ticket in the main form if desired.",
       position: "top",
       onbeforechange: () => {
         $("#wizardModal").modal("hide");
@@ -815,12 +1259,12 @@
     },
     {
       element: "#generarTicket",
-      intro: "Generate Ticket: Once your lines are in the main table, click here to finalize, see a preview, and print/share your ticket.",
+      intro: "Generate Ticket: Once lines are set, see a final preview, confirm, print, or share your ticket.",
       position: "bottom"
     },
     {
       element: "#totalJugadas",
-      intro: "Total Plays: This is the grand total of your wagers, multiplied by the number of days and tracks selected.",
+      intro: "Total Plays: The total cost of your wagers, multiplied by selected tracks and dates.",
       position: "left"
     }
   ];
@@ -828,37 +1272,37 @@
   const tutorialStepsES = [
     {
       element: "#fecha",
-      intro: "Fechas de Apuesta: Se selecciona 'hoy' automáticamente para que no tengas que pulsar nada. Puedes añadir más días o quitar el de hoy si quieres apostar a futuro.",
+      intro: "Fechas: 'Hoy' se selecciona en automático, así no tienes que tocar nada. Puedes añadir más días o eliminar el de hoy si deseas apostar a futuro.",
       position: "bottom"
     },
     {
       element: "#tracksAccordion",
-      intro: "Tracks: Están separados en 'USA' y 'Santo Domingo'. Despliega cada uno para ver las opciones. Si vas a jugar modo 'Venezuela', marca 'Venezuela' y un track de USA a la vez.",
+      intro: "Tracks: Despliega 'USA' o 'Santo Domingo' para elegir tus loterías. Para modo 'Venezuela', marca también 'Venezuela' y un track de USA.",
       position: "top"
     },
     {
       element: "#tablaJugadas",
-      intro: "Tabla Principal: Aquí se verán tus jugadas. Puedes añadir filas con 'Add Play' y poner Bet Number, Straight, Box y Combo. El total se calcula solo.",
+      intro: "Tabla Principal: Cada fila es una jugada. Llena 'Bet Number', 'Straight', 'Box', 'Combo', y el total se calcula automáticamente.",
       position: "top"
     },
     {
       element: "#agregarJugada",
-      intro: "Add Play: Crea una fila nueva para una jugada manual.",
+      intro: "Add Play: Crea una nueva fila para ingresar una jugada manual.",
       position: "bottom"
     },
     {
       element: "#eliminarJugada",
-      intro: "Remove Last Play: Si te equivocaste, borra la última jugada ingresada.",
+      intro: "Remove Last Play: Si te equivocaste, quita la última jugada agregada.",
       position: "bottom"
     },
     {
       element: "#resetForm",
-      intro: "Reset Form: Limpia todo (tracks, jugadas, total) para empezar de cero.",
+      intro: "Reset Form: Limpia todos los datos (tracks, jugadas, total) para empezar de cero.",
       position: "bottom"
     },
     {
       element: "#wizardButton",
-      intro: "Wizard: Abre una ventana de entrada rápida con números aleatorios o repetitivos. Haz clic en Siguiente para abrirla.",
+      intro: "Wizard: Una ventana de entrada rápida para jugadas aleatorias o repetidas. Haz clic en Siguiente para abrirlo.",
       position: "bottom",
       onbeforechange: () => {
         $("#wizardButton").trigger("click");
@@ -866,224 +1310,34 @@
     },
     {
       element: "#wizardModal",
-      intro: "Bienvenido al Quick Entry Wizard. Aquí puedes ingresar jugadas manualmente o generarlas. Revisemos cada parte.",
+      intro: "Bienvenido al Wizard. Puedes agregar jugadas manualmente o generarlas. Veamos cada sección.",
       position: "top"
     },
     {
       element: "#wizardBetNumber",
-      intro: "Bet Number: Ingresa 2–4 dígitos (o 5 con guion/x). Luego pulsa 'Add & Next' para añadirlo abajo.",
+      intro: "Bet Number: 2–4 dígitos, o 5 si lleva guion/x para Pale. Luego 'Add & Next'.",
       position: "top"
     },
     {
       element: "#wizardStraight",
-      intro: "Straight: Monto de apuesta directa. Si lo bloqueas, ese valor se reutiliza en cada jugada nueva.",
+      intro: "Straight: Monto directo de apuesta. Si lo bloqueas, usarás el mismo en cada nueva jugada.",
       position: "top"
     },
     {
       element: "#wizardBox",
-      intro: "Box: Indica si la jugada lleva box. También se puede bloquear.",
+      intro: "Box: Si tu jugada lleva box, aquí. También se puede bloquear.",
       position: "top"
     },
     {
       element: "#wizardCombo",
-      intro: "Combo: Otro tipo de apuesta. Al bloquearlo, usas el mismo combo en todas las jugadas siguientes.",
+      intro: "Combo: Otro tipo de apuesta. Al bloquearlo, se mantiene en cada jugada nueva.",
       position: "top"
     },
     {
       element: "#wizardAddAllToMain",
-      intro: "Add Main: Pasa tus jugadas al formulario principal. Si cierras sin hacer esto, se perderán.",
+      intro: "Add Main: Para que las jugadas queden en el formulario principal. Si cierras sin añadir, se pierden.",
       position: "left"
     },
     {
       element: "#btnGenerateQuickPick",
-      intro: "Quick Pick: Genera jugadas aleatorias automáticamente, eligiendo 'Game Mode' y cantidad de jugadas.",
-      position: "top"
-    },
-    {
-      element: "#btnPermute",
-      intro: "Permute: Revuelve los dígitos de las jugadas existentes para formar nuevas combinaciones.",
-      position: "top"
-    },
-    {
-      element: "#btnGenerateRoundDown",
-      intro: "Round Down: Crea 10 jugadas variando dígitos entre un primer y último número de forma consecutiva.",
-      position: "top"
-    },
-    {
-      element: "#wizardGenerateTicket",
-      intro: "Generate: Si quieres saltarte el formulario principal y ver el Ticket Preview, usa este botón.",
-      position: "left"
-    },
-    {
-      element: "#wizardEditMainForm",
-      intro: "Edit Main: Cierra el Wizard y vuelve a la tabla principal si deseas revisar algo.",
-      position: "left"
-    },
-    {
-      element: "#wizardModal",
-      intro: "Cerraremos el Wizard. El siguiente paso es generar tu Ticket en el formulario principal, si gustas.",
-      position: "top",
-      onbeforechange: () => {
-        $("#wizardModal").modal("hide");
-      }
-    },
-    {
-      element: "#generarTicket",
-      intro: "Generate Ticket: Al tener listas tus jugadas, presiona aquí para ver la vista previa final y confirmarlas.",
-      position: "bottom"
-    },
-    {
-      element: "#totalJugadas",
-      intro: "Total Plays: Es el total de tu apuesta, multiplicado por la cantidad de días y tracks elegidos.",
-      position: "left"
-    }
-  ];
-
-  const tutorialStepsCREOLE = [
-    {
-      element: "#fecha",
-      intro: "Dat Paray: 'Jodia' seleksyone otomatikman. Ou ka ajoute plis jou ou retire jodia si vle parye pou pi devan.",
-      position: "bottom"
-    },
-    {
-      element: "#tracksAccordion",
-      intro: "Tracks: Separe an 'USA' ak 'Santo Domingo'. Ou ka louvri chak pou wè opsyon. Si w vle jwe 'Venezuela', kombine 'Venezuela' ak youn track USA.",
-      position: "top"
-    },
-    {
-      element: "#tablaJugadas",
-      intro: "Tablo Prensipal: La a w ap mete tout jwe ou. Ou kapab ajoute liy ak 'Add Play'. Sistèm lan kalkile total pou ou.",
-      position: "top"
-    },
-    {
-      element: "#agregarJugada",
-      intro: "Add Play: Ajoute yon nouvo liy pou antre manch-boul ou manyèlman.",
-      position: "bottom"
-    },
-    {
-      element: "#eliminarJugada",
-      intro: "Remove Last Play: Si w fè erè, efase dènye jwe ou te mete.",
-      position: "bottom"
-    },
-    {
-      element: "#resetForm",
-      intro: "Reset Form: Efase tout bagay (tracks, jwe, total) pou kòmanse a zewo.",
-      position: "bottom"
-    },
-    {
-      element: "#wizardButton",
-      intro: "Wizard: Ouvri yon fenèt pou antre jwe rapid, kit se aléatwa ou menm konbinezon. Peze 'Next' pou louvri.",
-      position: "bottom",
-      onbeforechange: () => {
-        $("#wizardButton").trigger("click");
-      }
-    },
-    {
-      element: "#wizardModal",
-      intro: "Byenvini nan Quick Entry Wizard. Ou ka mete jwe manually oswa pwodui yo. An gade chak pati.",
-      position: "top"
-    },
-    {
-      element: "#wizardBetNumber",
-      intro: "Bet Number: Antre 2–4 chif (ou 5 si gen tirè/x). Apre sa peze 'Add & Next'.",
-      position: "top"
-    },
-    {
-      element: "#wizardStraight",
-      intro: "Straight: Montant paray ou. Si ou 'lock' li, tout nouvo jwe ap rete menm kob la pou Straight.",
-      position: "top"
-    },
-    {
-      element: "#wizardBox",
-      intro: "Box: Si jwe ou genyen box, mete li la. Ou ka lock li tou.",
-      position: "top"
-    },
-    {
-      element: "#wizardCombo",
-      intro: "Combo: Yon lot tip paray. Si ou lock li, li aplike pou tout jwe kap vini.",
-      position: "top"
-    },
-    {
-      element: "#wizardAddAllToMain",
-      intro: "Add Main: Fo w ajoute jwe yo anvan w fèmen Wizard. Si non, y ap pèdi.",
-      position: "left"
-    },
-    {
-      element: "#btnGenerateQuickPick",
-      intro: "Quick Pick: Genere manch-boul aleatwa imedyatman. Chwazi mode lan ak konbyen jwe ou vle.",
-      position: "top"
-    },
-    {
-      element: "#btnPermute",
-      intro: "Permute: Brase chif ki deja nan jwe ou yo pou fè nouvo kombinezon.",
-      position: "top"
-    },
-    {
-      element: "#btnGenerateRoundDown",
-      intro: "Round Down: Kreye 10 jwe pa varye chif kòmanse ak dènye chif ou mete.",
-      position: "top"
-    },
-    {
-      element: "#wizardGenerateTicket",
-      intro: "Generate: Sote tablo prensipal la epi al dirèkteman Ticket Preview si ou vle.",
-      position: "left"
-    },
-    {
-      element: "#wizardEditMainForm",
-      intro: "Edit Main: Fèmen Wizard la epi retounen tablo prensipal si gen bagay ou vle chanje.",
-      position: "left"
-    },
-    {
-      element: "#wizardModal",
-      intro: "Nou pral fèmen Wizard kounye a. Apre sa, ou kapab 'Generate Ticket' pou fini paray ou.",
-      position: "top",
-      onbeforechange: () => {
-        $("#wizardModal").modal("hide");
-      }
-    },
-    {
-      element: "#generarTicket",
-      intro: "Generate Ticket: Apre ou fin mete jwe ou, peze sa pou wè preview final, konfime, epi enprime/partaje.",
-      position: "bottom"
-    },
-    {
-      element: "#totalJugadas",
-      intro: "Total Plays: Montan total pari ou, miltipliye pa konbyen jou ak tracks ou chwazi.",
-      position: "left"
-    }
-  ];
-
-  // ===========================
-  // 2) Enganchamos a scripts.js => definimos 3 listeners
-  // ===========================
-  $("#helpEnglish").click(function(){
-    startTutorial(tutorialStepsEN, "Next", "Back", "Skip", "Done");
-  });
-  $("#helpSpanish").click(function(){
-    startTutorial(tutorialStepsES, "Siguiente", "Atrás", "Saltar", "Hecho");
-  });
-  $("#helpCreole").click(function(){
-    startTutorial(tutorialStepsCREOLE, "Next", "Back", "Skip", "Done");
-  });
-
-  // ===========================
-  // 3) Función para iniciar Intro.js con los pasos e idioma
-  // ===========================
-  function startTutorial(stepsArray, nextLabel, prevLabel, skipLabel, doneLabel){
-    introJs()
-      .setOptions({
-        steps: stepsArray,
-        showProgress: true,
-        showBullets: false,
-        exitOnOverlayClick: false,
-        nextLabel: nextLabel,
-        prevLabel: prevLabel,
-        skipLabel: skipLabel,
-        doneLabel: doneLabel
-      })
-      .start();
-  }
-
-  </script>
-</body>
-</html>
+      intro: "Quick Pick: Genera jugadas aleatorias según un modo de juego y cuántas jugadas
