@@ -1,12 +1,14 @@
- /* 
+   /* 
   scripts.js
   ----------------------------------------------------------------
   Versión ~1100+ líneas con:
-   1) Round Down, Quick Pick, localStorage,
-   2) “Pale-Ven” / “Pale-RD” al detectar un guion o x en betNumber,
-   3) Tres tutoriales distintos (Inglés, Español, Criollo) para #helpEnglish, #helpSpanish, #helpCreole,
-   4) Eliminado el viejo #helpButton,
-   5) Flatpickr con la fecha de hoy por defecto, wizard, etc.
+   1) Round Down, Quick Pick, localStorage, “Permute” en Wizard, 
+   2) Resaltar duplicados (clase .duplicado),
+   3) Resaltar errores (clase .error-field),
+   4) Selecciona automáticamente el día de hoy (defaultDate: [ new Date() ]),
+   5) Zoom mayor (scale=2.0) en onOpen del Flatpickr.
+
+  ¡Sin perder el resto de la lógica!
 */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -30,10 +32,10 @@ $(document).ready(function() {
   let selectedDaysCount = 0;
   const MAX_PLAYS = 25;
 
-  let playCount = 0;         // # rows en main table
-  let wizardCount = 0;       // # rows en wizard
+  let playCount = 0;         // # rows in main table
+  let wizardCount = 0;       // # rows in wizard table
 
-  // En wizard => candados
+  // En wizard, candados
   const lockedFields = {
     straight: false,
     box: false,
@@ -84,21 +86,21 @@ $(document).ready(function() {
   };
 
   // =========================================================
-  // INIT FLATPICKR => Selecciona hoy sin requerir clic
+  // INIT FLATPICKR
   // =========================================================
   flatpickr("#fecha", {
     mode: "multiple",
     dateFormat: "m-d-Y",
     minDate: "today",
+    // Para que aparezca seleccionado "hoy" en la interfaz
     defaultDate: [ new Date() ],
     clickOpens: true,
     allowInput: false,
     appendTo: document.body,
     onReady: function(selectedDates, dateStr, instance) {
-      // Asegurar que se muestre la fecha 'hoy' sin clic
       instance.calendarContainer.style.zIndex = 999999;
     },
-    // Efecto zoom => scale(2.0)
+    // Efecto zoom => más notorio (scale=2.0)
     onOpen: function() {
       this.calendarContainer.style.transform = 'scale(2.0)';
       this.calendarContainer.style.transformOrigin = 'top left';
@@ -121,7 +123,7 @@ $(document).ready(function() {
     const arr = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
-    // Venezuela no cuenta en el multiplicador
+    // Minimizar la parte de "Venezuela" (no cuenta en multiplicador)
     selectedTracksCount = arr.filter(x => x !== "Venezuela").length || 1;
     calculateMainTotal();
     disableTracksByTime();
@@ -155,7 +157,7 @@ $(document).ready(function() {
     highlightDuplicatesInMain();
   });
 
-  // Al cambiar input => recalcular
+  // Recalc on input
   $("#tablaJugadas").on("input", ".betNumber, .straight, .box, .combo", function(){
     const row = $(this).closest("tr");
     recalcMainRow(row);
@@ -170,8 +172,6 @@ $(document).ready(function() {
     }
     playCount++;
     const rowIndex = playCount;
-
-    // Straight y combo => numéricos
     const rowHTML = `
       <tr data-playIndex="${rowIndex}">
         <td>
@@ -184,13 +184,13 @@ $(document).ready(function() {
         </td>
         <td class="gameMode">-</td>
         <td>
-          <input type="number" step="1" class="form-control straight" />
+          <input type="text" class="form-control straight" />
         </td>
         <td>
           <input type="text" class="form-control box" />
         </td>
         <td>
-          <input type="number" step="0.01" class="form-control combo" />
+          <input type="text" class="form-control combo" />
         </td>
         <td class="total">0.00</td>
       </tr>
@@ -210,6 +210,7 @@ $(document).ready(function() {
     storeFormState();
   }
 
+  // Recalcula 1 fila
   function recalcMainRow($row){
     const bn = $row.find(".betNumber").val().trim();
     const gm = determineGameMode(bn);
@@ -225,14 +226,17 @@ $(document).ready(function() {
   }
 
   /* =========================================================
-     calculateMainTotal
+     function calculateMainTotal
   ========================================================= */
   function calculateMainTotal(){
     let sum=0;
+    // suma los totales
     $("#tablaJugadas tr").each(function(){
-      const val= parseFloat($(this).find(".total").text())||0;
+      const totalCell= $(this).find(".total").text();
+      const val= parseFloat(totalCell)||0;
       sum+= val;
     });
+    // multiplica por # tracks y # dias
     if(selectedDaysCount===0){
       sum=0;
     } else {
@@ -243,63 +247,37 @@ $(document).ready(function() {
   }
 
   /* =========================================================
-     determineGameMode => "Pale" con - o x
+     DETERMINE GAME MODE
   ========================================================= */
-  function determineGameMode(bn){
-    // Hasta 5 chars => 2..5
-    if(!bn || bn.length<2 || bn.length>5) return "-";
-
+  function determineGameMode(betNumber){
+    if(!betNumber || betNumber.length<2 || betNumber.length>4) return "-";
     const tracks = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
     const isUSA = tracks.some(t => cutoffTimes.USA[t]);
     const isSD  = tracks.some(t => cutoffTimes["Santo Domingo"][t]);
-    const includesVen = tracks.includes("Venezuela");
+    const includesVenezuela = tracks.includes("Venezuela");
+    const length = betNumber.length;
 
-    // 1) VENEZUELA + USA => "Ven" o "Pale-Ven"
-    if(includesVen && isUSA){
-      // 2 díg => Ven
-      if(/^\d{2}$/.test(bn)) {
-        return "Ven";
-      }
-      // 22-50 => "Pale-Ven"
-      if(/^\d{2}[-xX]\d{2}$/.test(bn)){
-        return "Pale-Ven";
-      }
-      // Sino => lo maneja como Win4,Pick3,Pulito
-      if(bn.length===4) return "Win 4";
-      if(bn.length===3) return "Pick 3";
-      if(bn.length===2) return "Pulito";
-      return "-";
+    if(includesVenezuela && isUSA){
+      if(length===2) return "Venezuela";
+      if(length===4) return "Venezuela-Pale";
     }
-
-    // 2) SOLO USA
-    if(isUSA && !isSD){
-      if(bn.length===4) return "Win 4";
-      if(bn.length===3) return "Pick 3";
-      if(bn.length===2) return "Pulito";
-      return "-";
+    else if(isUSA && !isSD){
+      if(length===4) return "Win 4";
+      if(length===3) return "Pick 3";
+      if(length===2) return "Pulito";
     }
-
-    // 3) SOLO SD
-    if(isSD && !isUSA){
-      // 2 dig => RD-Quiniela
-      if(/^\d{2}$/.test(bn)){
-        return "RD-Quiniela";
-      }
-      // 22-50 => Pale-RD
-      if(/^\d{2}[-xX]\d{2}$/.test(bn)){
-        return "Pale-RD";
-      }
-      return "-";
+    else if(isSD && !isUSA){
+      if(length===2) return "RD-Quiniela";
+      if(length===4) return "RD-Pale";
     }
-
     return "-";
   }
 
   function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
     if(!bn || gm==="-") return "0.00";
-    const st = parseFloat(stVal)||0;
+    const st = parseFloat(stVal) || 0;
     const combo = parseFloat(coVal)||0;
 
     if(gm==="Pulito"){
@@ -309,7 +287,7 @@ $(document).ready(function() {
       }
       return "0.00";
     }
-    if(gm==="Ven" || gm.startsWith("RD-") || gm==="Pale-Ven" || gm==="Pale-RD"){
+    if(gm==="Venezuela" || gm.startsWith("RD-")){
       return st.toFixed(2);
     }
     if(gm==="Win 4" || gm==="Pick 3"){
@@ -326,11 +304,11 @@ $(document).ready(function() {
   }
 
   function calcCombos(str){
-    const freq={};
+    const freq = {};
     for(let c of str){
-      freq[c]=(freq[c]||0)+1;
+      freq[c] = (freq[c]||0)+1;
     }
-    const factorial = n=> n<=1?1 : n*factorial(n-1);
+    const factorial = n => n<=1 ? 1 : n*factorial(n-1);
     let denom=1;
     for(let k in freq){
       denom*= factorial(freq[k]);
@@ -342,7 +320,7 @@ $(document).ready(function() {
      LOCALSTORAGE => store/load
   ========================================================= */
   function storeFormState(){
-    const st={
+    const st = {
       selectedTracksCount,
       selectedDaysCount,
       dateVal: $("#fecha").val(),
@@ -350,19 +328,19 @@ $(document).ready(function() {
       plays: []
     };
     $("#tablaJugadas tr").each(function(){
-      const bn=$(this).find(".betNumber").val();
-      const gm=$(this).find(".gameMode").text();
-      const stv=$(this).find(".straight").val();
-      const bxv=$(this).find(".box").val();
-      const cov=$(this).find(".combo").val();
-      const tot=$(this).find(".total").text();
+      const bn = $(this).find(".betNumber").val();
+      const gm = $(this).find(".gameMode").text();
+      const stv= $(this).find(".straight").val();
+      const bxv= $(this).find(".box").val();
+      const cov= $(this).find(".combo").val();
+      const tot= $(this).find(".total").text();
       st.plays.push({
-        betNumber: bn||"",
-        gameMode: gm||"-",
-        straight: stv||"",
-        box: bxv||"",
-        combo: cov||"",
-        total: tot||"0.00"
+        betNumber: bn || "",
+        gameMode: gm || "-",
+        straight: stv || "",
+        box: bxv || "",
+        combo: cov || "",
+        total: tot || "0.00"
       });
     });
     localStorage.setItem("formState", JSON.stringify(st));
@@ -371,7 +349,7 @@ $(document).ready(function() {
   function loadFormState(){
     const data=JSON.parse(localStorage.getItem("formState"));
     if(!data) return;
-    $("#fecha").val(data.dateVal||"");
+    $("#fecha").val(data.dateVal || "");
     selectedDaysCount= data.selectedDaysCount||0;
     selectedTracksCount= data.selectedTracksCount||1;
     playCount= data.playCount||0;
@@ -380,7 +358,7 @@ $(document).ready(function() {
     let i=0;
     data.plays.forEach((p)=>{
       i++;
-      const rowHTML=`
+      const rowHTML = `
         <tr data-playIndex="${i}">
           <td>
             <button type="button" class="btnRemovePlay removeMainBtn" data-row="${i}">${i}</button>
@@ -390,24 +368,31 @@ $(document).ready(function() {
           </td>
           <td class="gameMode">${p.gameMode||"-"}</td>
           <td>
-            <input type="number" step="1" class="form-control straight" value="${p.straight||""}" />
+            <input type="text" class="form-control straight" value="${p.straight||""}" />
           </td>
           <td>
             <input type="text" class="form-control box" value="${p.box||""}" />
           </td>
           <td>
-            <input type="number" step="0.01" class="form-control combo" value="${p.combo||""}" />
+            <input type="text" class="form-control combo" value="${p.combo||""}" />
           </td>
           <td class="total">${p.total||"0.00"}</td>
         </tr>
       `;
       $("#tablaJugadas").append(rowHTML);
     });
-    playCount=i;
+    playCount = i;
     recalcAllMainRows();
     calculateMainTotal();
     highlightDuplicatesInMain();
   }
+
+  function recalcAllMainRows(){
+    $("#tablaJugadas tr").each(function(){
+      recalcMainRow($(this));
+    });
+  }
+
   loadFormState();
 
   /* =========================================================
@@ -431,6 +416,7 @@ $(document).ready(function() {
     showCutoffTimes();
     disableTracksByTime();
     isProgrammaticReset=false;
+    // re-check track auto selection
     autoSelectNYTrack();
   }
 
@@ -449,7 +435,7 @@ $(document).ready(function() {
     }
     $("#ticketFecha").text(dateVal);
 
-    const chosenTracks=$(".track-checkbox:checked")
+    const chosenTracks = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
     if(chosenTracks.length===0){
@@ -458,12 +444,12 @@ $(document).ready(function() {
     }
     $("#ticketTracks").text(chosenTracks.join(", "));
 
-    // cutoff
-    const arrDates=dateVal.split(", ");
-    const today=dayjs().startOf("day");
+    // Verificar cutoff si user eligió hoy
+    const arrDates = dateVal.split(", ");
+    const today = dayjs().startOf("day");
     for(let ds of arrDates){
-      const [mm,dd,yy]=ds.split("-").map(Number);
-      const picked=dayjs(new Date(yy,mm-1,dd)).startOf("day");
+      const [mm,dd,yy] = ds.split("-").map(Number);
+      const picked = dayjs(new Date(yy, mm-1, dd)).startOf("day");
       if(picked.isSame(today,"day")){
         const now=dayjs();
         for(let t of chosenTracks){
@@ -472,7 +458,7 @@ $(document).ready(function() {
           if(raw){
             let co= dayjs(raw,"HH:mm");
             let cf= co.isAfter(dayjs("21:30","HH:mm")) ? dayjs("22:00","HH:mm") : co.subtract(10,"minute");
-            if(now.isSame(cf)|| now.isAfter(cf)){
+            if(now.isSame(cf)||now.isAfter(cf)){
               alert(`Track "${t}" is closed for today.`);
               return;
             }
@@ -481,33 +467,35 @@ $(document).ready(function() {
       }
     }
 
-    // Validar
-    const rows=$("#tablaJugadas tr");
+    // Validar filas => highlight error
+    const rows = $("#tablaJugadas tr");
     let valid=true;
     const errors=[];
     rows.each(function(){
-      $(this).find(".betNumber,.straight,.box,.combo").removeClass("error-field");
+      $(this).find(".betNumber,.straight,.box,.combo").removeClass("error-field"); 
     });
-    rows.each(function(){
-      const rowIndex=parseInt($(this).attr("data-playIndex"));
-      const bn=$(this).find(".betNumber").val().trim();
-      const gm=$(this).find(".gameMode").text();
-      const st=$(this).find(".straight").val();
-      const bx=$(this).find(".box").val();
-      const co=$(this).find(".combo").val();
 
-      let errorHere=false;
-      // BN
-      if(!bn || bn.length<2){
+    rows.each(function(){
+      const rowIndex = parseInt($(this).attr("data-playIndex"));
+      const bn = $(this).find(".betNumber").val().trim();
+      const gm = $(this).find(".gameMode").text();
+      const st = $(this).find(".straight").val();
+      const bx = $(this).find(".box").val();
+      const co = $(this).find(".combo").val();
+      const betNumField = $(this).find(".betNumber");
+
+      let errorHere = false;
+      // BN val
+      if(!bn || bn.length<2 || bn.length>4){
         errorHere=true;
         errors.push(rowIndex);
-        $(this).find(".betNumber").addClass("error-field");
+        betNumField.addClass("error-field");
       }
       // Brooklyn/Front => BN=3
       if(hasBrooklynOrFront(chosenTracks) && bn.length!==3){
         errorHere=true;
         errors.push(rowIndex);
-        $(this).find(".betNumber").addClass("error-field");
+        betNumField.addClass("error-field");
       }
       if(gm==="-"){
         errorHere=true;
@@ -515,7 +503,7 @@ $(document).ready(function() {
         $(this).find(".gameMode").addClass("error-field");
       }
       // Modo
-      if(["Ven","Pale-Ven","Pulito","RD-Quiniela","Pale-RD"].includes(gm)){
+      if(["Venezuela","Venezuela-Pale","Pulito","RD-Quiniela","RD-Pale"].includes(gm)){
         if(!st || parseFloat(st)<=0){
           errorHere=true;
           errors.push(rowIndex);
@@ -526,7 +514,8 @@ $(document).ready(function() {
           errors.push(rowIndex);
           $(this).find(".box").addClass("error-field");
         }
-      } else if(["Win 4","Pick 3"].includes(gm)){
+      }
+      else if(["Win 4","Pick 3"].includes(gm)){
         const sVal=parseFloat(st)||0;
         const bVal=parseFloat(bx)||0;
         const cVal=parseFloat(co)||0;
@@ -544,16 +533,16 @@ $(document).ready(function() {
       return;
     }
 
-    // Fill ticket preview
+    // fill ticket table
     $("#ticketJugadas").empty();
     rows.each(function(){
       const rowIndex=$(this).attr("data-playIndex");
-      const bn=$(this).find(".betNumber").val().trim();
-      const gm=$(this).find(".gameMode").text();
-      let stVal=$(this).find(".straight").val().trim();
-      let bxVal=$(this).find(".box").val().trim();
-      let coVal=$(this).find(".combo").val().trim();
-      let totVal=$(this).find(".total").text();
+      const bn  = $(this).find(".betNumber").val().trim();
+      const gm  = $(this).find(".gameMode").text();
+      let stVal = $(this).find(".straight").val().trim();
+      let bxVal = $(this).find(".box").val().trim();
+      let coVal = $(this).find(".combo").val().trim();
+      let totVal= $(this).find(".total").text();
 
       if(!stVal) stVal="0.00";
       if(!bxVal) bxVal="-";
@@ -591,14 +580,14 @@ $(document).ready(function() {
     $(this).prop("disabled",true);
     $("#editButton").addClass("d-none");
 
-    const uniqueTicket= generateUniqueTicketNumber();
+    const uniqueTicket = generateUniqueTicketNumber();
     $("#numeroTicket").text(uniqueTicket);
-    transactionDateTime=dayjs().format("MM/DD/YYYY hh:mm A");
+    transactionDateTime = dayjs().format("MM/DD/YYYY hh:mm A");
     $("#ticketTransaccion").text(transactionDateTime);
 
-    // QR
+    // generate QR
     $("#qrcode").empty();
-    new QRCode(document.getElementById("qrcode"), {
+    new QRCode(document.getElementById("qrcode"),{
       text: uniqueTicket,
       width:128,
       height:128
@@ -636,7 +625,7 @@ $(document).ready(function() {
 
         alert("Your ticket image was downloaded successfully.");
 
-        // Guardar en SheetDB
+        // Save to SheetDB
         saveBetDataToSheetDB(uniqueTicket, success=>{
           if(success){
             console.log("Bet data sent to SheetDB.");
@@ -675,7 +664,7 @@ $(document).ready(function() {
         } else {
           alert("Your browser does not support file sharing. Please share the downloaded image manually.");
         }
-      }catch(err){
+      } catch(err){
         console.error(err);
         alert("Could not share the ticket image. Please try manually.");
       }
@@ -693,26 +682,24 @@ $(document).ready(function() {
     $("#preTicket").css("overflow-x","auto");
   }
 
-  // =========================================================
-  // saveBetDataToSheetDB => SheetDB
-  // =========================================================
+  // SheetDB
   function saveBetDataToSheetDB(uniqueTicket, callback){
-    const dateVal=$("#fecha").val()||"";
-    const chosenTracks=$(".track-checkbox:checked")
+    const dateVal = $("#fecha").val()||"";
+    const chosenTracks = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
-    const joinedTracks=chosenTracks.join(", ");
+    const joinedTracks = chosenTracks.join(", ");
     const nowISO=dayjs().toISOString();
     let betData=[];
 
     $("#tablaJugadas tr").each(function(){
       const rowIndex=$(this).attr("data-playIndex");
-      const bn=$(this).find(".betNumber").val();
-      const gm=$(this).find(".gameMode").text();
-      const st=$(this).find(".straight").val();
-      const bx=$(this).find(".box").val();
-      const co=$(this).find(".combo").val();
-      const tot=$(this).find(".total").text();
+      const bn = $(this).find(".betNumber").val();
+      const gm = $(this).find(".gameMode").text();
+      const st = $(this).find(".straight").val();
+      const bx = $(this).find(".box").val();
+      const co = $(this).find(".combo").val();
+      const tot= $(this).find(".total").text();
 
       if(gm!=="-"){
         betData.push({
@@ -759,12 +746,10 @@ $(document).ready(function() {
     }
     return null;
   }
-
   function hasBrooklynOrFront(tracks){
-    const bfSet=new Set(["Brooklyn Midday","Brooklyn Evening","Front Midday","Front Evening"]);
+    const bfSet = new Set(["Brooklyn Midday","Brooklyn Evening","Front Midday","Front Evening"]);
     return tracks.some(t=> bfSet.has(t));
   }
-
   function userChoseToday(){
     const val=$("#fecha").val();
     if(!val) return false;
@@ -777,7 +762,6 @@ $(document).ready(function() {
     }
     return false;
   }
-
   function disableTracksByTime(){
     if(!userChoseToday()){
       enableAllTracks();
@@ -790,8 +774,8 @@ $(document).ready(function() {
       const raw=getTrackCutoff(val);
       if(raw){
         let co=dayjs(raw,"HH:mm");
-        let cf= co.isAfter(dayjs("21:30","HH:mm")) ? dayjs("22:00","HH:mm") : co.subtract(10,"minute");
-        if(now.isSame(cf)|| now.isAfter(cf)){
+        let cf=co.isAfter(dayjs("21:30","HH:mm"))?dayjs("22:00","HH:mm"):co.subtract(10,"minute");
+        if(now.isSame(cf)||now.isAfter(cf)){
           $(this).prop("checked",false).prop("disabled",true);
           $(this).closest(".track-button-container").find(".track-button").css({
             opacity:0.5,
@@ -808,7 +792,6 @@ $(document).ready(function() {
     });
     storeFormState();
   }
-
   function enableAllTracks(){
     $(".track-checkbox").each(function(){
       $(this).prop("disabled",false);
@@ -818,7 +801,6 @@ $(document).ready(function() {
       });
     });
   }
-
   showCutoffTimes();
   disableTracksByTime();
   setInterval(disableTracksByTime,60000);
@@ -834,7 +816,7 @@ $(document).ready(function() {
 
       if(raw){
         let co=dayjs(raw,"HH:mm");
-        let cf= co.isAfter(dayjs("21:30","HH:mm")) ? dayjs("22:00","HH:mm") : co.subtract(10,"minute");
+        let cf=co.isAfter(dayjs("21:30","HH:mm")) ? dayjs("22:00","HH:mm") : co.subtract(10,"minute");
         const hh=cf.format("HH");
         const mm=cf.format("mm");
         $(this).text(`${hh}:${mm}`);
@@ -871,7 +853,7 @@ $(document).ready(function() {
     $("#rdLastNumber").val("");
   }
 
-  // En wizard => toggles
+  // candados
   $(".lockBtn").click(function(){
     const field=$(this).data("field");
     lockedFields[field]=!lockedFields[field];
@@ -882,25 +864,26 @@ $(document).ready(function() {
     }
   });
 
-  // Add & Next (Wizard)
+  // Add & Next
   $("#wizardAddNext").click(function(){
     const bn=$("#wizardBetNumber").val().trim();
-    if(bn.length<2||bn.length>5){
-      alert("Bet Number must be 2-5 chars (dash or x for Pale).");
+    if(bn.length<2||bn.length>4){
+      alert("Bet Number must be 2-4 digits.");
       return;
     }
     const gm=determineGameMode(bn);
     if(gm==="-"){
-      alert(`Cannot determine game mode for number "${bn}". Check track or format.`);
+      alert(`Cannot determine game mode for number ${bn}. Check tracks or length.`);
       return;
     }
-    let stVal= lockedFields.straight? $("#wizardStraight").val().trim() : $("#wizardStraight").val().trim();
-    let bxVal= lockedFields.box? $("#wizardBox").val().trim() : $("#wizardBox").val().trim();
-    let coVal= lockedFields.combo? $("#wizardCombo").val().trim() : $("#wizardCombo").val().trim();
+    let stVal = lockedFields.straight? $("#wizardStraight").val().trim() : $("#wizardStraight").val().trim();
+    let bxVal = lockedFields.box? $("#wizardBox").val().trim() : $("#wizardBox").val().trim();
+    let coVal = lockedFields.combo? $("#wizardCombo").val().trim() : $("#wizardCombo").val().trim();
 
     const rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
     addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
 
+    // Si candado no está => limpiar
     if(!lockedFields.straight) $("#wizardStraight").val("");
     if(!lockedFields.box) $("#wizardBox").val("");
     if(!lockedFields.combo) $("#wizardCombo").val("");
@@ -944,20 +927,20 @@ $(document).ready(function() {
     wizardCount=i;
   }
 
-  // Quick Pick => wizard
+  // Quick Pick
   $("#btnGenerateQuickPick").click(function(){
     const gm=$("#qpGameMode").val();
-    const countVal=parseInt($("#qpCount").val())||1;
+    const countVal= parseInt($("#qpCount").val())||1;
     if(countVal<1||countVal>25){
-      alert("Enter a count between 1 and 25.");
+      alert("Please enter a count between 1 and 25.");
       return;
     }
-    const stVal= lockedFields.straight? $("#wizardStraight").val().trim() : "";
-    const bxVal= lockedFields.box? $("#wizardBox").val().trim() : "";
-    const coVal= lockedFields.combo? $("#wizardCombo").val().trim() : "";
+    const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): "";
+    const bxVal= lockedFields.box? $("#wizardBox").val().trim(): "";
+    const coVal= lockedFields.combo? $("#wizardCombo").val().trim(): "";
 
     for(let i=0;i<countVal;i++){
-      let bn= generateRandomNumberForMode(gm);
+      let bn = generateRandomNumberForMode(gm);
       bn= padNumberForMode(bn, gm);
       let rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
       addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
@@ -966,50 +949,50 @@ $(document).ready(function() {
   });
 
   function generateRandomNumberForMode(mode){
-    if(mode==="Win 4"||mode==="Pale-Ven"||mode==="Pale-RD"){
+    if(mode==="Win 4"||mode==="Venezuela-Pale"||mode==="RD-Pale"){
       return Math.floor(Math.random()*10000);
     }
     if(mode==="Pick 3"){
       return Math.floor(Math.random()*1000);
     }
-    if(mode==="Ven"||mode==="Pulito"||mode==="RD-Quiniela"){
+    if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela"){
       return Math.floor(Math.random()*100);
     }
     return Math.floor(Math.random()*1000);
   }
-  function padNumberForMode(num,mode){
+  function padNumberForMode(num, mode){
     let length=3;
-    if(mode==="Win 4"||mode==="Pale-Ven"||mode==="Pale-RD") length=4;
-    if(mode==="Ven"||mode==="Pulito"||mode==="RD-Quiniela") length=2;
+    if(mode==="Win 4"||mode==="Venezuela-Pale"||mode==="RD-Pale") length=4;
+    if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela") length=2;
     let s=num.toString();
     while(s.length<length) s="0"+s;
     return s;
   }
 
-  // Round Down => wizard
+  // Round Down
   $("#btnGenerateRoundDown").click(function(){
     const firstNum=$("#rdFirstNumber").val().trim();
-    const lastNum=$("#rdLastNumber").val().trim();
+    const lastNum =$("#rdLastNumber").val().trim();
     if(!firstNum||!lastNum){
       alert("Please enter both first and last number for Round Down.");
       return;
     }
     if(firstNum.length!==lastNum.length){
-      alert("First/Last must have same length (2..4).");
+      alert("First/Last must have the same length (2,3, or 4 digits).");
       return;
     }
-    const len=firstNum.length;
+    const len= firstNum.length;
     let diffPos=[];
     for(let i=0;i<len;i++){
       if(firstNum[i]!==lastNum[i]) diffPos.push(i);
     }
+    // all differ => produce 000..999 => 10 jugadas
     if(diffPos.length===len){
-      // e.g. 000..999 => 10 jugadas
       for(let d=0; d<10; d++){
         let bn=(""+d).repeat(len);
         const gm=determineGameMode(bn);
         if(gm==="-"){
-          alert(`Cannot determine game mode for ${bn}.`);
+          alert(`Cannot determine game mode for number ${bn}. Check tracks or length.`);
           return;
         }
         const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): "";
@@ -1021,6 +1004,7 @@ $(document).ready(function() {
       highlightDuplicatesInWizard();
       return;
     }
+    // exactly 1 pos differ
     if(diffPos.length===1){
       const pos= diffPos[0];
       const prefix= firstNum.split("");
@@ -1041,23 +1025,26 @@ $(document).ready(function() {
       highlightDuplicatesInWizard();
       return;
     }
-    alert("Round Down expects either exactly 1 digit difference, or all differ (like 000..999).");
+    alert("Round Down expects either exactly 1 digit difference, or all differ like 000..999.");
   });
 
-  // Permute => wizard
+  // Permute => gather digits from wizard BN, then re-distribute
   $("#btnPermute").click(function(){
     permuteWizardBetNumbers();
   });
+
   function permuteWizardBetNumbers(){
-    const rows=$("#wizardTableBody tr");
+    const rows = $("#wizardTableBody tr");
     if(rows.length===0){
       alert("No plays in the wizard table.");
       return;
     }
+    // gather digits
     let allDigits=[];
-    let lengths=[];
+    let lengths=[]; 
+
     rows.each(function(){
-      const bn=$(this).find("td").eq(1).text().trim();
+      const bn=$(this).find("td").eq(1).text().trim(); 
       lengths.push(bn.length);
       for(let c of bn) allDigits.push(c);
     });
@@ -1065,25 +1052,28 @@ $(document).ready(function() {
       alert("No digits found to permute.");
       return;
     }
+    // shuffle all digits
     shuffleArray(allDigits);
+    // now redistribute
     let idx=0;
     rows.each(function(i){
-      const needed=lengths[i];
+      const needed= lengths[i];
       const subset= allDigits.slice(idx, idx+needed);
       idx+= needed;
-      const newBN=subset.join("");
+      const newBN= subset.join("");
       const gm= determineGameMode(newBN);
-      const stTd=$(this).find("td").eq(3).text().trim();
-      const bxTd=$(this).find("td").eq(4).text().trim();
-      const coTd=$(this).find("td").eq(5).text().trim();
+      const stTd = $(this).find("td").eq(3).text().trim();
+      const bxTd = $(this).find("td").eq(4).text().trim();
+      const coTd = $(this).find("td").eq(5).text().trim();
 
-      const newTotal= calculateRowTotal(newBN, gm, stTd==="-"?"0":stTd, bxTd==="-"?"0":bxTd, coTd==="-"?"0":coTd);
+      const newTotal = calculateRowTotal(newBN, gm, stTd==="-"?"0":stTd, bxTd==="-"?"0":bxTd, coTd==="-"?"0":coTd);
       $(this).find("td").eq(1).text(newBN);
       $(this).find("td").eq(2).text(gm);
       $(this).find("td").eq(6).text(parseFloat(newTotal).toFixed(2));
     });
     highlightDuplicatesInWizard();
   }
+
   function shuffleArray(arr){
     for(let i=arr.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
@@ -1091,7 +1081,7 @@ $(document).ready(function() {
     }
   }
 
-  // Add All => main
+  // Add All to Main
   $("#wizardAddAllToMain").click(function(){
     const wizardRows=$("#wizardTableBody tr");
     if(wizardRows.length===0){
@@ -1126,13 +1116,13 @@ $(document).ready(function() {
             </td>
             <td class="gameMode">${gm}</td>
             <td>
-              <input type="number" step="1" class="form-control straight" value="${stVal}" />
+              <input type="text" class="form-control straight" value="${stVal}" />
             </td>
             <td>
               <input type="text" class="form-control box" value="${bxVal}" />
             </td>
             <td>
-              <input type="number" step="0.01" class="form-control combo" value="${coVal}" />
+              <input type="text" class="form-control combo" value="${coVal}" />
             </td>
             <td class="total">${parseFloat(total||0).toFixed(2)}</td>
           </tr>
@@ -1148,14 +1138,15 @@ $(document).ready(function() {
     storeFormState();
   });
 
-  // Wizard => Generate Ticket
+  // Wizard => [Generate Ticket]
   $("#wizardGenerateTicket").click(function(){
+    // add all to main
     $("#wizardAddAllToMain").trigger("click");
     wizardModal.hide();
     doGenerateTicket();
   });
 
-  // Wizard => Edit Main
+  // Wizard => [Edit Main]
   $("#wizardEditMainForm").click(function(){
     wizardModal.hide();
   });
@@ -1164,13 +1155,16 @@ $(document).ready(function() {
      DUPLICATES HIGHLIGHT
   ========================================================= */
   function highlightDuplicatesInMain(){
+    // remove old .duplicado
     $("#tablaJugadas tr").find(".betNumber").removeClass("duplicado");
+    // gather BNs
     let counts={};
     $("#tablaJugadas tr").each(function(){
       const bn=$(this).find(".betNumber").val().trim();
-      if(!bn)return;
+      if(!bn) return;
       counts[bn]=(counts[bn]||0)+1;
     });
+    // highlight those with count>1
     $("#tablaJugadas tr").each(function(){
       const bn=$(this).find(".betNumber").val().trim();
       if(counts[bn]>1){
@@ -1178,6 +1172,7 @@ $(document).ready(function() {
       }
     });
   }
+
   function highlightDuplicatesInWizard(){
     $("#wizardTableBody tr").find("td:nth-child(2)").removeClass("duplicado");
     let counts={};
@@ -1211,82 +1206,5 @@ $(document).ready(function() {
     }
     $(".track-checkbox").trigger("change");
   }
-
-  // =========================================================
-  // TUTORIAL => TRES BOTONES (English, Spanish, Creole)
-  // =========================================================
-  // NOTA: Este code snippet asume que en el index.html
-  // se definieron tutorialStepsEN, tutorialStepsES, tutorialStepsCREOLE,
-  // y la funcion startTutorial(steps, next, prev, skip, done).
-  // O bien, podemos definirlo aquí directamente.
-
-  // EJEMPLO: definimos aquí mismo
-  const tutorialStepsEN = [
-    {
-      element: "#fecha",
-      intro: "Bet Dates: 'Today' is automatically selected, so no need to tap. You can add more or remove the default date if you want future bets.",
-      position: "bottom"
-    },
-    {
-      element: "#tracksAccordion",
-      intro: "Tracks: Expand 'USA' or 'Santo Domingo' to pick draws. For 'Venezuela', check 'Venezuela' plus a USA track.",
-      position: "top"
-    },
-    // ...
-    // Agrega todos los pasos EN que desees
-  ];
-  const tutorialStepsES = [
-    {
-      element: "#fecha",
-      intro: "Fechas: Hoy se elige automáticamente, no necesitas pulsar nada. Puedes agregar más o quitar la actual.",
-      position: "bottom"
-    },
-    {
-      element: "#tracksAccordion",
-      intro: "Tracks: Despliega 'USA' o 'Santo Domingo'. Para 'Venezuela', también marca 'Venezuela' con un track USA.",
-      position: "top"
-    },
-    // ...
-  ];
-  const tutorialStepsCREOLE = [
-    {
-      element: "#fecha",
-      intro: "Dat Pariy: 'Jodia' seleksyone otomatik. Ou ka ajoute plis jou ou retire jodia pou parye pita.",
-      position: "bottom"
-    },
-    {
-      element: "#tracksAccordion",
-      intro: "Tracks: Louvri 'USA' oswa 'Santo Domingo'. Pou 'Venezuela', mete 'Venezuela' + track USA.",
-      position: "top"
-    },
-    // ...
-  ];
-
-  // Definir la funcion startTutorial(steps, next, prev, skip, done)
-  function startTutorial(stepsArray, nextLabel, prevLabel, skipLabel, doneLabel){
-    introJs()
-      .setOptions({
-        steps: stepsArray,
-        showProgress: true,
-        showBullets: false,
-        exitOnOverlayClick: false,
-        nextLabel: nextLabel,
-        prevLabel: prevLabel,
-        skipLabel: skipLabel,
-        doneLabel: doneLabel
-      })
-      .start();
-  }
-
-  // Vincular a los 3 botones:
-  $("#helpEnglish").click(function(){
-    startTutorial(tutorialStepsEN, "Next", "Back", "Skip", "Done");
-  });
-  $("#helpSpanish").click(function(){
-    startTutorial(tutorialStepsES, "Siguiente", "Atrás", "Saltar", "Hecho");
-  });
-  $("#helpCreole").click(function(){
-    startTutorial(tutorialStepsCREOLE, "Next", "Back", "Skip", "Done");
-  });
 
 }); // doc ready ends
