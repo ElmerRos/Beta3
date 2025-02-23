@@ -75,7 +75,6 @@ $(document).ready(function() {
     clickOpens: true,
     allowInput: false,
     appendTo: document.body,
-    // Zoom
     onOpen: function() {
       this.calendarContainer.style.transform = 'scale(2.0)';
       this.calendarContainer.style.transformOrigin = 'top left';
@@ -222,7 +221,7 @@ $(document).ready(function() {
   function determineGameMode(betNumber){
     if(!betNumber) return "-";
 
-    // Si es Pale => 2 dígitos, - o x, 2 dígitos
+    // Pale => 2 dígitos, - o x, 2 dígitos
     const paleRegex = /^(\d{2})(-|x)(\d{2})$/;
     const isPaleFormat = paleRegex.test(betNumber);
 
@@ -262,7 +261,6 @@ $(document).ready(function() {
       if(length===3) return "Pick 3";
       if(length===4) return "Win 4";
     }
-
     return "-";
   }
 
@@ -290,7 +288,6 @@ $(document).ready(function() {
       let total = st + numericBox + combo*combosCount;
       return total.toFixed(2);
     }
-    // default
     const numericBox = parseFloat(bxVal)||0;
     let total = st + numericBox + combo;
     return total.toFixed(2);
@@ -433,7 +430,7 @@ $(document).ready(function() {
     }
     $("#ticketTracks").text(chosenTracks.join(", "));
 
-    // Ver cutoff si eligió hoy
+    // Verificar cutoff si elige HOY
     const arrDates = dateVal.split(", ");
     const today = dayjs().startOf("day");
     for(let ds of arrDates){
@@ -824,7 +821,7 @@ $(document).ready(function() {
     $(".track-checkbox").trigger("change");
   }
 
-  // HIGHLIGHT DUPLICATES (en main table)
+  // DUPLICATES en main table
   function highlightDuplicatesInMain(){
     $("#tablaJugadas tr").find(".betNumber").removeClass("duplicado");
     let counts={};
@@ -1124,11 +1121,12 @@ $(document).ready(function() {
   // =========================================================
   // INTRO.JS TUTORIAL (3 idiomas)
   // =========================================================
+  // Pasos en inglés
   const tutorialStepsEN = [
     {
       element: '#fecha',
       title: 'Bet Dates',
-      intro: 'Pick one or more dates to bet on. Today is preselected by default.'
+      intro: 'Pick one or more dates for your bets. Today is preselected.'
     },
     {
       element: '.accordion',
@@ -1143,51 +1141,51 @@ $(document).ready(function() {
     {
       element: '#wizardButton',
       title: 'Wizard Button',
-      intro: 'Open the Quick Entry Wizard for faster input.'
+      intro: 'Click this Wizard button to open the Quick Entry Wizard. Then press Next.'
     },
     {
-      title: 'Wizard Panel',
-      intro: 'We will open the Wizard and explain its components.'
+      title: 'Inside Wizard',
+      intro: 'Now that you opened the Wizard manually, let’s see each part.'
     },
     {
       element: '#wizardBetNumber',
-      title: 'Bet Number Field',
-      intro: 'Enter 2-4 digits or a “Pale” format (e.g. 22-50). Then Add & Next.'
+      title: 'Bet Number',
+      intro: 'Enter 2–4 digits or “Pale” (e.g. 22-50). Then Add & Next.'
     },
     {
       element: '#lockStraight',
       title: 'Lock Straight',
-      intro: 'Keep the same Straight amount for new bets.'
+      intro: 'Locks the Straight amount so it repeats in new bets.'
     },
     {
       element: '#lockBox',
       title: 'Lock Box',
-      intro: 'Lock/unlock the Box amount.'
+      intro: 'Same for the Box amount.'
     },
     {
       element: '#lockCombo',
       title: 'Lock Combo',
-      intro: 'And likewise for Combo.'
+      intro: 'And for Combo.'
     },
     {
       element: '#btnGenerateQuickPick',
       title: 'Quick Pick',
-      intro: 'Generate random numbers based on the chosen game mode.'
+      intro: 'Generates random numbers (Pick 3, Win 4...).'
     },
     {
       element: '#btnGenerateRoundDown',
       title: 'Round Down',
-      intro: 'Enter a start/end to produce consecutive sequences.'
+      intro: 'Generate consecutive sequences within a range.'
     },
     {
       element: '#wizardAddAllToMain',
       title: 'Add Main',
-      intro: 'Moves all Wizard plays to the main table.'
+      intro: 'Sends all Wizard plays to the main table.'
     },
     {
       element: '#wizardGenerateTicket',
       title: 'Generate from Wizard',
-      intro: 'Generates a ticket directly from here.'
+      intro: 'You can generate a ticket directly from here.'
     },
     {
       element: '#wizardEditMainForm',
@@ -1196,7 +1194,7 @@ $(document).ready(function() {
     },
     {
       title: 'Close Wizard',
-      intro: 'We will close the Wizard now.'
+      intro: 'When done, close the Wizard or press Next to continue.'
     },
     {
       element: '#generarTicket',
@@ -1205,6 +1203,7 @@ $(document).ready(function() {
     }
   ];
 
+  // Pasos en español
   const tutorialStepsES = [
     {
       element: '#fecha',
@@ -1214,26 +1213,26 @@ $(document).ready(function() {
     {
       element: '.accordion',
       title: 'Tracks',
-      intro: 'Elige los tracks (USA, Santo Domingo...).'
+      intro: 'Elige los tracks (USA, Santo Domingo...) que desees.'
     },
     {
       element: '#jugadasTable',
       title: 'Tabla de Jugadas',
-      intro: 'Ingresa tus jugadas: Número, Straight, Box, Combo.'
+      intro: 'Aquí ingresas tus jugadas: Número, Straight, Box, Combo.'
     },
     {
       element: '#wizardButton',
       title: 'Botón Wizard',
-      intro: 'Abre el asistente de entrada rápida.'
+      intro: 'Haz clic para abrir el Wizard. Luego presiona “Siguiente.”'
     },
     {
-      title: 'Panel del Wizard',
-      intro: 'Abriremos el Wizard y explicaremos sus componentes.'
+      title: 'Dentro del Wizard',
+      intro: 'Como ya lo abriste tú, ahora explicamos sus campos.'
     },
     {
       element: '#wizardBetNumber',
       title: 'Número de Apuesta',
-      intro: 'Escribe 2-4 dígitos o “Pale” (e.g. 22-50), luego Add & Next.'
+      intro: 'Escribe 2–4 dígitos o formato Pale (22-50). Luego Add & Next.'
     },
     {
       element: '#lockStraight',
@@ -1243,7 +1242,7 @@ $(document).ready(function() {
     {
       element: '#lockBox',
       title: 'Candado Box',
-      intro: 'Bloquea / desbloquea la cantidad de Box.'
+      intro: 'Igual con Box.'
     },
     {
       element: '#lockCombo',
@@ -1253,12 +1252,12 @@ $(document).ready(function() {
     {
       element: '#btnGenerateQuickPick',
       title: 'Quick Pick',
-      intro: 'Genera números aleatorios según la modalidad seleccionada.'
+      intro: 'Genera números aleatorios según la modalidad.'
     },
     {
       element: '#btnGenerateRoundDown',
       title: 'Round Down',
-      intro: 'Ingresa un rango para crear secuencias consecutivas.'
+      intro: 'Genera secuencias consecutivas entre dos números.'
     },
     {
       element: '#wizardAddAllToMain',
@@ -1267,69 +1266,70 @@ $(document).ready(function() {
     },
     {
       element: '#wizardGenerateTicket',
-      title: 'Generate desde Wizard',
-      intro: 'Genera un ticket directo desde el Wizard.'
+      title: 'Generate (Wizard)',
+      intro: 'También puedes generar un ticket desde aquí.'
     },
     {
       element: '#wizardEditMainForm',
       title: 'Editar Principal',
-      intro: 'O regresa a la tabla principal.'
+      intro: 'O regresa al formulario principal.'
     },
     {
       title: 'Cerrar Wizard',
-      intro: 'Cerramos el Wizard ahora.'
+      intro: 'Al terminar, cierra el Wizard o pasa al siguiente paso.'
     },
     {
       element: '#generarTicket',
       title: 'Generar Ticket',
-      intro: 'Finalmente, haz clic para ver tu ticket.'
+      intro: 'Finalmente, haz clic aquí para ver el ticket.'
     }
   ];
 
+  // Pasos en criollo/haitiano
   const tutorialStepsHT = [
     {
       element: '#fecha',
       title: 'Dat Pari',
-      intro: 'Chwazi youn oswa plizyè dat. Jodi a se default.'
+      intro: 'Chwazi youn oswa plizyè dat pou pari. Jodi a default.'
     },
     {
       element: '.accordion',
       title: 'Tracks',
-      intro: 'Chwazi kous (USA, Santo Domingo...).'
+      intro: 'Chwazi kous (USA, Santo Domingo...) ou vle.'
     },
     {
       element: '#jugadasTable',
       title: 'Tab Pari',
-      intro: 'Antre parye ou: Nimewo, Straight, Box, Combo.'
+      intro: 'Antre parye: Nimewo, Straight, Box, Combo.'
     },
     {
       element: '#wizardButton',
       title: 'Bouton Wizard',
-      intro: 'Louvri asistan an pou antre rapid.'
+      intro: 'Klike pou louvri Wizard la. Apre sa Siguiente.'
     },
     {
-      title: 'Panel Wizard',
-      intro: 'Nou pral louvri wizard la e eksplike.'
+      title: 'Andedan Wizard la',
+      intro: 'Depi ou louvri li, nou pral eksplike chak pati.'
     },
     {
       element: '#wizardBetNumber',
       title: 'Nimewo Pari',
-      intro: 'Ekri 2-4 chif oswa “Pale” (22-50). Add & Next.'
+      intro: 'Ekri 2–4 chif oswa “Pale” (22-50).'
     },
     {
       element: '#lockStraight',
       title: 'Lock Straight',
-      intro: 'Kenbe menm valè Straight.'
+      intro: 'Kenbe valè Straight la.'
     },
     {
       element: '#lockBox',
       title: 'Lock Box',
-      intro: 'Bloke / debloke valè Box.'
+      intro: 'Menm bagay pou Box.'
     },
     {
       element: '#lockCombo',
       title: 'Lock Combo',
-      intro: 'Menm bagay pou Combo.'
+      intro: 'Ak Combo tou.'
     },
     {
       element: '#btnGenerateQuickPick',
@@ -1339,31 +1339,31 @@ $(document).ready(function() {
     {
       element: '#btnGenerateRoundDown',
       title: 'Round Down',
-      intro: 'Kreye sekans ak premye/dènye nimewo.'
+      intro: 'Kreye sekans pa antre premye/dènye.'
     },
     {
       element: '#wizardAddAllToMain',
       title: 'Add Main',
-      intro: 'Ajoute tout parye Wizard yo.'
+      intro: 'Mete tout parye Wizard yo nan tablo prensipal.'
     },
     {
       element: '#wizardGenerateTicket',
       title: 'Generate (Wizard)',
-      intro: 'Jenere tikè a dirèkteman.'
+      intro: 'Ou ka jenere tikè a la.'
     },
     {
       element: '#wizardEditMainForm',
       title: 'Edit Main',
-      intro: 'Retounen sou tablo prensipal la si ou vle.'
+      intro: 'Oubyen retounen sou tablo prensipal.'
     },
     {
       title: 'Fèmen Wizard',
-      intro: 'N ap fèmen wizard la.'
+      intro: 'Lè w fini, fèmen wizard la.'
     },
     {
       element: '#generarTicket',
       title: 'Jenere Tikè',
-      intro: 'Finalman, klike la pou wè tikè a.'
+      intro: 'Finalman, klike la pou wè tikè w la.'
     }
   ];
 
@@ -1384,34 +1384,19 @@ $(document).ready(function() {
       doneLabel = 'Listo';
     } else {
       steps = tutorialStepsHT;
+      // Podrías cambiar los labels a criollo si quisieras
     }
 
     introJs().setOptions({
       steps,
       showStepNumbers: true,
       showProgress: true,
-      exitOnOverlayClick: true,  // Permite salir haciendo clic fuera
-      tooltipPosition: 'auto',
-      scrollToElement: true,      // En móvil, se moverá al elemento
+      exitOnOverlayClick: true,   // Salir tocando fuera
+      scrollToElement: false,     // Evitar bloqueo en móvil
       nextLabel,
       prevLabel,
       skipLabel,
-      doneLabel,
-      // Abrir/cerrar Wizard en pasos 4 y 14, con un setTimeout para que funcone en móvil
-      onbeforechange: function(){
-        const stepIndex = this._currentStep;
-        // Paso 4 => abrir Wizard
-        if(stepIndex === 4){
-          $("#wizardModal").modal("show");
-          // Esperar a que abra
-          setTimeout(()=>{ this.refresh(); }, 600);
-        }
-        // Paso 14 => cerrar Wizard
-        if(stepIndex === 14){
-          $("#wizardModal").modal("hide");
-          setTimeout(()=>{ this.refresh(); }, 300);
-        }
-      }
+      doneLabel
     }).start();
   }
 
