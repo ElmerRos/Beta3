@@ -28,17 +28,18 @@
     rel="stylesheet"
   />
 
-  <!-- Intro.js (para tutorial) -->
+  <!-- Intro.js (CSS + JS para el tutorial) -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/intro.js/minified/introjs.min.css"
   />
   <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 
-  <!-- Custom CSS (con los estilos neon, etc.) -->
+  <!-- Custom CSS (con estilos neon, etc.) -->
   <link href="styles.css" rel="stylesheet" />
+
+  <!-- Estilo para forzar tooltip blanco + texto negro en Intro.js -->
   <style>
-    /* Forzamos el tooltip de Intro.js a fondo blanco y texto negro */
     .introjs-tooltip {
       background-color: #fff !important;
       color: #000 !important;
@@ -48,7 +49,6 @@
     .introjs-overlay {
       z-index: 99999999 !important;
     }
-    /* Podemos personalizar los botones o el contenedor del tooltip si se desea */
   </style>
 </head>
 <body>
@@ -66,7 +66,7 @@
     <form id="lotteryForm">
       <!-- Date Selection -->
       <div class="row mb-3">
-        <div class="col-md-4 col-sm-6" data-intro="Select one or more bet dates here. Today is preselected." data-title="Bet Dates">
+        <div class="col-md-4 col-sm-6">
           <label for="fecha" class="form-label">Bet Dates:</label>
           <input
             type="text"
@@ -79,7 +79,7 @@
       </div>
 
       <!-- Tracks Selection -->
-      <div class="mb-4" data-intro="Choose which Tracks you want. You can expand each section and select. If a track is disabled, it's past cutoff time." data-title="Select Tracks">
+      <div class="mb-4">
         <label class="form-label">Select Tracks:</label>
         <div class="accordion" id="tracksAccordion">
           <!--
@@ -651,7 +651,7 @@
       </div>
 
       <!-- Plays Table (Editable) -->
-      <div class="table-responsive mb-4" data-intro="Enter your plays here. Add or remove rows, then fill the bet number and amounts." data-title="Plays Table">
+      <div class="table-responsive mb-4">
         <table
           class="table table-dark table-bordered glow-table"
           id="jugadasTable"
@@ -675,7 +675,7 @@
 
       <!-- Buttons: Add, Wizard, Remove Last, Reset -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="button-group" data-intro="Use these buttons to Add new lines, open the Wizard, remove the last entry, or reset everything.">
+        <div class="button-group">
           <button
             type="button"
             class="btn btn-primary"
@@ -713,7 +713,7 @@
       </div>
 
       <!-- Generate Ticket -->
-      <div class="d-grid gap-2" data-intro="Finally, tap this button to generate and see your Ticket preview." data-title="Generate Ticket">
+      <div class="d-grid gap-2">
         <button
           type="button"
           class="btn btn-success btn-lg"
@@ -869,7 +869,7 @@
                   type="number"
                   class="form-control"
                   id="wizardBetNumber"
-                  placeholder="2–4 digits"
+                  placeholder="2–4 digits or Pale (22-50)"
                   style="width: 180px;"
                 />
               </div>
@@ -1020,7 +1020,6 @@
                   <option value="Pick 3">Pick 3</option>
                   <option value="Win 4">Win 4</option>
                   <option value="Venezuela">Venezuela</option>
-                  <!-- Importante: cambiamos nombres a Pale-Ven y Pale-RD -->
                   <option value="Pale-Ven">Pale-Ven</option>
                   <option value="Pulito">Pulito</option>
                   <option value="RD-Quiniela">RD-Quiniela</option>
@@ -1099,7 +1098,6 @@
     </div>
   </div>
 
-  <!-- JS Libraries al final -->
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <!-- Popper.js (for Bootstrap) -->
@@ -1132,7 +1130,7 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
   ></script>
 
-  <!-- Nuestro scripts.js unificado -->
+  <!-- Nuestro scripts.js con toda la lógica -->
   <script src="scripts.js"></script>
 </body>
 </html>
