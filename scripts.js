@@ -1,13 +1,4 @@
- /* 
-  scripts.js
-  Incorporando:
-   - Lógica para “Pale-Ven” y “Pale-RD” (con guion o x)
-   - type="number" en Straight y Combo en la tabla principal
-   - Fecha de hoy autoseleccionada
-   - Tutorial Intro.js en 3 idiomas
-*/
-
-const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
+ const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
 $(document).ready(function() {
   dayjs.extend(dayjs_plugin_customParseFormat);
@@ -21,19 +12,19 @@ $(document).ready(function() {
   let selectedDaysCount = 0;
   const MAX_PLAYS = 25;
 
-  let playCount = 0;         // # rows in main table
-  let wizardCount = 0;       // # rows in wizard table
+  let playCount = 0;         // # filas en la tabla principal
+  let wizardCount = 0;       // # filas en la tabla interna del Wizard
 
-  // Candados en wizard
+  // Candados en Wizard
   const lockedFields = {
     straight: false,
     box: false,
     combo: false
   };
 
-  // ===========================
-  // CUTOFF TIMES
-  // ===========================
+  /* ========================================================
+     CUT-OFF TIMES
+  ======================================================== */
   const cutoffTimes = {
     "USA": {
       "New York Mid Day": "14:20",
@@ -74,23 +65,23 @@ $(document).ready(function() {
     }
   };
 
-  // ===========================
-  // INIT FLATPICKR
-  // ===========================
+  /* ========================================================
+     INIT FLATPICKR
+     - Seleccionar hoy por defecto
+  ======================================================== */
   flatpickr("#fecha", {
     mode: "multiple",
     dateFormat: "m-d-Y",
     minDate: "today",
-    defaultDate: [ new Date() ], // Fecha de hoy por defecto
+    defaultDate: [ new Date() ],
     clickOpens: true,
     allowInput: false,
     appendTo: document.body,
     onReady: function(selectedDates, dateStr, instance) {
       instance.calendarContainer.style.zIndex = 999999;
-      // Podrías usar instance.setDate(new Date(), true) si gustas forzar hoy.
     },
+    // Efecto zoom
     onOpen: function() {
-      // Efecto "zoom" en el calendario
       this.calendarContainer.style.transform = 'scale(2.0)';
       this.calendarContainer.style.transformOrigin = 'top left';
     },
@@ -105,22 +96,22 @@ $(document).ready(function() {
     }
   });
 
-  // ===========================
-  // TRACK CHECKBOXES
-  // ===========================
+  /* ========================================================
+     TRACK CHECKBOXES
+  ======================================================== */
   $(".track-checkbox").change(function(){
     const arr = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
-    // "Venezuela" no cuenta en multiplicador:
+    // "Venezuela" no suma al multiplicador
     selectedTracksCount = arr.filter(x => x !== "Venezuela").length || 1;
     calculateMainTotal();
     disableTracksByTime();
   });
 
-  // ===========================
-  // MAIN TABLE => Add, Remove
-  // ===========================
+  /* ========================================================
+     MAIN TABLE => Add, Remove
+  ======================================================== */
   $("#agregarJugada").click(function(){
     const row = addMainRow();
     if(row) row.find(".betNumber").focus();
@@ -138,6 +129,7 @@ $(document).ready(function() {
     highlightDuplicatesInMain();
   });
 
+  // Botón (X) en cada fila
   $("#tablaJugadas").on("click",".removeMainBtn",function(){
     $(this).closest("tr").remove();
     playCount--;
@@ -146,7 +138,7 @@ $(document).ready(function() {
     highlightDuplicatesInMain();
   });
 
-  // Cuando se escribe en betNumber, straight, box, combo => recalcular
+  // Recalcular al escribir
   $("#tablaJugadas").on("input", ".betNumber, .straight, .box, .combo", function(){
     const row = $(this).closest("tr");
     recalcMainRow(row);
@@ -154,7 +146,6 @@ $(document).ready(function() {
     storeFormState();
   });
 
-  // Agregar row principal con type="number" en Straight y Combo
   function addMainRow(){
     if(playCount >= MAX_PLAYS){
       alert("You have reached 25 plays in the main form.");
@@ -214,9 +205,9 @@ $(document).ready(function() {
     calculateMainTotal();
   }
 
-  // ===========================
-  // CALCULATE MAIN TABLE TOTAL
-  // ===========================
+  /* ========================================================
+     CALCULATE MAIN TOTAL
+  ======================================================== */
   function calculateMainTotal(){
     let sum=0;
     $("#tablaJugadas tr").each(function(){
@@ -224,7 +215,7 @@ $(document).ready(function() {
       const val= parseFloat(totalCell)||0;
       sum+= val;
     });
-    // multiplicar por # tracks y # dias
+    // Multiplicar por #tracks y #dias
     if(selectedDaysCount===0){
       sum=0;
     } else {
@@ -234,14 +225,15 @@ $(document).ready(function() {
     storeFormState();
   }
 
-  // ===========================
-  // DETERMINE GAME MODE (Pale-Ven / Pale-RD)
-  // ===========================
+  /* ========================================================
+     DETERMINE GAME MODE
+     - Incluye Pale-Ven (##-## o ##x##) y Pale-RD
+  ======================================================== */
   function determineGameMode(betNumber){
     if(!betNumber) return "-";
 
-    // Detectar si tiene 2 dígitos, luego - o x, luego 2 dígitos => length=5
-    const paleRegex = /^(\d{2})(-|x)(\d{2})$/; // ej "22-50" o "33x12"
+    // Detectar si es Pale (5 caracteres: 2 dígitos, - o x, 2 dígitos)
+    const paleRegex = /^(\d{2})(-|x)(\d{2})$/; // 22-50, 33x19, etc.
     const isPaleFormat = paleRegex.test(betNumber);
 
     const tracks = $(".track-checkbox:checked")
@@ -251,31 +243,31 @@ $(document).ready(function() {
     const isSD  = tracks.some(t => cutoffTimes["Santo Domingo"][t]);
     const includesVenezuela = tracks.includes("Venezuela");
 
-    // 1) Si se detecta Pale
+    // Si coincide con Pale
     if(isPaleFormat) {
+      // Pale-Ven => Venezuela + al menos un track USA
       if(includesVenezuela && isUSA) {
-        // Pale-Ven
         return "Pale-Ven";
-      } else if(isSD && !isUSA) {
-        // Pale-RD
+      }
+      // Pale-RD => un track SD + sin track USA
+      if(isSD && !isUSA) {
         return "Pale-RD";
       }
-      // Si no cumple condiciones (p.ej. no está Venezuela + USA, ni SantoD sin USA)
-      // => devolvemos "-"
       return "-";
     }
 
-    // 2) Si no es Pale => chequear longitud 2,3,4
+    // No es Pale => chequear longitud 2,3,4
     const length = betNumber.length;
     if(length<2 || length>4) return "-";
 
-    // Lógica antigua, adaptada:
+    // Lógica previa
     if(includesVenezuela && isUSA) {
       // 2 dígitos => "Venezuela"
-      // 4 dígitos => antes era "Venezuela-Pale" (ahora lo detecta el paleRegex)
+      // 3 => "Pick 3" 
+      // 4 => "Win 4"
       if(length===2) return "Venezuela";
-      if(length===3) return "Pick 3"; // A veces pasa...
-      if(length===4) return "Win 4";  // O se puede forzar "Pick 4"
+      if(length===3) return "Pick 3";
+      if(length===4) return "Win 4";
     }
     else if(isUSA && !isSD){
       if(length===4) return "Win 4";
@@ -283,23 +275,23 @@ $(document).ready(function() {
       if(length===2) return "Pulito";
     }
     else if(isSD && !isUSA){
-      // 2 dígitos => RD-Quiniela
-      // 4 dígitos => RD-Pale (pero si no tiene '-')
       if(length===2) return "RD-Quiniela";
-      if(length===3) return "Pick 3"; // caso raro
-      if(length===4) return "Win 4";  // o "RD-Pale" si no usaste guion
+      if(length===3) return "Pick 3";
+      if(length===4) return "Win 4"; // O a veces "RD-Pale" sin guion, pero no está contemplado
     }
 
     return "-";
   }
 
+  /* ========================================================
+     CALCULATE ROW TOTAL
+  ======================================================== */
   function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
     if(!bn || gm==="-") return "0.00";
     const st = parseFloat(stVal) || 0;
     const combo = parseFloat(coVal)||0;
 
-    // Casos:
-    // "Pulito": si trae algo en Box => # de posiciones => st x #pos
+    // Pulito
     if(gm==="Pulito"){
       if(bxVal){
         const positions = bxVal.split(",").map(x=>x.trim()).filter(Boolean);
@@ -307,24 +299,24 @@ $(document).ready(function() {
       }
       return "0.00";
     }
+    // Venezuela, RD-Quiniela, Pale-Ven, Pale-RD, etc.
     if(gm==="Venezuela" || gm.startsWith("RD-") || gm==="Pale-RD" || gm==="Pale-Ven"){
-      // Loterías RD o Venezuela => solo Straight (?). Se asume la lógica actual
       return st.toFixed(2);
     }
+    // Win 4 / Pick 3 => combos
     if(gm==="Win 4" || gm==="Pick 3"){
       const numericBox = parseFloat(bxVal)||0;
       const combosCount = calcCombos(bn);
-      let total = st + numericBox + combo * combosCount;
-      return total.toFixed(2);
-    } else {
-      // default
-      const numericBox = parseFloat(bxVal)||0;
-      let total = st + numericBox + combo;
+      let total = st + numericBox + combo*combosCount;
       return total.toFixed(2);
     }
+    // default
+    const numericBox = parseFloat(bxVal)||0;
+    let total = st + numericBox + combo;
+    return total.toFixed(2);
   }
 
-  // Calcular cuántas combinaciones hay en "Pick3/Win4" para combo
+  // Para combos repetidos (p.ej. 112 => combos = 3)
   function calcCombos(str){
     const freq = {};
     for(let c of str){
@@ -338,9 +330,9 @@ $(document).ready(function() {
     return factorial(str.length)/denom;
   }
 
-  // ===========================
-  // LOCALSTORAGE => store/load
-  // ===========================
+  /* ========================================================
+     LOCAL STORAGE => guardar / cargar
+  ======================================================== */
   function storeFormState(){
     const st = {
       selectedTracksCount,
@@ -417,9 +409,9 @@ $(document).ready(function() {
 
   loadFormState();
 
-  // ===========================
-  // RESET FORM
-  // ===========================
+  /* ========================================================
+     RESET FORM
+  ======================================================== */
   $("#resetForm").click(function(){
     if(confirm("Are you sure you want to reset the form?")){
       resetForm();
@@ -441,9 +433,9 @@ $(document).ready(function() {
     autoSelectNYTrack();
   }
 
-  // ===========================
-  // GENERATE TICKET
-  // ===========================
+  /* ========================================================
+     GENERATE TICKET
+  ======================================================== */
   $("#generarTicket").click(function(){
     doGenerateTicket();
   });
@@ -465,7 +457,7 @@ $(document).ready(function() {
     }
     $("#ticketTracks").text(chosenTracks.join(", "));
 
-    // Verificar cutoff si se eligió HOY
+    // Verificar cutoff si incluye HOY
     const arrDates = dateVal.split(", ");
     const today = dayjs().startOf("day");
     for(let ds of arrDates){
@@ -478,7 +470,7 @@ $(document).ready(function() {
           const raw=getTrackCutoff(t);
           if(raw){
             let co= dayjs(raw,"HH:mm");
-            let cf= co.isAfter(dayjs("21:30","HH:mm")) ? dayjs("22:00","HH:mm") : co.subtract(10,"minute");
+            let cf= co.isAfter(dayjs("21:30","HH:mm"))? dayjs("22:00","HH:mm"): co.subtract(10,"minute");
             if(now.isSame(cf)||now.isAfter(cf)){
               alert(`Track "${t}" is closed for today.`);
               return;
@@ -505,13 +497,12 @@ $(document).ready(function() {
       const co = $(this).find(".combo").val();
 
       let errorHere = false;
-      // Bet Number
       if(!bn){
         errorHere=true;
         errors.push(rowIndex);
         $(this).find(".betNumber").addClass("error-field");
       }
-      // Brooklyn/Front => BN=3 dígitos
+      // Brooklyn/Front => BN=3
       if(hasBrooklynOrFront(chosenTracks) && bn.length!==3){
         errorHere=true;
         errors.push(rowIndex);
@@ -522,7 +513,7 @@ $(document).ready(function() {
         errors.push(rowIndex);
         $(this).find(".gameMode").addClass("error-field");
       }
-      // Validar importes según modo
+      // Validar importes
       if(["Venezuela","Pale-Ven","Pulito","RD-Quiniela","Pale-RD"].includes(gm)){
         if(!st || parseFloat(st)<=0){
           errorHere=true;
@@ -553,7 +544,7 @@ $(document).ready(function() {
       return;
     }
 
-    // Llenar tabla del ticket
+    // Llenar la tabla del ticket
     $("#ticketJugadas").empty();
     rows.each(function(){
       const rowIndex=$(this).attr("data-playIndex");
@@ -630,7 +621,7 @@ $(document).ready(function() {
         const dataUrl=canvas.toDataURL("image/png");
         window.ticketImageDataUrl=dataUrl;
 
-        // Auto-download
+        // Descarga automática
         const link=document.createElement("a");
         link.href=dataUrl;
         link.download=`ticket_${uniqueTicket}.png`;
@@ -697,9 +688,6 @@ $(document).ready(function() {
     $("#preTicket").css("overflow-x","auto");
   }
 
-  // ===========================
-  // SheetDB
-  // ===========================
   function saveBetDataToSheetDB(uniqueTicket, callback){
     const dateVal = $("#fecha").val()||"";
     const chosenTracks = $(".track-checkbox:checked")
@@ -779,6 +767,7 @@ $(document).ready(function() {
     }
     return false;
   }
+
   function disableTracksByTime(){
     if(!userChoseToday()){
       enableAllTracks();
@@ -818,6 +807,7 @@ $(document).ready(function() {
       });
     });
   }
+
   showCutoffTimes();
   disableTracksByTime();
   setInterval(disableTracksByTime,60000);
@@ -841,14 +831,11 @@ $(document).ready(function() {
     });
   }
 
-  // ===========================
-  // AUTO SELECT NY TRACK
-  // ===========================
+  // AUTO-SELECT NY TRACK
   autoSelectNYTrack();
   function autoSelectNYTrack(){
     const anyChecked = $(".track-checkbox:checked").length>0;
     if(anyChecked) return;
-
     const now=dayjs();
     let middayCutoff= dayjs().hour(14).minute(20);
     if(now.isBefore(middayCutoff)){
@@ -859,9 +846,9 @@ $(document).ready(function() {
     $(".track-checkbox").trigger("change");
   }
 
-  // ===========================
-  // DUPLICATES HIGHLIGHT
-  // ===========================
+  /* ========================================================
+     HIGHLIGHT DUPLICATES
+  ======================================================== */
   function highlightDuplicatesInMain(){
     $("#tablaJugadas tr").find(".betNumber").removeClass("duplicado");
     let counts={};
@@ -878,9 +865,9 @@ $(document).ready(function() {
     });
   }
 
-  // ===========================
-  // WIZARD
-  // ===========================
+  /* ========================================================
+     WIZARD
+  ======================================================== */
   const wizardModal=new bootstrap.Modal(document.getElementById("wizardModal"));
 
   $("#wizardButton").click(function(){
@@ -918,26 +905,25 @@ $(document).ready(function() {
     }
   });
 
-  // Add & Next
+  // Add & Next (Wizard)
   $("#wizardAddNext").click(function(){
     const bn=$("#wizardBetNumber").val().trim();
-    if(bn.length<2||bn.length>4){
-      alert("Bet Number must be 2-4 digits (or use the Pale format in the main table).");
-      return;
-    }
+
+    // Dejamos que determineGameMode decida. Si es "-", no es válido
     const gm=determineGameMode(bn);
     if(gm==="-"){
-      alert(`Cannot determine game mode for ${bn}. Check tracks or length.`);
+      alert(`Cannot determine game mode for "${bn}". Check tracks or length/format.`);
       return;
     }
-    let stVal = lockedFields.straight? $("#wizardStraight").val().trim() : $("#wizardStraight").val().trim();
-    let bxVal = lockedFields.box? $("#wizardBox").val().trim() : $("#wizardBox").val().trim();
-    let coVal = lockedFields.combo? $("#wizardCombo").val().trim() : $("#wizardCombo").val().trim();
+
+    let stVal = lockedFields.straight ? $("#wizardStraight").val().trim() : $("#wizardStraight").val().trim();
+    let bxVal = lockedFields.box ? $("#wizardBox").val().trim() : $("#wizardBox").val().trim();
+    let coVal = lockedFields.combo ? $("#wizardCombo").val().trim() : $("#wizardCombo").val().trim();
 
     const rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
     addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
 
-    // Si no candado => limpiamos
+    // Si no está bloqueado => limpiar
     if(!lockedFields.straight) $("#wizardStraight").val("");
     if(!lockedFields.box) $("#wizardBox").val("");
     if(!lockedFields.combo) $("#wizardCombo").val("");
@@ -1003,21 +989,20 @@ $(document).ready(function() {
   });
 
   function generateRandomNumberForMode(mode){
+    // Ajusta según tu preferencia
     if(mode==="Win 4"||mode==="Pale-Ven"||mode==="Pale-RD"){
-      // generamos 4 dígitos
       return Math.floor(Math.random()*10000);
     }
     if(mode==="Pick 3"){
       return Math.floor(Math.random()*1000);
     }
     if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela"){
-      // 2 dígitos
       return Math.floor(Math.random()*100);
     }
-    // fallback
     return Math.floor(Math.random()*1000);
   }
   function padNumberForMode(num, mode){
+    // Solo rellenamos con ceros a la izquierda
     let length=3;
     if(mode==="Win 4"||mode==="Pale-Ven"||mode==="Pale-RD") length=4;
     if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela") length=2;
@@ -1038,27 +1023,8 @@ $(document).ready(function() {
       alert("First/Last must have the same length (2,3, or 4 digits).");
       return;
     }
-    const len= firstNum.length;
-    let diffPos=[];
-    for(let i=0;i<len;i++){
-      if(firstNum[i]!==lastNum[i]) diffPos.push(i);
-    }
-    // Ejemplo simplificado
-    // (Lógica adicional que generes tus secuencias consecutivas)
-    if(diffPos.length===0){
-      // No difieren => single number
-      const gm= determineGameMode(firstNum);
-      const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): "";
-      const bxVal= lockedFields.box? $("#wizardBox").val().trim(): "";
-      const coVal= lockedFields.combo? $("#wizardCombo").val().trim(): "";
-      const rowT= calculateRowTotal(firstNum, gm, stVal, bxVal, coVal);
-      addWizardRow(firstNum, gm, stVal, bxVal, coVal, rowT);
-      highlightDuplicatesInWizard();
-      return;
-    }
-    // [ ... tu lógica de consecutivos, etc. ... ]
-    // Simplemente ejemplo
-    alert("Example RoundDown. Adjust logic for your consecutive sequences as needed.");
+    // Aquí va tu lógica de "consecutivos". Ejemplo minimal:
+    alert("RoundDown example. Implement your consecutive logic as needed.");
   });
 
   // Permute
@@ -1079,7 +1045,7 @@ $(document).ready(function() {
       for(let c of bn) allDigits.push(c);
     });
     if(allDigits.length===0){
-      alert("No digits to permute.");
+      alert("No digits found to permute.");
       return;
     }
     shuffleArray(allDigits);
@@ -1108,7 +1074,7 @@ $(document).ready(function() {
     }
   }
 
-  // Add All to Main
+  // Botón [Add All To Main]
   $("#wizardAddAllToMain").click(function(){
     const wizardRows=$("#wizardTableBody tr");
     if(wizardRows.length===0){
@@ -1165,15 +1131,15 @@ $(document).ready(function() {
     storeFormState();
   });
 
-  // Wizard => [Generate Ticket]
+  // Botón [Generate Ticket] en Wizard
   $("#wizardGenerateTicket").click(function(){
-    // add all to main
+    // Primero, "Add All to Main"
     $("#wizardAddAllToMain").trigger("click");
     wizardModal.hide();
     doGenerateTicket();
   });
 
-  // Wizard => [Edit Main]
+  // Botón [Edit Main]
   $("#wizardEditMainForm").click(function(){
     wizardModal.hide();
   });
@@ -1194,10 +1160,10 @@ $(document).ready(function() {
     });
   }
 
-  // ===========================
-  // INTRO.JS TUTORIAL
-  // ===========================
-  // Pasos en inglés (ejemplo)
+  /* ========================================================
+     TUTORIAL INTRO.JS (3 idiomas)
+     - Más pasos detallados dentro del Wizard
+  ======================================================== */
   const tutorialStepsEN = [
     {
       element: '#fecha',
@@ -1212,60 +1178,162 @@ $(document).ready(function() {
     {
       element: '#jugadasTable',
       title: 'Plays Table',
-      intro: 'Add your plays: Bet Number, Straight, Box, Combo, etc.'
+      intro: 'Add your plays here: Bet Number, Straight, Box, Combo.'
     },
     {
       element: '#wizardButton',
-      title: 'Wizard',
-      intro: 'Click here to open the Quick Entry Wizard.'
+      title: 'Wizard Button',
+      intro: 'Open the Quick Entry Wizard for faster input.'
+    },
+    // ABRIMOS el Wizard
+    {
+      title: 'Wizard Panel',
+      intro: 'We will now open the Wizard and explain its components.',
+      // onbeforechange => abrimos wizard
     },
     {
-      // Al cambiar de paso abrimos el Wizard
-      title: 'Wizard Steps',
-      intro: 'Inside the Wizard, you can fill multiple bets quickly, lock amounts, QuickPick, RoundDown, etc.',
-      // Abrimos modal en onbeforechange (ver setOptions)
+      element: '#wizardBetNumber',
+      title: 'Bet Number Field',
+      intro: 'Here you can type 2-4 digits or a “Pale” format (like 22-50). Then click Add & Next.'
+    },
+    {
+      element: '#lockStraight',
+      title: 'Lock Straight',
+      intro: 'Click this lock to keep the same Straight amount for every new bet.'
+    },
+    {
+      element: '#lockBox',
+      title: 'Lock Box',
+      intro: 'Similarly, lock/unlock the Box amount.'
+    },
+    {
+      element: '#lockCombo',
+      title: 'Lock Combo',
+      intro: '...and the same for Combo.'
+    },
+    {
+      element: '#btnGenerateQuickPick',
+      title: 'Quick Pick',
+      intro: 'Generate random numbers based on the selected game mode.'
+    },
+    {
+      element: '#btnGenerateRoundDown',
+      title: 'Round Down',
+      intro: 'You can enter a start/end number to produce consecutive sequences.'
+    },
+    {
+      element: '#wizardAddAllToMain',
+      title: 'Add Main',
+      intro: 'This moves all Wizard plays to the main table.'
+    },
+    {
+      element: '#wizardGenerateTicket',
+      title: 'Generate from Wizard',
+      intro: 'Or directly generate a ticket from here, which also sends your plays to main.'
+    },
+    {
+      element: '#wizardEditMainForm',
+      title: 'Edit Main',
+      intro: 'If you prefer to go back and see or adjust your main table, click here.'
+    },
+    // CERRAMOS Wizard
+    {
+      title: 'Done with Wizard',
+      intro: 'We will close the Wizard now.',
+      // onbeforechange => cerramos wizard
     },
     {
       element: '#generarTicket',
       title: 'Generate Ticket',
-      intro: 'Finally, click here to generate the final ticket. You can print or share it.'
-    },
+      intro: 'Finally, tap here to generate your ticket preview.'
+    }
   ];
 
-  // Pasos en español (ejemplo)
+  // Pasos en español
   const tutorialStepsES = [
     {
       element: '#fecha',
-      title: 'Fechas de Apuesta',
-      intro: 'Selecciona una o varias fechas. Hoy se marca por defecto.'
+      title: 'Fechas',
+      intro: 'Selecciona una o varias fechas para apostar. Hoy está preseleccionado.'
     },
     {
       element: '.accordion',
       title: 'Tracks',
-      intro: 'Escoge los tracks (USA, Santo Domingo...). Verás la hora límite en texto pequeño.'
+      intro: 'Elige los tracks deseados (USA, Santo Domingo...). Verás su hora límite en texto pequeño.'
     },
     {
       element: '#jugadasTable',
       title: 'Tabla de Jugadas',
-      intro: 'Agrega tus jugadas: Número, Straight, Box, Combo, etc.'
+      intro: 'Aquí ingresas tus jugadas: Número, Straight, Box, Combo.'
     },
     {
       element: '#wizardButton',
-      title: 'Asistente (Wizard)',
-      intro: 'Presiona para abrir el Wizard de captura rápida.'
+      title: 'Botón Wizard',
+      intro: 'Abre el Asistente de Entrada Rápida para llenar apuestas más velozmente.'
+    },
+    // Abrir wizard
+    {
+      title: 'Panel del Wizard',
+      intro: 'Abriremos el Wizard y explicaremos sus partes.',
     },
     {
-      title: 'Dentro del Wizard',
-      intro: 'Aquí puedes ingresar múltiples números, usar QuickPick o RoundDown, y luego exportarlos al formulario principal.',
+      element: '#wizardBetNumber',
+      title: 'Campo Bet Number',
+      intro: 'Aquí escribes 2-4 dígitos o formato Pale (22-50). Luego presiona Add & Next.'
+    },
+    {
+      element: '#lockStraight',
+      title: 'Candado Straight',
+      intro: 'Si lo activas, ese importe Straight se repetirá en cada jugada nueva.'
+    },
+    {
+      element: '#lockBox',
+      title: 'Candado Box',
+      intro: 'Igual, bloquea el valor de Box si deseas repetirlo.'
+    },
+    {
+      element: '#lockCombo',
+      title: 'Candado Combo',
+      intro: '... y lo mismo para Combo.'
+    },
+    {
+      element: '#btnGenerateQuickPick',
+      title: 'Quick Pick',
+      intro: 'Genera números aleatorios según la modalidad seleccionada.'
+    },
+    {
+      element: '#btnGenerateRoundDown',
+      title: 'Round Down',
+      intro: 'Puedes crear secuencias consecutivas ingresando un rango (First/Last).'
+    },
+    {
+      element: '#wizardAddAllToMain',
+      title: 'Add Main',
+      intro: 'Pasa todas las jugadas del Wizard a la tabla principal.'
+    },
+    {
+      element: '#wizardGenerateTicket',
+      title: 'Generate (Wizard)',
+      intro: 'También puedes generar el ticket directamente desde aquí, lo que moverá las jugadas a la tabla principal.'
+    },
+    {
+      element: '#wizardEditMainForm',
+      title: 'Edit Main',
+      intro: 'Si prefieres volver y ver la tabla principal, haz clic aquí.'
+    },
+    // Cerrar wizard
+    {
+      title: 'Cerrar Wizard',
+      intro: 'Cerramos el Wizard para continuar con el formulario principal.'
     },
     {
       element: '#generarTicket',
       title: 'Generar Ticket',
-      intro: 'Al terminar, genera tu ticket, imprímelo o compártelo.'
-    },
+      intro: 'Finalmente, presiona aquí para ver la vista previa de tu ticket.'
+    }
   ];
 
-  // Pasos en criollo haitiano (ejemplo)
+  // Pasos en criollo/haitiano (ejemplo)
   const tutorialStepsHT = [
     {
       element: '#fecha',
@@ -1275,27 +1343,78 @@ $(document).ready(function() {
     {
       element: '.accordion',
       title: 'Tracks',
-      intro: 'Chwazi kous ou vle (USA, Santo Domingo...). Lè cut-off la parèt an piti.'
+      intro: 'Chwazi kous (USA, Santo Domingo...). Lè limite a ap parèt an ti ekriti.'
     },
     {
       element: '#jugadasTable',
       title: 'Tab Pari',
-      intro: 'Ajoute parye ou yo: Nimewo, Straight, Box, Combo, elatriye.'
+      intro: 'Antre parye ou: Nimewo, Straight, Box, Combo.'
     },
     {
       element: '#wizardButton',
-      title: 'Asistan (Wizard)',
-      intro: 'Klike la pou wouvri asistan an rapid.'
+      title: 'Bouton Wizard',
+      intro: 'Louvri Asistan an pou antre parye pi vit.'
+    },
+    // Abrir wizard
+    {
+      title: 'Panel Wizard',
+      intro: 'N ap louvri Wizard la kounye a pou eksplike sa ki ladan.'
     },
     {
-      title: 'Andedan Wizard la',
-      intro: 'Ou ka antre plizyè nimewo, QuickPick, RoundDown, epi ajoute tout nan tablo prensipal la.'
+      element: '#wizardBetNumber',
+      title: 'Bet Number',
+      intro: 'Ekri 2-4 chif oswa “Pale” (eg. 22-50). Apre sa, klike Add & Next.'
+    },
+    {
+      element: '#lockStraight',
+      title: 'Lock Straight',
+      intro: 'Aktive l pou kenbe menm valè Straight pou chak parye.'
+    },
+    {
+      element: '#lockBox',
+      title: 'Lock Box',
+      intro: 'Menm jan an pou Box.'
+    },
+    {
+      element: '#lockCombo',
+      title: 'Lock Combo',
+      intro: 'E pou Combo tou.'
+    },
+    {
+      element: '#btnGenerateQuickPick',
+      title: 'Quick Pick',
+      intro: 'Genera nimewo o aza selon mòd jwèt la.'
+    },
+    {
+      element: '#btnGenerateRoundDown',
+      title: 'Round Down',
+      intro: 'Kreye sekans pa bay premye/dènye nimewo.'
+    },
+    {
+      element: '#wizardAddAllToMain',
+      title: 'Add Main',
+      intro: 'Ajoute tout parye Wizard yo nan tablo prensipal la.'
+    },
+    {
+      element: '#wizardGenerateTicket',
+      title: 'Generate (Wizard)',
+      intro: 'Ou ka jenere tikè a dirèkteman depi Wizard la.'
+    },
+    {
+      element: '#wizardEditMainForm',
+      title: 'Edit Main',
+      intro: 'Ou ka retounen edite tablo prensipal la si ou vle.'
+    },
+    // Cerrar wizard
+    {
+      title: 'Fèmen Wizard',
+      intro: 'N ap fèmen Wizard la pou nou tounen sou fòm prensipal la.'
     },
     {
       element: '#generarTicket',
-      title: 'Jenere Tikè a',
-      intro: 'Lè w fini, jenere tikè a, enprime li oswa pataje li.'
-    },
+      title: 'Jenere Tikè',
+      intro: 'Finalman, klike la pou wè tikè w la.'
+    }
   ];
 
   function startTutorial(lang) {
@@ -1315,39 +1434,37 @@ $(document).ready(function() {
       doneLabel = 'Listo';
     } else {
       steps = tutorialStepsHT;
-      nextLabel = 'Next';
-      prevLabel = 'Back';
-      skipLabel = 'Skip';
-      doneLabel = 'Done';
+      // Puedes personalizar los labels al criollo si lo deseas:
+      // nextLabel = "Next";
+      // ...
     }
 
     introJs().setOptions({
-      steps: steps,
+      steps,
       showStepNumbers: true,
       showProgress: true,
-      tooltipPosition: 'auto',
-      nextLabel: nextLabel,
-      prevLabel: prevLabel,
-      skipLabel: skipLabel,
-      doneLabel: doneLabel,
       exitOnOverlayClick: false,
-      // Para abrir/cerrar Wizard en paso 4
-      // onbeforechange...
-      onbeforechange: function(targetElement){
-        // ejemplo: si step 4 no tiene 'element', abrimos wizard
-        if(this._currentStep === 3){ 
-          // Vamos a abrir el Wizard
+      tooltipPosition: 'auto',
+      nextLabel,
+      prevLabel,
+      skipLabel,
+      doneLabel,
+      // Abrir/cerrar Wizard cuando toque
+      onbeforechange: function(){
+        // Ejemplo: al llegar al paso 4, abrimos Wizard
+        if(this._currentStep === 4){
           $("#wizardModal").modal("show");
         }
-        // Si step final, aseguramos wizard cerrado
-        if(this._currentStep === 5){
+        // Al llegar al paso 14 (o 15), cerramos Wizard
+        // Ajusta según tu numeración exacta
+        if(this._currentStep === 14){
           $("#wizardModal").modal("hide");
         }
       }
     }).start();
   }
 
-  // Botones para iniciar tutorial
+  // Botones tutorial
   $("#helpEnglish").click(()=>startTutorial('en'));
   $("#helpSpanish").click(()=>startTutorial('es'));
   $("#helpCreole").click(()=>startTutorial('ht'));
