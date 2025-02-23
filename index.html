@@ -1,32 +1,64 @@
-   <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Beast Reader (BETA) East New York</title>
+
   <!-- Bootstrap CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
-  <!-- Flatpickr CSS (with a modern theme) -->
+
+  <!-- Flatpickr CSS (tema material_blue) -->
   <link
     href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
     rel="stylesheet"
   />
+
   <!-- Bootstrap Icons -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
   />
+
   <!-- Google Fonts -->
   <link
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap"
     rel="stylesheet"
   />
-  <!-- Custom CSS -->
+
+  <!-- Intro.js (para tutorial) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/intro.js/minified/introjs.min.css"
+  />
+  <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+
+  <!-- Custom CSS (con los estilos neon, etc.) -->
   <link href="styles.css" rel="stylesheet" />
+  <style>
+    /* Forzamos el tooltip de Intro.js a fondo blanco y texto negro */
+    .introjs-tooltip {
+      background-color: #fff !important;
+      color: #000 !important;
+      text-align: left;
+    }
+    .introjs-tooltipreferenceLayer,
+    .introjs-overlay {
+      z-index: 99999999 !important;
+    }
+    /* Podemos personalizar los botones o el contenedor del tooltip si se desea */
+  </style>
 </head>
 <body>
+  <!-- Botones del tutorial en 3 idiomas -->
+  <div style="position: absolute; top: 10px; right: 10px; z-index:99999;">
+    <button id="helpEnglish" class="btn btn-secondary">E</button>
+    <button id="helpSpanish" class="btn btn-secondary">S</button>
+    <button id="helpCreole" class="btn btn-secondary">C</button>
+  </div>
+
   <div class="container my-5">
     <h2 class="text-center mb-4">Beast Reader (Cricket) East New York</h2>
 
@@ -34,7 +66,7 @@
     <form id="lotteryForm">
       <!-- Date Selection -->
       <div class="row mb-3">
-        <div class="col-md-4 col-sm-6">
+        <div class="col-md-4 col-sm-6" data-intro="Select one or more bet dates here. Today is preselected." data-title="Bet Dates">
           <label for="fecha" class="form-label">Bet Dates:</label>
           <input
             type="text"
@@ -47,7 +79,7 @@
       </div>
 
       <!-- Tracks Selection -->
-      <div class="mb-4">
+      <div class="mb-4" data-intro="Choose which Tracks you want. You can expand each section and select. If a track is disabled, it's past cutoff time." data-title="Select Tracks">
         <label class="form-label">Select Tracks:</label>
         <div class="accordion" id="tracksAccordion">
           <!--
@@ -619,7 +651,7 @@
       </div>
 
       <!-- Plays Table (Editable) -->
-      <div class="table-responsive mb-4">
+      <div class="table-responsive mb-4" data-intro="Enter your plays here. Add or remove rows, then fill the bet number and amounts." data-title="Plays Table">
         <table
           class="table table-dark table-bordered glow-table"
           id="jugadasTable"
@@ -643,7 +675,7 @@
 
       <!-- Buttons: Add, Wizard, Remove Last, Reset -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="button-group">
+        <div class="button-group" data-intro="Use these buttons to Add new lines, open the Wizard, remove the last entry, or reset everything.">
           <button
             type="button"
             class="btn btn-primary"
@@ -681,7 +713,7 @@
       </div>
 
       <!-- Generate Ticket -->
-      <div class="d-grid gap-2">
+      <div class="d-grid gap-2" data-intro="Finally, tap this button to generate and see your Ticket preview." data-title="Generate Ticket">
         <button
           type="button"
           class="btn btn-success btn-lg"
@@ -801,7 +833,6 @@
        =================================
        WIZARD MODAL (Quick Entry)
        =================================
-       MOD CHANGES START
   -->
   <div
     class="modal fade"
@@ -816,7 +847,6 @@
         <!-- Encabezado con "Close Window" rojo en top-right -->
         <div class="modal-header">
           <h5 class="modal-title" id="wizardModalLabel">Quick Entry Wizard</h5>
-          <!-- Reemplazamos la "btn-close" default por un botón rojo -->
           <button
             type="button"
             class="btn btn-danger"
@@ -828,7 +858,7 @@
         </div>
 
         <div class="modal-body">
-          <!-- FILA 1: Bet Number (izq) + Add & Next, sin botón en la derecha -->
+          <!-- FILA 1: Bet Number + Add & Next -->
           <div class="row mb-3">
             <div class="col-12 col-lg-6 d-flex align-items-end">
               <div class="me-2">
@@ -853,7 +883,6 @@
                 </button>
               </div>
             </div>
-            <div class="col-12 col-lg-6"></div>
           </div>
 
           <!-- FILA 2: Straight + candado (izq) / Add Main (der) -->
@@ -882,7 +911,6 @@
               </div>
             </div>
             <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
-              <!-- Renombrado: "Add All to Main" => "Add Main" -->
               <button
                 type="button"
                 class="btn btn-warning"
@@ -903,7 +931,7 @@
                     type="text"
                     class="form-control"
                     id="wizardBox"
-                    placeholder="e.g. 1,2 or 3"
+                    placeholder="e.g. 1,2"
                     style="width: 180px;"
                   />
                   <button
@@ -918,7 +946,6 @@
               </div>
             </div>
             <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
-              <!-- Renombrado: "Generate Ticket" => "Generate" -->
               <button
                 type="button"
                 class="btn btn-success"
@@ -955,7 +982,6 @@
               </div>
             </div>
             <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
-              <!-- Renombrado: "Edit Main Form" => "Edit Main" -->
               <button
                 type="button"
                 class="btn btn-secondary"
@@ -994,10 +1020,11 @@
                   <option value="Pick 3">Pick 3</option>
                   <option value="Win 4">Win 4</option>
                   <option value="Venezuela">Venezuela</option>
-                  <option value="Venezuela-Pale">Venezuela-Pale</option>
+                  <!-- Importante: cambiamos nombres a Pale-Ven y Pale-RD -->
+                  <option value="Pale-Ven">Pale-Ven</option>
                   <option value="Pulito">Pulito</option>
                   <option value="RD-Quiniela">RD-Quiniela</option>
-                  <option value="RD-Pale">RD-Pale</option>
+                  <option value="Pale-RD">Pale-RD</option>
                 </select>
               </div>
               <div class="col-6">
@@ -1021,7 +1048,6 @@
               >
                 Quick Pick
               </button>
-              <!-- "Shuffle" renombrado a "Permute" -->
               <button
                 type="button"
                 class="btn btn-info"
@@ -1072,9 +1098,8 @@
       </div>
     </div>
   </div>
-  <!-- MOD CHANGES END -->
 
-  <!-- JS Libraries at the end -->
+  <!-- JS Libraries al final -->
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <!-- Popper.js (for Bootstrap) -->
@@ -1096,7 +1121,6 @@
   ></script>
   <!-- Day.js -->
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
-  <!-- Day.js Plugins -->
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/customParseFormat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/arraySupport.js"></script>
   <script>
@@ -1107,7 +1131,8 @@
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
   ></script>
-  <!-- Our custom JS -->
+
+  <!-- Nuestro scripts.js unificado -->
   <script src="scripts.js"></script>
 </body>
 </html>
