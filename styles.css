@@ -1,5 +1,4 @@
- 
-  /* ===========================
+ /* ===========================
    1) BASE COLORS & FONTS
    =========================== */
 :root {
@@ -46,9 +45,7 @@ h2 {
 
 /* ===========================
    2) FLATPICKR INPUT
-   (Revirtiendo a un estilo sencillo/clásico)
    =========================== */
-/* Mantén tu input con halo “glow” */
 .glow-input {
   box-shadow: 0 0 10px var(--color-neon-cian);
   transition: box-shadow 0.3s, border-color 0.3s;
@@ -58,7 +55,6 @@ h2 {
   box-shadow: 0 0 15px var(--color-neon-morado);
   outline: none;
 }
-/* No sobreescribimos .flatpickr-day, etc. => usará el estilo por defecto de la librería */
 
 /* ===========================
    3) ACCORDION & TRACKS
@@ -112,8 +108,6 @@ h2 {
 .track-button-container input[type="checkbox"] {
   display: none;
 }
-
-/* Botón con estilo 3D + ripple */
 .track-button {
   position: relative;
   display: flex;
@@ -126,16 +120,12 @@ h2 {
   cursor: pointer;
   user-select: none;
   text-align: center;
-
-  /* Efecto 3D principal */
   background: linear-gradient(#555, #333);
   color: #ffffff;
   box-shadow: 0 5px #111;
   border: 1px solid #444;
-
-  /* Animaciones */
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s;
-  overflow: hidden; /* Para el ripple */
+  overflow: hidden;
   padding: 0.5rem;
 }
 .track-button:hover {
@@ -143,7 +133,6 @@ h2 {
   box-shadow: 0 7px #111;
   background: linear-gradient(#666, #444);
 }
-/* Al hacer click => hundimiento + ripple */
 .track-button:active {
   transform: translateY(2px);
   box-shadow: 0 3px #111;
@@ -204,8 +193,6 @@ h2 {
   white-space: nowrap;
   vertical-align: middle;
 }
-
-/* Editable inputs */
 .table-dark td .form-control {
   background: #333333;
   color: #fff;
@@ -299,8 +286,6 @@ h2 {
 .button-group .btn {
   flex: 1;
 }
-
-/* BOTÓN ROJO para remover jugadas (1ra col) */
 .btnRemovePlay {
   background-color: #ff0044 !important;
   color: #fff !important;
@@ -383,37 +368,50 @@ h2 {
 /* ===========================
    9) TICKET CONTAINER
    =========================== */
+
+/* Fuerza un ancho grande (1200px) y aumenta fuentes en la tabla
+   para que siempre se vea 'landscape' y con buena legibilidad. */
 #preTicket {
   background-color: #0a0a0a;
   color: #ffffff;
   padding: 20px;
   border-radius: 10px;
-  overflow-x: auto;
-  max-width: 100%;
+  /* Quitamos max-width:100% y forzamos 1200px */
+  min-width: 1200px;
+  width: 1200px; 
+  max-width: none;
+  margin: 0 auto; /* centrado horizontal */
+  overflow-x: auto; 
   overflow-y: visible;
 }
+
 #preTicket h4 {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
   font-size: 1.5rem;
 }
+
+/* Ajusta la tabla a 1200px, sube un poco el font-size */
 #preTicket table {
   background-color: #1e1e1e;
-  width: 100%;
+  min-width: 1200px;
   table-layout: fixed;
-  font-size: 1.125rem;
+  font-size: 1.2rem; /* un poco mayor que 1.125 */
 }
+
+/* Celdas con más font-size y algo de padding mayor */
 #preTicket th,
 #preTicket td {
   border: 1px solid #00ffff;
   color: #ffffff;
-  padding: 6px;
+  padding: 8px;
   word-wrap: break-word;
-  font-size: 0.9rem;
+  font-size: 1.0rem; /* antes era 0.9; ahora un poco más grande */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 #preTicket th:nth-child(1) {
   width: 10%;
 }
@@ -427,42 +425,46 @@ h2 {
 #preTicket th:nth-child(3) {
   width: 20%;
 }
-#preTicket td {
-  font-size: 0.9rem;
-  padding: 6px;
+
+#ticketFecha {
+  color: #ffffff !important;
 }
 .cutoff-time[data-track='Venezuela'] {
   color: var(--color-fondo);
 }
 
-/* 
-   -> Cambiamos el color de texto
-      en duplicados a #000 (negro)
-*/
+/* Duplicados => fondo amarillo */
 .duplicado {
-  background-color: #ffff99 !important; /* Amarillo */
+  background-color: #ffff99 !important;
   border: 2px solid #ffe600 !important;
-  color: #000 !important; /* Texto negro para legibilidad */
+  color: #000 !important;
 }
-
-/* 
-   -> Errores en morado 
-*/
+/* Errores => fondo morado */
 .error-field {
   background-color: var(--color-neon-morado) !important;
   border: 2px solid var(--color-neon-cian) !important;
 }
 
-/* Ajustes responsive ticket */
+/* En pantallas MUY pequeñas (menor de 600px),
+   si aun prefieres no romper el landscape, 
+   eliminamos la regla anterior que achicaba #preTicket */
 @media (max-width: 600px) {
+  /* Podrías comentar completamente este bloque 
+     o dejarlo si deseas. 
+     Si lo dejas, quita los widths forzados. */
   #preTicket table,
   #preTicket th,
   #preTicket td {
-    font-size: 0.9rem;
+    font-size: 1rem;
     white-space: nowrap;
   }
   #preTicket {
-    padding: 10px;
+    /* Eliminamos width:1200 para estos móviles => 
+       preferimos forzar el scrolleo, 
+       así quedará un scroll horizontal grande. */
+    /* Ojo: si quieres MANTENER el ancho,
+       no pongas width: auto, 
+       simplemente no overrides these lines. */
     overflow-x: auto;
   }
   #qrcode {
@@ -471,31 +473,8 @@ h2 {
   }
   #preTicket th,
   #preTicket td {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
   }
-}
-@media (max-width: 768px) {
-  #preTicket {
-    width: 1200px !important;
-    max-width: none !important;
-    margin: 0 auto !important;
-    overflow-x: auto !important;
-  }
-  #preTicket table {
-    min-width: 1200px !important;
-    table-layout: fixed !important;
-    white-space: nowrap !important;
-  }
-  #preTicket th,
-  #preTicket td {
-    font-size: 1rem !important;
-    text-overflow: ellipsis;
-  }
-}
-
-/* Fijar color de Bet Dates en ticket */
-#ticketFecha {
-  color: #ffffff !important;
 }
 
 /* ===========================
@@ -511,10 +490,8 @@ h2 {
   width: 7ch;
   text-align: center;
 }
-
-/* Candaditos => 3 veces más grandes */
 .lockBtn {
-  font-size: 2.4rem; /* triplicado */
+  font-size: 2.4rem;
   padding: 0.9rem 1.2rem;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.2s;
@@ -526,7 +503,6 @@ h2 {
   background-color: #333;
   transform: scale(1.05);
 }
-
 #wizardTable thead th {
   background-color: #1e1e1e;
   color: var(--color-neon-cian);
