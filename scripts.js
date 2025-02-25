@@ -430,7 +430,7 @@ $(document).ready(function() {
     }
     $("#ticketTracks").text(chosenTracks.join(", "));
 
-    // Verificar cutoff si elige HOY
+    // Ver cutoff si elige HOY
     const arrDates = dateVal.split(", ");
     const today = dayjs().startOf("day");
     for(let ds of arrDates){
@@ -975,10 +975,13 @@ $(document).ready(function() {
     return s;
   }
 
+  // =========================================================
+  // ROUND DOWN (Corregido)
+  // =========================================================
   $("#btnGenerateRoundDown").click(function(){
     const firstNum=$("#rdFirstNumber").val().trim();
     const lastNum =$("#rdLastNumber").val().trim();
-    if(!firstNum||!lastNum){
+    if(!firstNum || !lastNum){
       alert("Please enter both first and last number for Round Down.");
       return;
     }
@@ -986,8 +989,37 @@ $(document).ready(function() {
       alert("First/Last must have the same length (2,3, or 4 digits).");
       return;
     }
-    // Lógica de consecutivos a tu preferencia
-    alert("RoundDown example. Implement your consecutive logic as needed.");
+
+    // Parsear a int (caso 120..129 => generamos 120,121,...129)
+    let start = parseInt(firstNum,10);
+    let end   = parseInt(lastNum,10);
+    if(isNaN(start) || isNaN(end)){
+      alert("Invalid numeric range for Round Down.");
+      return;
+    }
+    // Por si está al revés (ej. 129..120)
+    if(start> end){
+      [start,end] = [end,start];
+    }
+
+    // Tomar candados
+    const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): $("#wizardStraight").val().trim();
+    const bxVal= lockedFields.box? $("#wizardBox").val().trim(): $("#wizardBox").val().trim();
+    const coVal= lockedFields.combo? $("#wizardCombo").val().trim(): $("#wizardCombo").val().trim();
+
+    // Generar la secuencia
+    for(let i=start; i<=end; i++){
+      // Poner ceros a la izquierda
+      let bn = i.toString().padStart(firstNum.length,"0");
+      let gm= determineGameMode(bn);
+      // Si no se detecta un modo válido, la saltamos
+      if(gm==="-") continue;
+
+      let rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
+      addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
+    }
+
+    highlightDuplicatesInWizard();
   });
 
   $("#btnPermute").click(function(){
@@ -1121,7 +1153,6 @@ $(document).ready(function() {
   // =========================================================
   // INTRO.JS TUTORIAL (3 idiomas)
   // =========================================================
-  // Pasos en inglés
   const tutorialStepsEN = [
     {
       element: '#fecha',
