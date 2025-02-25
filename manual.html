@@ -1,0 +1,108 @@
+<!-- manual.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lottery App Manual</title>
+  <style>
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0; 
+      padding: 20px;
+    }
+    .manual-section {
+      display: none; /* Por defecto oculto */
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1, h2, h3, h4 {
+      color: #00ffff;
+      text-shadow: 0 0 5px #00ffff;
+    }
+    /* Un poco de estilo para cada idioma */
+    #manualEnglish { border: 2px solid #00ffff; padding: 10px; margin-bottom: 20px; }
+    #manualSpanish { border: 2px solid #ffcb00; padding: 10px; margin-bottom: 20px; }
+    #manualCreole { border: 2px solid #ff0044; padding: 10px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+<h1 style="text-align:center;">Manual Page</h1>
+
+<!-- Contenedor en inglés -->
+<div id="manualEnglish" class="manual-section">
+  <h2>Lottery App Manual (English)</h2>
+  <p><strong>Date Selection:</strong> The date input lets you pick one or multiple betting dates. 
+     Today is automatically assigned.</p>
+  <p><strong>Tracks:</strong> Expand the “USA” or “Santo Domingo” sections. Mark the tracks you want.
+     Some tracks will disable after cutoff time. If you pick “Venezuela,” combine it with a USA track 
+     to do Venezuelan plays. For “NY Horses,” you can enter any digits (1–4) 
+     and it will appear as “NY Horses.”</p>
+  <p><strong>Plays Table:</strong> Each row has a Bet Number, which determines the game mode 
+     (Pulito, Pick 3, Win 4, Single Action, NY Horses, etc.). Straight/Box/Combo amounts 
+     can be added. The total for that row is displayed. The overall total is multiplied by your 
+     number of selected dates and tracks.</p>
+  <p><strong>Single Action:</strong> Occurs if you pick a standard USA track (not Venezuela, not 
+     NY Horses) and input exactly 1 digit in Bet Number. Then the mode is “Single Action.”</p>
+  <p><strong>NY Horses:</strong> If “New York Horses” is marked, any number of digits (1–4) results
+     in “NY Horses.”</p>
+  <p><strong>Buttons:</strong></p>
+  <ul>
+    <li><em>Add Play</em>: Adds a new row in the table.</li>
+    <li><em>Wizard</em>: Opens the Quick Entry Window for bulk or random plays.</li>
+    <li><em>Remove Last Play</em>: Removes the final row from the table.</li>
+    <li><em>Reset Form</em>: Clears everything (dates, tracks, table).</li>
+    <li><em>Generate Ticket</em>: Shows the Ticket Preview window, where you can confirm, print, or share the ticket.</li>
+  </ul>
+  <p><strong>Quick Entry Window (Wizard):</strong> You can add multiple plays quickly, lock amounts 
+     (Straight, Box, Combo), generate Quick Picks, do Round Down sequences, or permute digits. 
+     Then click “Add Main” to pass them to the main table or “Generate” to create a ticket directly.</p>
+  <p><strong>Ticket Preview:</strong> Upon generating a ticket, you see a preview with all plays, total amount,
+     and a QR code. You can edit (return to the form) or confirm and print/share. 
+     A unique Ticket Number is assigned once you confirm.</p>
+</div>
+
+<!-- Contenedor en español -->
+<div id="manualSpanish" class="manual-section">
+  <h2>Manual Completo de la App de Loterías (Español)</h2>
+  <p><strong>Changelog Example o texto largo en español:</strong> 
+     Calendario (Selección de Fechas): ...</p>
+  <p><strong>Tracks:</strong> ...</p>
+  <p><strong>Tabla de Jugadas:</strong> ...</p>
+  <p><strong>Single Action / NY Horses:</strong> ...</p>
+  <p><strong>Botones:</strong> Add Play, Wizard, etc...</p>
+  <p><strong>Ventana de Pre-Ticket:</strong> ...</p>
+</div>
+
+<!-- Contenedor en kreyòl -->
+<div id="manualCreole" class="manual-section">
+  <h2>Manyèl Aplikasyon Lòtri (Kreyòl)</h2>
+  <p><strong>Chwazi Dat:</strong> Zòn dat la pèmèt ou pran youn oswa plizyè jou parye. Jodi a mete otomatikman.</p>
+  <p><strong>Tracks:</strong> Gade seksyon “USA” oswa “Santo Domingo.” Si ou chwazi “Venezuela,” dwe ak USA, 
+     “New York Horses” pèmèt antre 1–4 chif, elatriye...</p>
+  <p><strong>Tablo Pari:</strong> Chak ranje gen Bet Number, ki detèmine mòd jwe (Pulito, Pick 3, Win 4...).</p>
+  <p><strong>Single Action:</strong> 1 chif pou track USA (pa Venezuela, pa Horses).</p>
+  <p><strong>NY Horses:</strong> 1–4 chif si track Horses.</p>
+  <p><strong>Bouton:</strong> Add Play, Wizard, etc. ...</p>
+  <p><strong>Preview Ticket:</strong> Montre total, code QR, etc.</p>
+</div>
+
+<script>
+  // Lee el parámetro ?lang=...
+  const params = new URLSearchParams(window.location.search);
+  const lang = params.get("lang") || "en";
+
+  if(lang === "es"){
+    document.getElementById("manualSpanish").style.display = "block";
+  } else if(lang === "ht"){
+    document.getElementById("manualCreole").style.display = "block";
+  } else {
+    // por defecto => inglés
+    document.getElementById("manualEnglish").style.display = "block";
+  }
+</script>
+
+</body>
+</html>
