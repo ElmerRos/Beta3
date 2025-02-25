@@ -40,7 +40,7 @@ h2 {
   margin-bottom: 20px;
   color: var(--color-neon-cian);
   text-shadow: 0 0 10px var(--color-neon-cian);
-  font-size: 1.125rem; /* ~18px */
+  font-size: 1.125rem; 
 }
 
 /* ===========================
@@ -309,9 +309,8 @@ h2 {
   background-color: #0a0a0a;
   color: #ffffff;
   box-shadow: 0 0 20px var(--color-neon-cian);
-  max-height: 90vh;
-  overflow: auto;
-  resize: both;
+  max-height: 90vh; 
+  overflow: hidden; /* Evitamos scroll en container */
   border: 2px solid var(--color-neon-cian);
 }
 .modal-header,
@@ -326,6 +325,15 @@ h2 {
   margin: 0 auto;
   width: 128px;
   height: 128px;
+}
+
+/* 
+   Para que el contenido del BODY del modal 
+   tenga scroll (cuando hay muchas jugadas).
+*/
+.modal-body {
+  max-height: 70vh; 
+  overflow-y: auto;
 }
 
 /* ===========================
@@ -369,66 +377,105 @@ h2 {
    9) TICKET CONTAINER
    =========================== */
 
-/* Fuerza un ancho grande (1200px) y aumenta fuentes en la tabla
-   para que siempre se vea 'landscape' y con buena legibilidad. */
+/* Forzamos un ancho mayor (1600px) para más "resolución" */
 #preTicket {
   background-color: #0a0a0a;
   color: #ffffff;
   padding: 20px;
   border-radius: 10px;
-  /* Quitamos max-width:100% y forzamos 1200px */
-  min-width: 1200px;
-  width: 1200px; 
+  min-width: 1600px;
+  width: 1600px;
   max-width: none;
-  margin: 0 auto; /* centrado horizontal */
-  overflow-x: auto; 
+  margin: 0 auto;
+  overflow-x: auto;
   overflow-y: visible;
 }
 
+/* Titular más grande */
 #preTicket h4 {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
-  font-size: 1.5rem;
+  font-size: 2rem; /* un poco mayor */
 }
 
-/* Ajusta la tabla a 1200px, sube un poco el font-size */
+/* Ajusta la tabla a 1600px, 
+   duplicando el font-size (≈2rem) en celdas */
 #preTicket table {
   background-color: #1e1e1e;
-  min-width: 1200px;
+  min-width: 1600px;
   table-layout: fixed;
-  font-size: 1.2rem; /* un poco mayor que 1.125 */
+  font-size: 2rem; 
 }
 
-/* Celdas con más font-size y algo de padding mayor */
+/* Columnas: reduzcamos “Game Mode” y 
+   demos más espacio a la 1ra col. */
 #preTicket th,
 #preTicket td {
   border: 1px solid #00ffff;
   color: #ffffff;
-  padding: 8px;
-  word-wrap: break-word;
-  font-size: 1.0rem; /* antes era 0.9; ahora un poco más grande */
+  /* Duplicar fuente => 2rem */
+  font-size: 2rem;
+  padding: 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Ajustes de anchura, 
+   1) (#) => 6% 
+   2) (Bet) => 12% 
+   3) (Game Mode) => 8% 
+   4) (Straight) => 10% 
+   5) (Box) => 10% 
+   6) (Combo) => 10% 
+   7) (Total) => 10%
+   => Suma ~66%, 
+   hay “sobrante” => cada col quedará con esos minímos 
+   y el resto distribuido.
+*/
 #preTicket th:nth-child(1) {
-  width: 10%;
+  width: 6%;
 }
-#preTicket th:nth-child(2),
-#preTicket th:nth-child(4),
-#preTicket th:nth-child(5),
-#preTicket th:nth-child(6),
-#preTicket th:nth-child(7) {
+#preTicket th:nth-child(2) {
   width: 12%;
 }
 #preTicket th:nth-child(3) {
-  width: 20%;
+  width: 8%;
+}
+#preTicket th:nth-child(4) {
+  width: 10%;
+}
+#preTicket th:nth-child(5) {
+  width: 10%;
+}
+#preTicket th:nth-child(6) {
+  width: 10%;
+}
+#preTicket th:nth-child(7) {
+  width: 10%;
 }
 
+/* Haz más grande el texto de “Total Plays,” “Ticket Number,” etc. 
+   Normalmente están en .total-section y #numeroTicket, #ticketTotal 
+   o #ticketTransaccion...
+*/
+.total-section {
+  font-size: 2rem;
+  margin: 1.5rem 0;
+}
+#ticketTotal {
+  font-size: 2rem !important;
+}
+#numeroTicket,
+#ticketTransaccion {
+  font-size: 2rem !important;
+}
+
+/* Cambiamos color de Bet Dates en ticket */
 #ticketFecha {
   color: #ffffff !important;
 }
+/* track venezuela => color de cutoff */
 .cutoff-time[data-track='Venezuela'] {
   color: var(--color-fondo);
 }
@@ -445,35 +492,19 @@ h2 {
   border: 2px solid var(--color-neon-cian) !important;
 }
 
-/* En pantallas MUY pequeñas (menor de 600px),
-   si aun prefieres no romper el landscape, 
-   eliminamos la regla anterior que achicaba #preTicket */
+/* Ajuste extra en pantallas muy pequeñas => se mostrará scroll horizontal */
 @media (max-width: 600px) {
-  /* Podrías comentar completamente este bloque 
-     o dejarlo si deseas. 
-     Si lo dejas, quita los widths forzados. */
+  #preTicket {
+    overflow-x: auto;
+  }
   #preTicket table,
   #preTicket th,
   #preTicket td {
-    font-size: 1rem;
-    white-space: nowrap;
-  }
-  #preTicket {
-    /* Eliminamos width:1200 para estos móviles => 
-       preferimos forzar el scrolleo, 
-       así quedará un scroll horizontal grande. */
-    /* Ojo: si quieres MANTENER el ancho,
-       no pongas width: auto, 
-       simplemente no overrides these lines. */
-    overflow-x: auto;
+    font-size: 1.6rem; 
   }
   #qrcode {
     width: 100px;
     height: 100px;
-  }
-  #preTicket th,
-  #preTicket td {
-    font-size: 0.9rem;
   }
 }
 
@@ -503,6 +534,10 @@ h2 {
   background-color: #333;
   transform: scale(1.05);
 }
+#wizardTable {
+  min-width: 100%;
+  table-layout: auto;
+}
 #wizardTable thead th {
   background-color: #1e1e1e;
   color: var(--color-neon-cian);
@@ -512,8 +547,4 @@ h2 {
 #wizardTable td {
   font-size: 1rem;
   white-space: nowrap;
-}
-#wizardTable {
-  min-width: 100%;
-  table-layout: auto;
 }
