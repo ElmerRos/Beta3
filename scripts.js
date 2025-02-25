@@ -85,7 +85,7 @@ $(document).ready(function() {
       this.calendarContainer.style.transform = '';
     },
     onReady: function(selectedDates, dateStr, instance){
-      // Forzamos la fecha de hoy en el campo
+      // Forzamos la fecha de hoy en el campo si no hay nada
       if(!dateStr || dateStr.trim()===""){
         instance.setDate(new Date(), true);
       }
@@ -224,7 +224,7 @@ $(document).ready(function() {
   }
 
   // =========================================================
-  // DETERMINE GAME MODE (Reordenado para Venezuela vs Pulito)
+  // DETERMINE GAME MODE (Reordenado para “Venezuela” vs “Pulito”)
   // =========================================================
   function determineGameMode(betNumber){
     if(!betNumber) return "-";
@@ -237,7 +237,7 @@ $(document).ready(function() {
     const includesVenezuela = tracks.includes("Venezuela");
     const includesHorses = tracks.includes("New York Horses");
 
-    // 1) "NY Horses" => si se marca "New York Horses", cualquier dígito => "NY Horses"
+    // 1) "NY Horses"
     if(includesHorses){
       return "NY Horses";
     }
@@ -268,7 +268,7 @@ $(document).ready(function() {
       return "Venezuela";
     }
 
-    // 6) Pulito (2 dígitos) => si hay tracks USA y no SD
+    // 6) Pulito => 2 dígitos, track USA sin SD
     if(isUSA && !isSD && length===2){
       return "Pulito";
     }
@@ -540,8 +540,6 @@ $(document).ready(function() {
           errors.push(rowIndex);
           $(this).find(".straight").addClass("error-field");
         }
-        // Pulito => box debe tener posiciones => ya verificado en calc => si no hay => error
-        // (Se hace arriba, ya que no se definió un limit para box)
       }
 
       // Requerir al menos algo en Win4 / Pick3 => st, bx o co > 0
@@ -561,7 +559,6 @@ $(document).ready(function() {
           $(this).find(".straight,.box,.combo").addClass("error-field");
         }
       }
-
       // NY Horses => st+bx+co > 0
       if(gm==="NY Horses"){
         if(st<=0 && bx<=0 && co<=0){
@@ -572,9 +569,9 @@ $(document).ready(function() {
       }
 
       // ===========================================================
-      // LIMITES DE APUESTA (Straight, Box, Combo)
+      // LIMITES DE APUESTA
       // ===========================================================
-      // Win 4 => st<=6, combo<=6, box<=40
+      // Win 4 => st<=6, co<=6, bx<=40
       if(gm==="Win 4"){
         if(st>6){
           errorHere=true;
@@ -592,7 +589,7 @@ $(document).ready(function() {
           $(this).find(".box").addClass("error-field");
         }
       }
-      // Pick 3 => st<=35, combo<=35, box<=100
+      // Pick 3 => st<=35, co<=35, bx<=100
       if(gm==="Pick 3"){
         if(st>35){
           errorHere=true;
@@ -610,7 +607,7 @@ $(document).ready(function() {
           $(this).find(".box").addClass("error-field");
         }
       }
-      // Venezuela(2 dig) => st<=100
+      // Venezuela y Pulito => st<=100
       if(gm==="Venezuela"){
         if(st>100){
           errorHere=true;
@@ -618,7 +615,6 @@ $(document).ready(function() {
           $(this).find(".straight").addClass("error-field");
         }
       }
-      // Pulito => st<=100
       if(gm==="Pulito"){
         if(st>100){
           errorHere=true;
@@ -626,7 +622,7 @@ $(document).ready(function() {
           $(this).find(".straight").addClass("error-field");
         }
       }
-      // Otras no definidas => sin límite extra
+      // Otras => sin límite adicional
 
       if(errorHere) valid=false;
     });
@@ -1075,14 +1071,13 @@ $(document).ready(function() {
   });
 
   function generateRandomNumberForMode(mode){
-    // "NY Horses" => genera 1..4 dígitos
+    // "NY Horses" => 1..4 dígitos
     if(mode==="NY Horses"){
       const length = Math.floor(Math.random()*4)+1;
       const maxVal = Math.pow(10,length)-1;
       return Math.floor(Math.random()*(maxVal+1));
     }
     if(mode==="Single Action"){
-      // 1 dígito
       return Math.floor(Math.random()*10); // 0..9
     }
     if(mode==="Win 4"||mode==="Pale-Ven"||mode==="Pale-RD"){
@@ -1094,38 +1089,32 @@ $(document).ready(function() {
     if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela"){
       return Math.floor(Math.random()*100);
     }
-    // Default => generamos un 3 dígitos
+    // Default => 3 dígitos
     return Math.floor(Math.random()*1000);
   }
 
   function padNumberForMode(num, mode){
-    // NY Horses => sin padding forzado
     if(mode==="NY Horses"){
       return num.toString();
     }
-    // Single Action => 1 dígito => devolvemos tal cual
     if(mode==="Single Action"){
       return num.toString();
     }
-    // Pale-Ven / Pale-RD / Win 4 => 4 dígitos
     if(mode==="Pale-Ven"||mode==="Pale-RD"||mode==="Win 4"){
       let s=num.toString();
       while(s.length<4) s="0"+s;
       return s;
     }
-    // Pulito, RD-Quiniela, Venezuela => 2 dígitos
     if(mode==="Pulito"||mode==="RD-Quiniela"||mode==="Venezuela"){
       let s=num.toString();
       while(s.length<2) s="0"+s;
       return s;
     }
-    // Pick 3 => 3 dígitos
     if(mode==="Pick 3"){
       let s=num.toString();
       while(s.length<3) s="0"+s;
       return s;
     }
-    // Default => 3 dígitos
     let s=num.toString();
     while(s.length<3) s="0"+s;
     return s;
@@ -1298,181 +1287,210 @@ $(document).ready(function() {
   // =========================================================
   // INTRO.JS TUTORIAL (3 idiomas)
   // =========================================================
-  // Versión resumida en EN y HT, y manual extenso en ES.
+
+  // Versión extendida en los tres idiomas:
   const tutorialStepsEN = [
     {
-      element: '#fecha',
-      title: 'Bet Dates',
-      intro: 'Pick one or more dates for your bets. Today is auto-assigned.'
+      title: '1. Calendar (Bet Dates)',
+      intro: `
+        <p><strong>Location:</strong> Top of the form.</p>
+        <p>Select one or multiple dates. “Today” is assigned by default. 
+        The total multiplies by how many dates are marked.</p>
+      `
     },
     {
-      element: '.accordion',
-      title: 'Tracks',
-      intro: 'Choose the tracks (USA, Santo Domingo...).'
+      title: '2. Tracks (USA, Santo Domingo)',
+      intro: `
+        <p>Select from the accordion “USA” or “Santo Domingo.” 
+        By default, a New York track is chosen if none are selected. 
+        Tracks disable automatically after cutoff time.</p>
+        <p><strong>Special rules:</strong> 
+        - “Venezuela” must be combined with a USA track for 2-digit or Pale-Ven. 
+        - RD tracks alone for 2-digit or Pale-RD (no USA selected).</p>
+      `
     },
     {
-      element: '#jugadasTable',
-      title: 'Plays Table',
-      intro: 'Enter Bet Number (2–4 digits or Palé). Then Straight, Box, Combo.'
+      title: '3. Main Form (Plays Table)',
+      intro: `
+        <p><strong>Bet Number:</strong> 2, 3, or 4 digits, or Pale (22-50). 
+        “Brooklyn” and “Front” require 3 digits. 
+        <strong>Straight, Box, Combo</strong> are your wagers. 
+        The total for each row is shown. 
+        The global total multiplies by number of tracks and dates selected.</p>
+        <p>Buttons below: 
+        <em>Add Play</em> (new row), 
+        <em>Wizard</em> (quick entry window), 
+        <em>Remove Last Play</em> (removes final row), 
+        <em>Reset Form</em> (clears all).
+        Then <em>Generate Ticket</em> shows a <strong>pre-ticket window</strong> with your plays, total, etc. 
+        You can edit or confirm and get a unique ticket with QR.</p>
+      `
     },
     {
-      element: '#wizardButton',
-      title: 'Wizard Window',
-      intro: 'Click here to open the Quick Entry Window. Then continue.'
+      title: '4. Quick Entry Window (Wizard)',
+      intro: `
+        <p>Open with the “Wizard” button. 
+        You can add multiple plays quickly.</p>
+        <ul>
+          <li><strong>Bet Number + Add & Next:</strong> Insert 2–4 digits or Pale, or 1 digit if Single Action, then add it to an internal table.</li>
+          <li><strong>Lock Straight/Box/Combo:</strong> Reuse the same amounts in subsequent plays.</li>
+          <li><strong>Quick Pick:</strong> Generate random numbers for “Pick 3,” “Win 4,” “Single Action,” “NY Horses,” etc.</li>
+          <li><strong>Round Down:</strong> Provide a numeric range (e.g. 120..129), it generates all consecutive plays.</li>
+          <li><strong>Permute:</strong> Shuffle digits of existing wizard plays.</li>
+          <li><strong>Add Main:</strong> Send all wizard plays to the main table. 
+              <strong>Generate</strong> => does that plus “Generate Ticket.”</li>
+          <li>Each wizard row has a red button with its row number to remove that play individually.</li>
+        </ul>
+      `
     },
     {
-      title: 'Wizard Explanation',
-      intro: 'Inside Wizard, you can add multiple plays quickly.'
+      title: '5. Single Action & NY Horses',
+      intro: `
+        <p><strong>Single Action:</strong> 1 digit if you selected a standard USA track (not “Venezuela,” not “NY Horses”).</p>
+        <p><strong>NY Horses:</strong> 1–4 digits if “New York Horses” track is selected.</p>
+      `
     },
     {
-      element: '#wizardGenerateTicket',
-      title: 'Generate from Wizard',
-      intro: 'Or send them to the main table and generate the ticket.'
-    },
-    {
-      element: '#generarTicket',
-      title: 'Generate Ticket',
-      intro: 'Finally, you can see the Ticket Preview, confirm, print/share.'
+      title: '6. Generating the Ticket',
+      intro: `
+        <p>When you press “Generate Ticket,” a <em>preview window</em> appears with your plays, dates, tracks, total, etc. 
+        If changes are needed, press “Edit.” 
+        Otherwise, “Confirm & Print” gives you a unique ticket number, QR, and downloads a ticket image. 
+        You can share it via the “Share Ticket” button or from your downloads folder.</p>
+      `
     }
   ];
 
-  // **Aquí el manual largo en español** con todas tus correcciones
   const tutorialStepsES = [
     {
       title: '1. Calendario (Selección de Fechas)',
       intro: `
-        <p><strong>Ubicación:</strong> En la parte superior del formulario principal.</p>
+        <p><strong>Ubicación:</strong> Parte superior del formulario principal.</p>
         <p><strong>Uso:</strong><br>
-        - El campo “Bet Dates” muestra un calendario (Flatpickr) al hacer clic.<br>
-        - Puede seleccionar varias fechas: haga clic en cada día deseado y se irán marcando.<br>
-        - Para deseleccionar una fecha, basta con volver a hacer clic en la misma fecha en el calendario.<br>
-        - Por defecto, se muestra la fecha de “hoy” ya seleccionada cuando inicia la app o se hace “Reset Form”.<br>
-        <strong>Impacto en el total:</strong><br>
-        - El total del ticket se multiplica por la cantidad de fechas seleccionadas.<br>
-        - Ej.: si el total básico es 5.00 y ha seleccionado 2 fechas, el total pasa a 10.00.
-        </p>
+        - Seleccione una o varias fechas, hoy se asigna por defecto.<br>
+        - Cada fecha marcada multiplica el total.<br>
+        - Para desmarcar, haga clic de nuevo en la fecha.</p>
       `
     },
     {
-      title: '2. Selección de Tracks (Acordeones “USA” y “Santo Domingo”)',
+      title: '2. Selección de Tracks (USA y RD)',
       intro: `
-        <p><strong>Ubicación:</strong> Debajo del calendario, con dos acordeones: “USA” y “Santo Domingo”.</p>
-        <p><strong>Funcionamiento:</strong><br>
-        - El sistema elige por defecto un track de New York (Mid Day o Evening) si no hay ninguno marcado, para arrancar.<br>
-        - Cada track aparece como un “botón” con checkbox.<br>
-        - Cuando marca un track, afecta el total: El total se multiplica también por la cantidad de tracks marcados (excepto “Venezuela”, que no cuenta).<br>
-        - <strong>Cierre de Tracks:</strong> Si se selecciona “hoy” en el calendario, los tracks se desactivan automáticamente al llegar su hora límite.<br>
-        - En la interfaz, verá esos tracks en gris y no podrá marcarlos.</p>
-        <p><strong>Reglas especiales:</strong><br>
-        - <em>Venezuela:</em> Para jugar “Venezuela” (2 dígitos) o “Pale-Ven” (22–50), debe marcar “Venezuela” y al menos un track de USA.<br>
-        - <em>Tracks de RD:</em> Para “RD-Quiniela” (2 dígitos) o “Pale-RD”, se requiere tener al menos un track dominicano (y no tener tracks USA si se quiere Pale-RD).</p>
-        <p><strong>Ejemplo de usar ambos países:</strong><br>
-        - La app no admite, en un mismo ticket, marcar simultáneamente RD y USA si se pretende jugadas “Pale-RD” y “Pale-Ven”. Podría confundirse la detección.<br>
-        - Alternativa: primero se marcan los tracks de un país, se ingresan jugadas, luego se desmarcan y se marcan los del otro país sin resetear, etc.</p>
+        <p>Expanda los acordeones para ver las loterías. 
+        El sistema elige un track de NY si no hay ninguno marcado. 
+        Al marcar un track (excepto “Venezuela”), aumenta el multiplicador del total. 
+        “Venezuela” se combina con un track de USA.<br>
+        Los tracks de RD se marcan solos para “RD-Quiniela” o “Pale-RD.” 
+        Si marca “hoy,” los tracks se desactivan automáticamente al cierre.</p>
       `
     },
     {
       title: '3. Formulario Principal (Tabla de Jugadas)',
       intro: `
-        <p>3.1. <strong>Campos de la Tabla</strong><br>
-        - <strong>Bet Number:</strong> Aquí se escribe el número de la jugada (2, 3 o 4 dígitos) o un Pale (22-33, etc.).<br>
-        - Para “Venezuela” son 2 dígitos; “Pulito” (en tracks USA) también 2 dígitos.<br>
-        - “Pick 3” = 3 dígitos.<br>
-        - “Win 4” = 4 dígitos.<br>
-        - <strong>Brooklyn Mid Day / Evening y Front Midday / Evening:</strong> Se requiere 3 dígitos, pues son los 3 dígitos finales (Brooklyn) o los 3 dígitos iniciales (Front) del Win4 de New York.<br><br>
-        - <strong>Straight ($):</strong> Monto a apostar al número exacto.<br>
-        - <strong>Box ($):</strong> Monto para la modalidad Box (posiciones distintas).<br>
-        - <strong>Combo ($):</strong> Monto para la modalidad combinada (ej. Win4/Pick3).<br>
-        - Algunos juegos exigen Straight > 0 (Venezuela, RD-Quiniela).
-        </p>
-        <p>3.2. <strong>Detección de Modo de Juego</strong><br>
-        - <strong>Pulito</strong> (2 dígitos, solo si hay tracks USA, sin SD). Además, requiere que se especifiquen posiciones en Box para multiplicar la apuesta.<br>
-        - <strong>Pick 3</strong> (3 dígitos).<br>
-        - <strong>Win 4</strong> (4 dígitos).<br>
-        - <strong>Venezuela</strong> (2 dígitos, solo si “Venezuela” y uno o varios tracks de USA).<br>
-        - <strong>Pale-Ven</strong> (“22-50” o “22x50”). Requiere “Venezuela” + track de USA.<br>
-        - <strong>RD-Quiniela</strong> (2 dígitos, con track dominicano, sin USA).<br>
-        - <strong>Pale-RD</strong> (22-50, con track SD, sin track USA).<br>
-        - <strong>Single Action</strong> (1 dígito en un track de USA, excepto “Venezuela” y “NY Horses”).<br>
-        - <strong>NY Horses</strong> (cualquier 1–4 dígitos si el track es “New York Horses”).<br>
-        </p>
-        <p>3.3. <strong>Botones Principales</strong><br>
-        - <strong>Add Play:</strong> Agrega una fila vacía al final.<br>
-        - <strong>Wizard:</strong> Abre la ventana “Quick Entry Wizard” (ver más adelante).<br>
-        - <strong>Remove Last Play:</strong> Elimina la última fila de la tabla.<br>
-        - <strong>Reset Form:</strong> Limpia todo (fechas, tracks, jugadas).<br>
-        <em>Sugerencia:</em> Tras llenar tus jugadas, pulsa “Generate Ticket” para ver la ventana de pre-ticket con QR.</p>
+        <p>Cada fila incluye <em>Bet Number</em> (2, 3 o 4 dígitos o Pale). 
+        Para “Brooklyn” o “Front,” se usan 3 dígitos (tomados del Win4). 
+        Introduzca montos en <em>Straight</em>, <em>Box</em>, <em>Combo</em>. 
+        El total global se multiplica por la cantidad de tracks (excepto Venezuela) y fechas.<br>
+        Botones: 
+        <strong>Add Play</strong> (nueva fila), 
+        <strong>Wizard</strong> (ventana rápida), 
+        <strong>Remove Last</strong> (quita la última fila),
+        <strong>Reset Form</strong> (limpia todo).
+        Luego “Generate Ticket” muestra una <u>ventana de pre-ticket</u> con QR, 
+        donde se puede <em>Editar</em> o <em>Confirmar</em>.</p>
       `
     },
     {
       title: '4. Ventana “Wizard” (Entrada Rápida)',
       intro: `
-        <p>Se abre con el botón “Wizard” y sirve para agilizar la creación de múltiples jugadas.</p>
-        <p>4.1. <strong>Campos Principales</strong><br>
-        - <strong>Bet Number + “Add & Next”:</strong> Introduce 2–4 dígitos o un Pale. Pulsa “Add & Next” y se crea una fila interna.<br>
-        - <strong>Straight, Box, Combo + candados:</strong> Permite bloquear (“lock”) un monto para repetirlo en cada jugada posterior. Ej. si siempre usas 5.00 en Straight.<br>
-        - <strong>Botón “Add Main”:</strong> Pasa todas las jugadas de la tabla interna a la tabla principal.<br>
-        - <strong>Botón “Generate”:</strong> Hace “Add All To Main” y luego lanza el “Generate Ticket” final.<br>
-        - <strong>Botón “Edit Main”:</strong> Cierra la ventana y vuelve al formulario principal sin generar ticket.</p>
-        <p>4.2. <strong>Secciones Extra</strong><br>
-        - <strong>Quick Pick:</strong> Elige la modalidad (Pick 3, Win 4, Single Action, NY Horses...), la cantidad de jugadas, y genera números aleatorios.<br>
-        - <strong>Permute:</strong> Reordena (baraja) los dígitos de las jugadas ya generadas en el Wizard.<br>
-        - <strong>Round Down:</strong> Introduce un rango (ej. 120 a 129) y genera todas las consecutivas. Cada una detecta su modo de juego automáticamente.<br>
-        </p>
-        <p>4.3. <strong>Eliminar Jugadas en el Wizard</strong><br>
-        - Cada fila tiene un botón rojo con el número de la jugada, que puede usarse para remover una jugada individual.</p>
-        <p>4.4. <strong>Pasar las Jugadas al Formulario Principal</strong><br>
-        - Usa “Add Main” para volcarlas a la tabla principal, o “Generate” para crear el ticket directo.</p>
+        <p><strong>Ingreso masivo:</strong><br>
+        - <em>Bet Number + Add & Next</em>: 2–4 dígitos (o 1 si Single Action), se añade a la tabla interna.<br>
+        - <em>Candados Straight/Box/Combo</em>: repiten el mismo valor sin reescribir.<br>
+        - <em>Quick Pick</em>: genera números aleatorios (Pick3, Win4, Single Action, NY Horses, etc.).<br>
+        - <em>Round Down</em>: rango consecutivo (ej. 120..129).<br>
+        - <em>Permute</em>: baraja dígitos de lo ya generado.<br>
+        - Cada jugada tiene un botón rojo con el <u>número</u> de esa jugada para eliminarla individualmente.<br>
+        - <em>Add Main</em> => pasa todo al formulario principal. 
+        <em>Generate</em> => lo mismo y abre “Generate Ticket.”</p>
       `
     },
     {
-      title: 'Generar Ticket: Vista Previa',
+      title: '5. Modalidades “Single Action” y “NY Horses”',
       intro: `
-        <p>Al hacer clic en “Generate Ticket”, aparece una ventana de <strong>Pre Ticket</strong> o vista previa, con todas tus jugadas, el monto total, la fecha(s) y los tracks. Allí puedes:</p>
-        <ul>
-          <li><strong>Edit:</strong> Regresar al formulario principal para corregir lo necesario.</li>
-          <li><strong>Confirm & Print:</strong> Se genera un número de ticket único y un código QR, se descarga la imagen del ticket y puedes compartirlo.</li>
-          <li><strong>Share Ticket:</strong> Botón para compartirlo directamente, o ir a la carpeta de descargas y compartir el archivo.</li>
-        </ul>
-        <p>Una vez confirmado, se bloquea la edición y el ticket queda con su número único.</p>
+        <p><strong>Single Action:</strong> si marca un track de USA (no Venezuela, no Horses) y el Bet Number tiene 1 dígito.</p>
+        <p><strong>NY Horses:</strong> si marca “New York Horses,” 1–4 dígitos => “NY Horses.”</p>
+      `
+    },
+    {
+      title: '6. Generar Ticket y Vista Previa',
+      intro: `
+        <p>Al pulsar “Generate Ticket,” verá la <em>ventana de pre-ticket</em> con jugadas, total, fechas y tracks. 
+        Puede <em>Editar</em> (regresar al formulario), o <em>Confirmar & Print</em>, que asigna un número de ticket único y genera el QR. 
+        Se descarga la imagen del ticket y puede compartirlo con “Share Ticket” o desde descargas.</p>
       `
     }
   ];
 
   const tutorialStepsHT = [
     {
-      element: '#fecha',
-      title: 'Dat Pari',
-      intro: 'Chwazi youn oswa plizyè dat; jodi a se auto.'
+      title: '1. Dat Pari',
+      intro: `
+        <p>Chwazi youn oswa plizyè dat pou pari ou. Jodi a se default. 
+        Plizyè dat ap miltipliye total ou.</p>
+      `
     },
     {
-      element: '.accordion',
-      title: 'Tracks',
-      intro: 'Chwazi kous ou vle (USA, RD). E pèmèt Venezuela si ou vle Pale-Ven.'
+      title: '2. Tracks (USA / RD)',
+      intro: `
+        <p>Make kous (USA oswa Santo Domingo). 
+        “Venezuela” mande kombine ak USA. 
+        RD mande track dominiken san track USA.</p>
+      `
     },
     {
-      element: '#jugadasTable',
-      title: 'Tab Pari',
-      intro: 'Antre Bet Number (2–4 chif, oswa Pale). Straight, Box, Combo.'
+      title: '3. Tab Pari (Main Form)',
+      intro: `
+        <p>Bet Number (2,3,4 chif oswa Pale). 
+        “Brooklyn/Front” se 3 chif (soti nan Win4). 
+        Mete Straight, Box, Combo. 
+        Total la miltipliye ak konbyen track (san Venezuela) ak dat ou pran.</p>
+        <p>Bouton: <strong>Add Play</strong> (nouvo liy), 
+        <strong>Wizard</strong> (fenèt antre rapid), 
+        <strong>Remove Last</strong>, 
+        <strong>Reset Form</strong>. 
+        Apre sa, <strong>Generate Ticket</strong> => fenèt preview tikè (QR), 
+        ou ka Edit oswa Confirm.</p>
+      `
     },
     {
-      element: '#wizardButton',
-      title: 'Bouton Wizard',
-      intro: 'Louvri fenèt antre rapid. Aprann plis.'
+      title: '4. Fenèt “Wizard” (Antre Rapid)',
+      intro: `
+        <p>Fè plizyè parye vit:</p>
+        <ul>
+          <li><em>Bet Number + Add & Next:</em> 2–4 chif oswa 1 chif (Single Action), li ale nan tablo entè.</li>
+          <li><em>Candado Straight/Box/Combo:</em> Kenbe menm valè san reekri.</li>
+          <li><em>Quick Pick:</em> Genera nimewo o aza (Pick3, Win4, Single Action, NY Horses...).</li>
+          <li><em>Round Down:</em> Sekans 120..129.</li>
+          <li><em>Permute:</em> Melanje chif yo.</li>
+          <li>Chak parye gen bouton wouj ak <u>nimewo</u> li pou retire li separeman.</li>
+          <li><em>Add Main</em> => mete tout nan tablo prensipal, 
+              <em>Generate</em> => kreye tikè dirèk.</li>
+        </ul>
+      `
     },
     {
-      title: 'Wizard (Kout rèsume)',
-      intro: 'Ajoute plizyè parye vit, lock Straight, Box, Combo, Quick Pick...'
+      title: '5. Single Action / NY Horses',
+      intro: `
+        <p><strong>Single Action:</strong> 1 chif si se track USA (pa Venezuela, pa Horses).</p>
+        <p><strong>NY Horses:</strong> 1–4 chif si track “New York Horses.”</p>
+      `
     },
     {
-      element: '#wizardGenerateTicket',
-      title: 'Generate (Wizard)',
-      intro: 'Ou ka kreye tikè dirèkteman la.'
-    },
-    {
-      element: '#generarTicket',
-      title: 'Generate Ticket',
-      intro: 'Apre sa, ou wè Vista Previa tikè a, confirm/print/share.'
+      title: '6. Generar Ticket (Preview)',
+      intro: `
+        <p>Lè w peze “Generate Ticket,” ou wè fenèt preview tikè a ak parye ou, total, dat, track. 
+        Ou ka <em>Edit</em> pou tounen, oswa <em>Confirm & Print</em> pou jwenn yon nimewo tikè inik ak QR. 
+        Tikè a telechaje kòm imaj, ou ka pataje li ak “Share Ticket” oswa soti nan download ou.</p>
+      `
     }
   ];
 
@@ -1493,6 +1511,7 @@ $(document).ready(function() {
       doneLabel = 'Listo';
     } else {
       steps = tutorialStepsHT;
+      // Podrías cambiar los labels a criollo si quisieras
     }
 
     introJs().setOptions({
@@ -1513,83 +1532,172 @@ $(document).ready(function() {
   $("#helpCreole").click(()=>startTutorial('ht'));
 
   // =========================================================
-  // MANUAL DETALLADO
+  // MANUAL DETALLADO (3 idiomas)
   // =========================================================
-  // En #manualEnglishText => texto resumido, #manualCreoleText => lo mismo,
-  // En #manualSpanishText => el texto grande y corregido.
+  // A continuación, los 3 manuales “completos” con la misma estructura.
+  // 1) EN, 2) ES, 3) Kreyòl
 
   const manualEnglishHTML = `
-    <h4>Lottery App Manual (English, short version)</h4>
-    <p>Please refer to the tutorial (Help button “E”) for a step-by-step guide.</p>
-  `;
-  const manualCreoleHTML = `
-    <h4>Manyèl (Kreyòl, vèsyon kout)</h4>
-    <p>Tanpri itilize bouton “C” pou tutoriel an kreyòl.</p>
+    <h4>Complete Lottery App Manual (English)</h4>
+    <ol>
+      <li><strong>Calendar (Bet Dates):</strong><br>
+        <p>Located at the top of the form. You can pick multiple dates. “Today” is chosen by default. 
+           The total multiplies by the number of dates selected.</p>
+      </li>
+      <li><strong>Tracks (USA / Santo Domingo):</strong><br>
+        <p>Below the calendar, we have two accordions: “USA” and “Santo Domingo.” 
+           By default, if no track is selected, the system picks a New York track. 
+           Checking a track (except “Venezuela”) increases the total multiplier. 
+           “Venezuela” must be combined with at least one USA track to play “Venezuela” or “Pale-Ven.” 
+           RD tracks require no USA for “RD-Quiniela” or “Pale-RD.”</p>
+      </li>
+      <li><strong>Main Form (Plays Table):</strong><br>
+        <p>Each row has a <em>Bet Number</em> (2–4 digits, or a Palé like 22-50). 
+           For “Brooklyn” or “Front,” you must use 3 digits. 
+           Enter <em>Straight</em>, <em>Box</em>, <em>Combo</em> amounts. 
+           The row total is shown on the right. The overall total also multiplies by the number of tracks and dates. 
+           Buttons: <em>Add Play</em> (adds row), <em>Wizard</em> (opens Quick Entry Window), 
+           <em>Remove Last Play</em>, <em>Reset Form</em>. 
+           Then “Generate Ticket” opens a <u>Pre-Ticket Window</u> to preview and confirm your ticket.</p>
+      </li>
+      <li><strong>Wizard Window (Quick Entry):</strong><br>
+        <p>Click “Wizard” to open a window that helps you create multiple plays quickly. 
+           You can:  
+           - Enter Bet Number + “Add & Next” repeatedly,  
+           - Lock Straight, Box, Combo,  
+           - Do Quick Pick for random numbers,  
+           - Round Down for consecutive ranges,  
+           - Permute digits.  
+           Each row has a red button with that row number to remove it individually.  
+           Finally, “Add Main” sends these plays to the main table, or “Generate” does that plus creates the ticket instantly.</p>
+      </li>
+      <li><strong>Single Action & NY Horses:</strong><br>
+        <p>
+          <em>Single Action</em>: If you select a USA track (not “Venezuela,” not “NY Horses”) and you enter exactly 1 digit, 
+          the system calls it “Single Action.”  
+          <em>NY Horses</em>: If you mark “New York Horses,” any Bet Number of 1–4 digits is “NY Horses.”</p>
+      </li>
+      <li><strong>Generate Ticket & Preview:</strong><br>
+        <p>Press “Generate Ticket” to see the pre-ticket window with all plays, total, date(s), and tracks. 
+           You can <em>Edit</em> to return, or <em>Confirm & Print</em> to finalize. 
+           That assigns a unique Ticket Number, creates a QR code, downloads the image, 
+           and you can share with “Share Ticket” or from your downloads folder. 
+           If you close without confirming, you may return and edit as needed.</p>
+      </li>
+    </ol>
   `;
 
-  // Aquí el manual extenso en español con las correcciones solicitadas
   const manualSpanishHTML = `
     <h4>Manual Completo de la App de Loterías (Español)</h4>
-
-    <p><strong>1. Calendario (Selección de Fechas)</strong><br>
-    <u>Ubicación:</u> Parte superior. Puede marcar varias fechas, hoy se asigna por defecto, etc.
-    El total se multiplica por cada fecha marcada.</p>
-
-    <p><strong>2. Selección de Tracks</strong><br>
-    Dos acordeones: “USA” y “Santo Domingo.” El sistema selecciona por defecto un track de New York si ninguno está marcado.
-    Marcar tracks (excepto “Venezuela”) aumenta el multiplicador de su total.
-    “Venezuela” se combina con un track USA para “Venezuela” (2 dígitos) o “Pale-Ven” (22-50).
-    Tracks de RD se marcan solos para “RD-Quiniela” o “Pale-RD.”</p>
-
-    <p><strong>3. Formulario Principal</strong><br>
-    - Cada fila tiene <em>Bet Number</em> (2, 3 o 4 dígitos o Pale).<br>
-    - <em>Straight, Box, Combo:</em> montos de apuesta.<br>
-    - <em>Brooklyn / Front</em>: requieren 3 dígitos (son 3 dígitos finales o iniciales del Win4 de NY).
-    <br><strong>Botones:</strong><br>
-    <em>Add Play</em> (agrega fila), <em>Wizard</em> (ventana rápida), <em>Remove Last</em> (quita la última fila),
-    <em>Reset Form</em> (limpia todo). Al terminar, “Generate Ticket” abre una <u>ventana de pre-ticket</u>
-    con la vista previa, donde puede editar antes de confirmar, o confirmar y obtener un ticket con QR.</p>
-
-    <p><strong>4. Ventana “Wizard”</strong><br>
-    - Aquí puede ingresar varias jugadas en bloque.<br>
-    - <em>Bet Number + Add & Next</em>: añade jugada a la tabla interna.<br>
-    - Candados en <em>Straight, Box, Combo</em> para repetir esos montos sin reescribir.<br>
-    - <em>Quick Pick</em> (Pick 3, Win 4, Single Action, NY Horses...), <em>Round Down</em> (rango consecutivo),
-      <em>Permute</em> (reordena dígitos).<br>
-    - Botón rojo con número de jugada => elimina esa jugada individual.<br>
-    - <em>Add Main</em> => pasa todo a la tabla principal. <em>Generate</em> => crea el ticket inmediatamente.</p>
-
-    <p><strong>Modalidades Especiales:</strong><br>
-    - <em>Single Action</em>: 1 dígito en tracks USA (excepto “Venezuela” / “NY Horses”).<br>
-    - <em>NY Horses</em>: (1–4 dígitos) si marca “New York Horses.”<br>
-    - <em>Pulito</em> (2 dígitos, track USA), con posiciones en Box para multiplicar.<br>
-    - <em>Venezuela</em> (2 dígitos, track “Venezuela” + USA).<br>
-    </p>
-
-    <p><strong>5. Límites de Apuesta</strong><br>
-    - Win4: Straight máx. 6, Combo máx. 6, Box máx. 40<br>
-    - Pick3: Straight y Combo máx. 35, Box máx. 100<br>
-    - Venezuela (2 dígitos) y Pulito: Straight máx. 100<br>
-    (El sistema le avisará si excede, al generar el ticket.)</p>
-
-    <p><strong>6. Generar Ticket: Vista Previa y Confirmación</strong><br>
-    - Al pulsar “Generate Ticket,” aparece la ventana de <em>pre-ticket</em> con tus jugadas, fecha, tracks y total.<br>
-    - Si algo está mal, pulsa “Edit” para volver al formulario.<br>
-    - Al confirmar, se asigna un número de ticket único y un código QR. Se descarga la imagen del ticket y puede
-      compartirlo desde la misma ventana (botón “Share Ticket”) o desde su carpeta de descargas.<br>
-    - Si cierra sin confirmar, puede volver a la tabla principal y modificar jugadas libremente.<br>
-    </p>
+    <ol>
+      <li><strong>Calendario (Selección de Fechas):</strong>
+        <p>Ubicado arriba. Puede marcar varias fechas, “hoy” se asigna por defecto. 
+           El total se multiplica por cuántas fechas seleccione. 
+           Para desmarcar, haga clic de nuevo en la fecha.</p>
+      </li>
+      <li><strong>Selección de Tracks (USA / Santo Domingo):</strong>
+        <p>Bajo el calendario, hay 2 acordeones: “USA” y “Santo Domingo.” 
+           Si no hay ninguno marcado, el sistema elige un track de NY por defecto. 
+           Al marcar un track (excepto “Venezuela”), el total se multiplica. 
+           “Venezuela” debe combinarse con un track de USA. 
+           RD se marca sin USA para “RD-Quiniela” o “Pale-RD.” 
+           Si hoy es la fecha, los tracks se desactivan al llegar su hora límite.</p>
+      </li>
+      <li><strong>Formulario Principal (Tabla de Jugadas):</strong>
+        <p>Cada fila tiene un <em>Bet Number</em> (2–4 dígitos o un Pale). 
+           Para “Brooklyn” o “Front,” se requieren 3 dígitos. 
+           Ingrese <em>Straight</em>, <em>Box</em>, <em>Combo</em>. 
+           El total global se multiplica por la cantidad de tracks (sin Venezuela) y fechas. 
+           Botones: <em>Add Play</em>, <em>Wizard</em>, <em>Remove Last Play</em>, <em>Reset Form</em>. 
+           Al final, <em>Generate Ticket</em> muestra una ventana de pre-ticket con QR, 
+           donde puede editar o confirmar.</p>
+      </li>
+      <li><strong>Ventana “Wizard” (Entrada Rápida):</strong>
+        <p>Se abre con el botón “Wizard.” 
+           Permite ingresar múltiples jugadas rápido. 
+           - <em>Bet Number + Add & Next</em> para añadir filas internas, 
+           - candados en <em>Straight, Box, Combo</em> para bloquear los montos, 
+           - <em>Quick Pick</em> (números aleatorios), 
+           - <em>Round Down</em> (rango consecutivo), 
+           - <em>Permute</em> (baraja dígitos). 
+           Cada jugada tiene un botón rojo con su número para quitarla individualmente. 
+           Luego <em>Add Main</em> pasa todo a la tabla principal, 
+           <em>Generate</em> crea el ticket inmediatamente.</p>
+      </li>
+      <li><strong>Single Action y NY Horses:</strong>
+        <p><em>Single Action</em>: 1 dígito si es un track de USA (excepto “Venezuela” y “NY Horses”).<br>
+           <em>NY Horses</em>: 1–4 dígitos si marcó “New York Horses.”</p>
+      </li>
+      <li><strong>Generar Ticket y Vista Previa:</strong>
+        <p>Al pulsar “Generate Ticket,” aparece la ventana de <em>pre-ticket</em> con todo: jugadas, total, fechas, tracks. 
+           Puede <em>Edit</em> para volver o <em>Confirm & Print</em> para asignar un número único y QR. 
+           Se descarga el ticket como imagen y lo puede compartir con “Share Ticket” o desde sus descargas. 
+           Si cierra sin confirmar, puede seguir editando en la tabla principal.</p>
+      </li>
+    </ol>
   `;
 
+  const manualCreoleHTML = `
+    <h4>Manyèl Konplè pou Aplikasyon Lòtri (Kreyòl)</h4>
+    <ol>
+      <li><strong>Dat Pari (Kalendriye):</strong>
+        <p>Sitiye anwo fòm lan. Ou ka chwazi youn oswa plizyè jou. “Jodi a” se default. 
+           Total la miltipliye ak konbyen jou ou make. 
+           Pou demake, klike ankò sou dat la.</p>
+      </li>
+      <li><strong>Tracks (USA / Santo Domingo):</strong>
+        <p>Anba kalendriye a gen 2 accordion: “USA” ak “Santo Domingo.” 
+           Si pa gen anyen make, li chwazi yon New York track otomatikman. 
+           Check track (san Venezuela) ap ogmante total la. 
+           “Venezuela” dwe ak yon track USA pou 2 chif oswa Pale-Ven. 
+           RD separe pou “RD-Quiniela” oswa “Pale-RD.” 
+           Si se jodi a, track yo ap fèmen otomatikman when cutoff tan rive.</p>
+      </li>
+      <li><strong>Tablo Pari (Main Form):</strong>
+        <p>Chak liy gen <em>Bet Number</em> (2–4 chif oswa Pale). 
+           “Brooklyn” oswa “Front” se 3 chif. 
+           Mete <em>Straight</em>, <em>Box</em>, <em>Combo</em>. 
+           Total jeneral miltipliye pa konbyen track (san Venezuela) ak dat. 
+           Bouton: <em>Add Play</em> (nouvo liy), <em>Wizard</em> (fenèt rapid), 
+           <em>Remove Last Play</em>, <em>Reset Form</em>. 
+           “Generate Ticket” ap montre fenèt pre-ticket ak QR, 
+           ou ka Edit oswa Confirm.</p>
+      </li>
+      <li><strong>Fenèt “Wizard” (Antre Rapid):</strong>
+        <p>Ouvri ak bouton “Wizard.” 
+           Ou ka antre plizyè parye vit:  
+           - <em>Bet Number + Add & Next</em>,  
+           - Candado pou <em>Straight/Box/Combo</em>,  
+           - <em>Quick Pick</em> (Pick3, Win4, Single Action, NY Horses...),  
+           - <em>Round Down</em> (sekans 120..129),  
+           - <em>Permute</em> (melanje chif),  
+           - Bouton wouj ak nimewo pou retire liy separeman,  
+           - <em>Add Main</em> => mete parye yo nan tablo prensipal,  
+           - <em>Generate</em> => kreye tikè imedyatman.</p>
+      </li>
+      <li><strong>Single Action ak NY Horses:</strong>
+        <p><em>Single Action:</em> 1 chif si se track USA (pa “Venezuela,” pa “NY Horses”).<br>
+           <em>NY Horses:</em> 1–4 chif si ou check “New York Horses.”</p>
+      </li>
+      <li><strong>Jenere Tikè ak Previa:</strong>
+        <p>Lè w peze “Generate Ticket,” fenèt <em>pre-ticket</em> parèt ak tout parye, total, dat, track. 
+           Ou ka <em>Edit</em> pou tounen, oswa <em>Confirm & Print</em> pou jwenn yon nimewo inik ak QR. 
+           L ap telechaje imaj tikè a, ou ka pataje avè “Share Ticket” oswa soti nan download ou. 
+           Si w pa konfime, ou ka retounen modifye tablo a.</p>
+      </li>
+    </ol>
+  `;
+
+  // Insertar en los div correspondientes
   $("#manualEnglishText").html(manualEnglishHTML);
   $("#manualSpanishText").html(manualSpanishHTML);
   $("#manualCreoleText").html(manualCreoleHTML);
 
-  // Ocultar ES y HT al inicio, mostrar EN o lo que desees
+  // Ocultar ES y HT al inicio, dejar EN visible o como prefieras
   $("#manualSpanishText").addClass("d-none");
   $("#manualCreoleText").addClass("d-none");
 
-  // Botones para mostrar/ocultar manual
+  // Botones para el manual
   $("#manualEnglishBtn").click(function(){
     $("#manualEnglishText").removeClass("d-none");
     $("#manualSpanishText").addClass("d-none");
