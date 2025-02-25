@@ -1,6 +1,7 @@
- const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
 $(document).ready(function() {
+  // Extensiones dayjs
   dayjs.extend(dayjs_plugin_customParseFormat);
   dayjs.extend(dayjs_plugin_arraySupport);
 
@@ -11,8 +12,8 @@ $(document).ready(function() {
   let selectedDaysCount = 0;
   const MAX_PLAYS = 25;
 
-  let playCount = 0;         // # filas en la tabla principal
-  let wizardCount = 0;       // # filas en la tabla interna del Wizard
+  let playCount = 0;         // Filas en la tabla principal
+  let wizardCount = 0;       // Filas en la tabla Wizard
 
   // Candados en Wizard
   const lockedFields = {
@@ -43,7 +44,8 @@ $(document).ready(function() {
       "Brooklyn Midday": "14:20",
       "Brooklyn Evening": "22:00",
       "Front Midday": "14:20",
-      "Front Evening": "22:00"
+      "Front Evening": "22:00",
+      "New York Horses": "16:00"
     },
     "Santo Domingo": {
       "Real": "11:45",
@@ -221,46 +223,63 @@ $(document).ready(function() {
   function determineGameMode(betNumber){
     if(!betNumber) return "-";
 
-    // Pale => 2 dígitos, - o x, 2 dígitos
-    const paleRegex = /^(\d{2})(-|x)(\d{2})$/;
-    const isPaleFormat = paleRegex.test(betNumber);
-
     const tracks = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
     const isUSA = tracks.some(t => cutoffTimes.USA[t]);
     const isSD  = tracks.some(t => cutoffTimes["Santo Domingo"][t]);
     const includesVenezuela = tracks.includes("Venezuela");
+    const includesHorses = tracks.includes("New York Horses");
 
-    if(isPaleFormat) {
+    // 1) SINGLE ACTION (NEW RULE)
+    //   A) Si "New York Horses" está marcado y betNumber tiene 1..4 dígitos => "Single Action"
+    if(includesHorses && betNumber.length>=1 && betNumber.length<=4){
+      return "Single Action";
+    }
+    //   B) Si NO es "New York Horses" pero es un track de USA (sin Venezuela),
+    //      y betNumber tiene 1 dígito => "Single Action"
+    if(isUSA && !includesVenezuela && !includesHorses && betNumber.length===1){
+      return "Single Action";
+    }
+
+    // 2) Pale => 2 dígitos, - o x, 2 dígitos
+    const paleRegex = /^(\d{2})(-|x)(\d{2})$/;
+    if( paleRegex.test(betNumber) ){
       if(includesVenezuela && isUSA) {
         return "Pale-Ven";
       }
-      if(isSD && !isUSA) {
+      if(isSD && !isUSA){
         return "Pale-RD";
       }
       return "-";
     }
 
+    // 3) Check length
     const length = betNumber.length;
     if(length<2 || length>4) return "-";
 
-    // Lógica general
-    if(includesVenezuela && isUSA) {
-      if(length===2) return "Venezuela";
-      if(length===3) return "Pick 3";
-      if(length===4) return "Win 4";
+    // 4) Lógica general
+    // Pulito (2 dígitos) => si hay tracks USA y no SD
+    if(isUSA && !isSD && length===2){
+      return "Pulito";
     }
-    else if(isUSA && !isSD){
-      if(length===4) return "Win 4";
-      if(length===3) return "Pick 3";
-      if(length===2) return "Pulito";
+    // Venezuela => 2 dígitos + (Venezuela + track USA)
+    if(length===2 && includesVenezuela && isUSA){
+      return "Venezuela";
     }
-    else if(isSD && !isUSA){
-      if(length===2) return "RD-Quiniela";
-      if(length===3) return "Pick 3";
-      if(length===4) return "Win 4";
+    // RD-Quiniela => 2 dígitos + track SD (sin USA)
+    if(length===2 && isSD && !isUSA){
+      return "RD-Quiniela";
     }
+    // 3 dígitos => Pick 3
+    if(length===3){
+      return "Pick 3";
+    }
+    // 4 dígitos => Win 4
+    if(length===4){
+      return "Win 4";
+    }
+
     return "-";
   }
 
@@ -272,6 +291,7 @@ $(document).ready(function() {
     const st = parseFloat(stVal) || 0;
     const combo = parseFloat(coVal)||0;
 
+    // Pulito => multiplicar st por la cantidad de posiciones (boxVal)
     if(gm==="Pulito"){
       if(bxVal){
         const positions = bxVal.split(",").map(x=>x.trim()).filter(Boolean);
@@ -279,18 +299,32 @@ $(document).ready(function() {
       }
       return "0.00";
     }
-    if(gm==="Venezuela" || gm.startsWith("RD-") || gm==="Pale-RD" || gm==="Pale-Ven"){
+
+    // Single Action
+    if(gm==="Single Action"){
+      // total = st + box + combo
+      const numericBox = parseFloat(bxVal)||0;
+      let totalSA = st + numericBox + combo;
+      return totalSA.toFixed(2);
+    }
+
+    // Venezuela, Pale-RD, Pale-Ven, RD-Quiniela => st
+    if(gm==="Venezuela" || gm==="Pale-RD" || gm==="Pale-Ven" || gm==="RD-Quiniela"){
       return st.toFixed(2);
     }
+
+    // Win 4, Pick 3 => combosCount
     if(gm==="Win 4" || gm==="Pick 3"){
       const numericBox = parseFloat(bxVal)||0;
       const combosCount = calcCombos(bn);
       let total = st + numericBox + combo*combosCount;
       return total.toFixed(2);
     }
+
+    // Caso default
     const numericBox = parseFloat(bxVal)||0;
-    let total = st + numericBox + combo;
-    return total.toFixed(2);
+    let totalD = st + numericBox + combo;
+    return totalD.toFixed(2);
   }
 
   function calcCombos(str){
@@ -430,7 +464,7 @@ $(document).ready(function() {
     }
     $("#ticketTracks").text(chosenTracks.join(", "));
 
-    // Ver cutoff si elige HOY
+    // Ver cutoff si eligió HOY
     const arrDates = dateVal.split(", ");
     const today = dayjs().startOf("day");
     for(let ds of arrDates){
@@ -493,6 +527,7 @@ $(document).ready(function() {
           $(this).find(".straight").addClass("error-field");
         }
         if(gm==="Pulito" && !bx){
+          // Pulito => box must have positions
           errorHere=true;
           errors.push(rowIndex);
           $(this).find(".box").addClass("error-field");
@@ -508,6 +543,18 @@ $(document).ready(function() {
           $(this).find(".straight,.box,.combo").addClass("error-field");
         }
       }
+      // Single Action => si st+box+combo=0 => error
+      if(gm==="Single Action"){
+        const sVal=parseFloat(st)||0;
+        const bVal=parseFloat(bx)||0;
+        const cVal=parseFloat(co)||0;
+        if(sVal<=0 && bVal<=0 && cVal<=0){
+          errorHere=true;
+          errors.push(rowIndex);
+          $(this).find(".straight,.box,.combo").addClass("error-field");
+        }
+      }
+
       if(errorHere) valid=false;
     });
 
@@ -754,7 +801,7 @@ $(document).ready(function() {
       const raw=getTrackCutoff(val);
       if(raw){
         let co=dayjs(raw,"HH:mm");
-        let cf= co.isAfter(dayjs("21:30","HH:mm"))?dayjs("22:00","HH:mm"):co.subtract(10,"minute");
+        let cf= co.isAfter(dayjs("21:30","HH:mm"))?dayjs("22:00","HH:mm"): co.subtract(10,"minute");
         if(now.isSame(cf)||now.isAfter(cf)){
           $(this).prop("checked",false).prop("disabled",true);
           $(this).closest(".track-button-container").find(".track-button").css({
@@ -839,7 +886,7 @@ $(document).ready(function() {
   }
 
   // =========================================================
-  // WIZARD
+  // WIZARD (Ventana)
   // =========================================================
   const wizardModal=new bootstrap.Modal(document.getElementById("wizardModal"));
 
@@ -941,9 +988,9 @@ $(document).ready(function() {
       alert("Please enter a count between 1 and 25.");
       return;
     }
-    const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): "";
-    const bxVal= lockedFields.box? $("#wizardBox").val().trim(): "";
-    const coVal= lockedFields.combo? $("#wizardCombo").val().trim(): "";
+    const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): $("#wizardStraight").val().trim();
+    const bxVal= lockedFields.box? $("#wizardBox").val().trim(): $("#wizardBox").val().trim();
+    const coVal= lockedFields.combo? $("#wizardCombo").val().trim(): $("#wizardCombo").val().trim();
 
     for(let i=0;i<countVal;i++){
       let bn = generateRandomNumberForMode(gm);
@@ -955,6 +1002,12 @@ $(document).ready(function() {
   });
 
   function generateRandomNumberForMode(mode){
+    // Single Action => 1..4 dígitos
+    if(mode==="Single Action"){
+      const length = Math.floor(Math.random()*4)+1; // 1..4
+      const maxVal = Math.pow(10,length)-1;
+      return Math.floor(Math.random()*(maxVal+1));
+    }
     if(mode==="Win 4"||mode==="Pale-Ven"||mode==="Pale-RD"){
       return Math.floor(Math.random()*10000);
     }
@@ -964,20 +1017,39 @@ $(document).ready(function() {
     if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela"){
       return Math.floor(Math.random()*100);
     }
+    // Default => generamos un 3 dígitos
     return Math.floor(Math.random()*1000);
   }
+
   function padNumberForMode(num, mode){
-    let length=3;
-    if(mode==="Win 4"||mode==="Pale-Ven"||mode==="Pale-RD") length=4;
-    if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela") length=2;
+    // Single Action => no forzamos a 4
+    if(mode==="Single Action"){
+      return num.toString();
+    }
+    // Pale-Ven / Pale-RD / Win 4 => 4 dígitos
+    if(mode==="Pale-Ven"||mode==="Pale-RD"||mode==="Win 4"){
+      let s=num.toString();
+      while(s.length<4) s="0"+s;
+      return s;
+    }
+    // Pulito, RD-Quiniela, Venezuela => 2 dígitos
+    if(mode==="Pulito"||mode==="RD-Quiniela"||mode==="Venezuela"){
+      let s=num.toString();
+      while(s.length<2) s="0"+s;
+      return s;
+    }
+    // Pick 3 => 3 dígitos
+    if(mode==="Pick 3"){
+      let s=num.toString();
+      while(s.length<3) s="0"+s;
+      return s;
+    }
+    // Default => 3 dígitos
     let s=num.toString();
-    while(s.length<length) s="0"+s;
+    while(s.length<3) s="0"+s;
     return s;
   }
 
-  // =========================================================
-  // ROUND DOWN (Corregido)
-  // =========================================================
   $("#btnGenerateRoundDown").click(function(){
     const firstNum=$("#rdFirstNumber").val().trim();
     const lastNum =$("#rdLastNumber").val().trim();
@@ -990,35 +1062,27 @@ $(document).ready(function() {
       return;
     }
 
-    // Parsear a int (caso 120..129 => generamos 120,121,...129)
     let start = parseInt(firstNum,10);
     let end   = parseInt(lastNum,10);
     if(isNaN(start) || isNaN(end)){
       alert("Invalid numeric range for Round Down.");
       return;
     }
-    // Por si está al revés (ej. 129..120)
     if(start> end){
       [start,end] = [end,start];
     }
 
-    // Tomar candados
     const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): $("#wizardStraight").val().trim();
     const bxVal= lockedFields.box? $("#wizardBox").val().trim(): $("#wizardBox").val().trim();
     const coVal= lockedFields.combo? $("#wizardCombo").val().trim(): $("#wizardCombo").val().trim();
 
-    // Generar la secuencia
     for(let i=start; i<=end; i++){
-      // Poner ceros a la izquierda
       let bn = i.toString().padStart(firstNum.length,"0");
       let gm= determineGameMode(bn);
-      // Si no se detecta un modo válido, la saltamos
       if(gm==="-") continue;
-
       let rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
       addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
     }
-
     highlightDuplicatesInWizard();
   });
 
@@ -1172,11 +1236,11 @@ $(document).ready(function() {
     {
       element: '#wizardButton',
       title: 'Wizard Button',
-      intro: 'Click this Wizard button to open the Quick Entry Wizard. Then press Next.'
+      intro: 'Click this Wizard button to open the Quick Entry Window. Then press Next.'
     },
     {
       title: 'Inside Wizard',
-      intro: 'Now that you opened the Wizard manually, let’s see each part.'
+      intro: 'Now that you opened the Window manually, let’s see each part.'
     },
     {
       element: '#wizardBetNumber',
@@ -1201,7 +1265,7 @@ $(document).ready(function() {
     {
       element: '#btnGenerateQuickPick',
       title: 'Quick Pick',
-      intro: 'Generates random numbers (Pick 3, Win 4...).'
+      intro: 'Generates random numbers (Pick 3, Win 4, Single Action, etc.).'
     },
     {
       element: '#btnGenerateRoundDown',
@@ -1225,12 +1289,12 @@ $(document).ready(function() {
     },
     {
       title: 'Close Wizard',
-      intro: 'When done, close the Wizard or press Next to continue.'
+      intro: 'When done, close the Window or press Next to continue.'
     },
     {
       element: '#generarTicket',
       title: 'Generate Ticket',
-      intro: 'Finally, tap here to see your Ticket preview.'
+      intro: 'Finally, tap here to see the Ticket Preview.'
     }
   ];
 
@@ -1239,12 +1303,12 @@ $(document).ready(function() {
     {
       element: '#fecha',
       title: 'Fechas',
-      intro: 'Selecciona una o varias fechas; hoy se elige por defecto.'
+      intro: 'Selecciona una o varias fechas; hoy se marca por defecto.'
     },
     {
       element: '.accordion',
       title: 'Tracks',
-      intro: 'Elige los tracks (USA, Santo Domingo...) que desees.'
+      intro: 'Elige los tracks (USA o Santo Domingo) que desees.'
     },
     {
       element: '#jugadasTable',
@@ -1254,16 +1318,16 @@ $(document).ready(function() {
     {
       element: '#wizardButton',
       title: 'Botón Wizard',
-      intro: 'Haz clic para abrir el Wizard. Luego presiona “Siguiente.”'
+      intro: 'Haz clic para abrir la Ventana de entrada rápida. Luego presiona “Siguiente.”'
     },
     {
-      title: 'Dentro del Wizard',
-      intro: 'Como ya lo abriste tú, ahora explicamos sus campos.'
+      title: 'Dentro de la Ventana',
+      intro: 'Como ya la abriste tú, ahora explicamos sus campos.'
     },
     {
       element: '#wizardBetNumber',
       title: 'Número de Apuesta',
-      intro: 'Escribe 2–4 dígitos o formato Pale (22-50). Luego Add & Next.'
+      intro: 'Escribe 2–4 dígitos o Pale (ej. 22-50). Luego Add & Next.'
     },
     {
       element: '#lockStraight',
@@ -1283,17 +1347,17 @@ $(document).ready(function() {
     {
       element: '#btnGenerateQuickPick',
       title: 'Quick Pick',
-      intro: 'Genera números aleatorios según la modalidad.'
+      intro: 'Genera números aleatorios según la modalidad (Pick 3, Win 4, Single Action...).'
     },
     {
       element: '#btnGenerateRoundDown',
       title: 'Round Down',
-      intro: 'Genera secuencias consecutivas entre dos números.'
+      intro: 'Genera secuencias consecutivas entre un número inicial y uno final.'
     },
     {
       element: '#wizardAddAllToMain',
       title: 'Add Main',
-      intro: 'Mueve todas las jugadas del Wizard a la tabla principal.'
+      intro: 'Mueve todas las jugadas a la tabla principal.'
     },
     {
       element: '#wizardGenerateTicket',
@@ -1306,13 +1370,13 @@ $(document).ready(function() {
       intro: 'O regresa al formulario principal.'
     },
     {
-      title: 'Cerrar Wizard',
-      intro: 'Al terminar, cierra el Wizard o pasa al siguiente paso.'
+      title: 'Cerrar Ventana',
+      intro: 'Al terminar, cierra la Ventana o pasa al siguiente paso.'
     },
     {
       element: '#generarTicket',
       title: 'Generar Ticket',
-      intro: 'Finalmente, haz clic aquí para ver el ticket.'
+      intro: 'Finalmente, haz clic aquí para ver la Vista Previa del Ticket.'
     }
   ];
 
@@ -1321,25 +1385,25 @@ $(document).ready(function() {
     {
       element: '#fecha',
       title: 'Dat Pari',
-      intro: 'Chwazi youn oswa plizyè dat pou pari. Jodi a default.'
+      intro: 'Chwazi youn oswa plizyè dat; jodi a se default.'
     },
     {
       element: '.accordion',
       title: 'Tracks',
-      intro: 'Chwazi kous (USA, Santo Domingo...) ou vle.'
+      intro: 'Chwazi kous (USA oswa Santo Domingo) ou vle.'
     },
     {
       element: '#jugadasTable',
       title: 'Tab Pari',
-      intro: 'Antre parye: Nimewo, Straight, Box, Combo.'
+      intro: 'Antre parye ou: Nimewo, Straight, Box, Combo.'
     },
     {
       element: '#wizardButton',
       title: 'Bouton Wizard',
-      intro: 'Klike pou louvri Wizard la. Apre sa Siguiente.'
+      intro: 'Klike pou louvri Ventana pou antre rapid. Apre sa Siguiente.'
     },
     {
-      title: 'Andedan Wizard la',
+      title: 'Andedan Ventana a',
       intro: 'Depi ou louvri li, nou pral eksplike chak pati.'
     },
     {
@@ -1350,7 +1414,7 @@ $(document).ready(function() {
     {
       element: '#lockStraight',
       title: 'Lock Straight',
-      intro: 'Kenbe valè Straight la.'
+      intro: 'Kole valè Straight la pou li repete.'
     },
     {
       element: '#lockBox',
@@ -1360,17 +1424,17 @@ $(document).ready(function() {
     {
       element: '#lockCombo',
       title: 'Lock Combo',
-      intro: 'Ak Combo tou.'
+      intro: 'E pou Combo tou.'
     },
     {
       element: '#btnGenerateQuickPick',
       title: 'Quick Pick',
-      intro: 'Genera nimewo o aza.'
+      intro: 'Genera nimewo o aza (Pick3, Win4, Single Action, elatriye).'
     },
     {
       element: '#btnGenerateRoundDown',
       title: 'Round Down',
-      intro: 'Kreye sekans pa antre premye/dènye.'
+      intro: 'Kreye sekans ant 2 nimewo.'
     },
     {
       element: '#wizardAddAllToMain',
@@ -1380,21 +1444,21 @@ $(document).ready(function() {
     {
       element: '#wizardGenerateTicket',
       title: 'Generate (Wizard)',
-      intro: 'Ou ka jenere tikè a la.'
+      intro: 'Ou ka jenere tikè dirèkteman.'
     },
     {
       element: '#wizardEditMainForm',
       title: 'Edit Main',
-      intro: 'Oubyen retounen sou tablo prensipal.'
+      intro: 'Oubyen tounen sou tablo prensipal la.'
     },
     {
-      title: 'Fèmen Wizard',
-      intro: 'Lè w fini, fèmen wizard la.'
+      title: 'Fèmen Ventana',
+      intro: 'Lè w fini, fèmen Ventana a ou pas step la.'
     },
     {
       element: '#generarTicket',
       title: 'Jenere Tikè',
-      intro: 'Finalman, klike la pou wè tikè w la.'
+      intro: 'Finalman, klike la pou wè Vista Previa de Tikè a.'
     }
   ];
 
@@ -1422,8 +1486,8 @@ $(document).ready(function() {
       steps,
       showStepNumbers: true,
       showProgress: true,
-      exitOnOverlayClick: true,   // Salir tocando fuera
-      scrollToElement: false,     // Evitar bloqueo en móvil
+      exitOnOverlayClick: true,
+      scrollToElement: false,
       nextLabel,
       prevLabel,
       skipLabel,
@@ -1434,4 +1498,23 @@ $(document).ready(function() {
   $("#helpEnglish").click(()=>startTutorial('en'));
   $("#helpSpanish").click(()=>startTutorial('es'));
   $("#helpCreole").click(()=>startTutorial('ht'));
+
+  // =========================================================
+  // MANUAL TOGGLE (3 Botones)
+  // =========================================================
+  $("#manualEnglishBtn").click(function(){
+    $("#manualEnglishText").removeClass("d-none");
+    $("#manualSpanishText").addClass("d-none");
+    $("#manualCreoleText").addClass("d-none");
+  });
+  $("#manualSpanishBtn").click(function(){
+    $("#manualEnglishText").addClass("d-none");
+    $("#manualSpanishText").removeClass("d-none");
+    $("#manualCreoleText").addClass("d-none");
+  });
+  $("#manualCreoleBtn").click(function(){
+    $("#manualEnglishText").addClass("d-none");
+    $("#manualSpanishText").addClass("d-none");
+    $("#manualCreoleText").removeClass("d-none");
+  });
 });
