@@ -310,7 +310,7 @@ h2 {
   color: #ffffff;
   box-shadow: 0 0 20px var(--color-neon-cian);
   max-height: 90vh; 
-  overflow: hidden; /* Evitamos scroll en container */
+  overflow: hidden; 
   border: 2px solid var(--color-neon-cian);
 }
 .modal-header,
@@ -326,12 +326,10 @@ h2 {
   width: 128px;
   height: 128px;
 }
-
-/* Para tener scroll en la zona del contenido del modal */
 .modal-body {
   max-height: 70vh; 
   overflow-y: scroll;
-  -webkit-overflow-scrolling: touch; 
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ===========================
@@ -375,7 +373,7 @@ h2 {
    9) TICKET CONTAINER
    =========================== */
 
-/* Volvemos a 1200px de ancho, y bajamos la fuente a ~2rem */
+/* Forzamos ancho 1200px y una fuente ~2rem */
 #preTicket {
   background-color: #0a0a0a;
   color: #ffffff;
@@ -389,14 +387,12 @@ h2 {
   overflow-y: visible;
 }
 
-/* Título (h4) más moderado, ~2rem */
 #preTicket h4 {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
   font-size: 2rem;
 }
 
-/* min-width:1200, font-size:2rem => suficientemente grande, no exagerado */
 #preTicket table {
   background-color: #1e1e1e;
   min-width: 1200px;
@@ -404,7 +400,7 @@ h2 {
   font-size: 2rem; 
 }
 
-/* Columnas => redistribuimos para no cortar la 1ra */
+/* Ajustar la 1ra col (#) y Bet Number a algo más angosto */
 #preTicket th,
 #preTicket td {
   border: 1px solid #00ffff;
@@ -416,21 +412,14 @@ h2 {
   text-overflow: ellipsis;
 }
 
-/* Ajustes en anchos:
-   1) (#) => 8%
-   2) (Bet) => 12%
-   3) (Game Mode) => 8%
-   4) (Straight) => 10%
-   5) (Box) => 8%
-   6) (Combo) => 10%
-   7) (Total) => 10%
-   => ~66% + “espacio flexible”
-*/
+/* La 1ra col (#) => 4%, Bet => 10%, Game Mode => 8%, 
+   Straight => 10%, Box => 8%, Combo =>10%, Total =>10%.
+   => Suma ~60%. Queda 40% para “aire” si se distribuye. */
 #preTicket th:nth-child(1) {
-  width: 8%;
+  width: 4%;
 }
 #preTicket th:nth-child(2) {
-  width: 12%;
+  width: 10%;
 }
 #preTicket th:nth-child(3) {
   width: 8%;
@@ -466,23 +455,19 @@ h2 {
   color: var(--color-fondo);
 }
 
-/* 
-   Duplicados => fondo amarillo 
-*/
+/* duplicados => amarillo */
 .duplicado {
   background-color: #ffff99 !important;
   border: 2px solid #ffe600 !important;
   color: #000 !important;
 }
-/* 
-   Errores => fondo morado 
-*/
+/* errores => morado */
 .error-field {
   background-color: var(--color-neon-morado) !important;
   border: 2px solid var(--color-neon-cian) !important;
 }
 
-/* Pantallas <600px => scroll horizontal, fuente un poco menor */
+/* Móvil < 600px => scroll horizontal y fuente algo menor */
 @media (max-width: 600px) {
   #preTicket {
     overflow-x: auto;
