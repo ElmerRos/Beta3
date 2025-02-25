@@ -326,11 +326,12 @@ h2 {
   width: 128px;
   height: 128px;
 }
-/* Permite scroll interno en la zona del contenido */
+
+/* Para tener scroll en la zona del contenido del modal */
 .modal-body {
   max-height: 70vh; 
   overflow-y: scroll;
-  -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+  -webkit-overflow-scrolling: touch; 
 }
 
 /* ===========================
@@ -374,92 +375,90 @@ h2 {
    9) TICKET CONTAINER
    =========================== */
 
-/* Aumentamos a 1600 px de ancho e incrementamos más la fuente */
+/* Volvemos a 1200px de ancho, y bajamos la fuente a ~2rem */
 #preTicket {
   background-color: #0a0a0a;
   color: #ffffff;
   padding: 20px;
   border-radius: 10px;
-  min-width: 1600px;
-  width: 1600px;
+  min-width: 1200px;
+  width: 1200px;
   max-width: none;
   margin: 0 auto;
   overflow-x: auto;
   overflow-y: visible;
 }
 
+/* Título (h4) más moderado, ~2rem */
 #preTicket h4 {
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
-  font-size: 2.4rem; /* más grande todavía */
+  font-size: 2rem;
 }
 
+/* min-width:1200, font-size:2rem => suficientemente grande, no exagerado */
 #preTicket table {
   background-color: #1e1e1e;
-  min-width: 1600px;
+  min-width: 1200px;
   table-layout: fixed;
-  /* Subimos más la fuente, a 2.4rem */
-  font-size: 2.4rem; 
+  font-size: 2rem; 
 }
 
-/* Ajustes en las columnas para que (#) no se corte 
-   y reducir “Bet” y “Box” */
+/* Columnas => redistribuimos para no cortar la 1ra */
 #preTicket th,
 #preTicket td {
   border: 1px solid #00ffff;
   color: #ffffff;
-  font-size: 2.4rem; /* duplicado */
-  padding: 12px;
+  font-size: 2rem;
+  padding: 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Reajustamos las anchuras => 
-   1) (#) => 7%
-   2) (Bet) => 10%
-   3) (Game Mode) => 7%
-   4) (Straight) => 9%
-   5) (Box) => 7%
-   6) (Combo) => 9%
-   7) (Total) => 9%
-   -> ~58% => resto se reparte. 
+/* Ajustes en anchos:
+   1) (#) => 8%
+   2) (Bet) => 12%
+   3) (Game Mode) => 8%
+   4) (Straight) => 10%
+   5) (Box) => 8%
+   6) (Combo) => 10%
+   7) (Total) => 10%
+   => ~66% + “espacio flexible”
 */
 #preTicket th:nth-child(1) {
-  width: 7%;
+  width: 8%;
 }
 #preTicket th:nth-child(2) {
-  width: 10%;
+  width: 12%;
 }
 #preTicket th:nth-child(3) {
-  width: 7%;
+  width: 8%;
 }
 #preTicket th:nth-child(4) {
-  width: 9%;
+  width: 10%;
 }
 #preTicket th:nth-child(5) {
-  width: 7%;
+  width: 8%;
 }
 #preTicket th:nth-child(6) {
-  width: 9%;
+  width: 10%;
 }
 #preTicket th:nth-child(7) {
-  width: 9%;
+  width: 10%;
 }
 
-/* Aumentar el texto en el Total, Ticket Number, etc. */
 .total-section {
-  font-size: 2.4rem;
+  font-size: 2rem;
   margin: 1.5rem 0;
 }
 #ticketTotal {
-  font-size: 2.4rem !important;
+  font-size: 2rem !important;
 }
 #numeroTicket,
 #ticketTransaccion {
-  font-size: 2.4rem !important;
+  font-size: 2rem !important;
 }
-
 #ticketFecha {
   color: #ffffff !important;
 }
@@ -467,19 +466,23 @@ h2 {
   color: var(--color-fondo);
 }
 
-/* Duplicados => fondo amarillo */
+/* 
+   Duplicados => fondo amarillo 
+*/
 .duplicado {
   background-color: #ffff99 !important;
   border: 2px solid #ffe600 !important;
   color: #000 !important;
 }
-/* Errores => fondo morado */
+/* 
+   Errores => fondo morado 
+*/
 .error-field {
   background-color: var(--color-neon-morado) !important;
   border: 2px solid var(--color-neon-cian) !important;
 }
 
-/* Con pantallas muy pequeñas => scroll horizontal */
+/* Pantallas <600px => scroll horizontal, fuente un poco menor */
 @media (max-width: 600px) {
   #preTicket {
     overflow-x: auto;
@@ -487,7 +490,7 @@ h2 {
   #preTicket table,
   #preTicket th,
   #preTicket td {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
   #qrcode {
     width: 100px;
