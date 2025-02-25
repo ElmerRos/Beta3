@@ -414,6 +414,24 @@
                     ></span>
                   </label>
                 </div>
+
+                <!-- New York Horses (nuevo track) -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New York Horses"
+                    id="trackNYHorses"
+                  />
+                  <label class="track-button" for="trackNYHorses">
+                    <span class="track-name">New York Horses</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="New York Horses"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Fin de tracks USA -->
               </div>
             </div>
           </div>
@@ -726,7 +744,7 @@
     </form>
   </div>
 
-  <!-- Ticket Preview Modal -->
+  <!-- Ticket Preview Window -->
   <div
     class="modal fade"
     id="ticketModal"
@@ -792,7 +810,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <!-- Edit (close modal) => user can come back to edit main table -->
+          <!-- Edit (close) => user can come back to edit main table -->
           <button
             type="button"
             class="btn btn-secondary"
@@ -832,7 +850,7 @@
 
   <!-- 
        =================================
-       WIZARD MODAL (Quick Entry)
+       WIZARD WINDOW (Quick Entry)
        =================================
   -->
   <div
@@ -847,7 +865,7 @@
       <div class="modal-content">
         <!-- Encabezado con "Close Window" rojo en top-right -->
         <div class="modal-header">
-          <h5 class="modal-title" id="wizardModalLabel">Quick Entry Wizard</h5>
+          <h5 class="modal-title" id="wizardModalLabel">Quick Entry Window</h5>
           <button
             type="button"
             class="btn btn-danger"
@@ -866,7 +884,7 @@
                 <label for="wizardBetNumber" class="form-label"
                   >Bet Number</label
                 >
-                <!-- Importante: type="text" para permitir 22-55, 11x22, etc. -->
+                <!-- type="text" => permitir "22-55", "11x22", etc. -->
                 <input
                   type="text"
                   class="form-control"
@@ -1026,6 +1044,8 @@
                   <option value="Pulito">Pulito</option>
                   <option value="RD-Quiniela">RD-Quiniela</option>
                   <option value="Pale-RD">Pale-RD</option>
+                  <!-- Nueva modalidad Single Action -->
+                  <option value="Single Action">Single Action</option>
                 </select>
               </div>
               <div class="col-6">
@@ -1132,7 +1152,62 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
   ></script>
 
-  <!-- Nuestro scripts.js final (ver debajo) -->
+  <!-- Nuestro scripts.js final (mantener intacto, luego agregaremos lo nuevo) -->
   <script src="scripts.js"></script>
+
+  <!-- 
+       =====================
+       MANUAL / INSTRUCTIONS
+       (Accordion con 3 botones de idioma)
+       =====================
+  -->
+  <div class="container mb-5">
+    <div class="accordion" id="manualAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingManual">
+          <button
+            class="accordion-button collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseManual"
+            aria-expanded="false"
+            aria-controls="collapseManual"
+          >
+            Manual / Instructions
+          </button>
+        </h2>
+        <div
+          id="collapseManual"
+          class="accordion-collapse collapse"
+          aria-labelledby="headingManual"
+          data-bs-parent="#manualAccordion"
+        >
+          <div class="accordion-body">
+            <!-- Botones para cambiar el idioma del manual -->
+            <div class="d-flex gap-2 mb-3">
+              <button class="btn btn-secondary" id="manualEnglishBtn">English</button>
+              <button class="btn btn-secondary" id="manualSpanishBtn">Español</button>
+              <button class="btn btn-secondary" id="manualCreoleBtn">Kreyòl</button>
+            </div>
+
+            <!-- Texto en Inglés -->
+            <div id="manualEnglishText">
+              <p><strong>Under construction:</strong> Here we will show the English manual content.</p>
+            </div>
+            <!-- Texto en Español (oculto por defecto) -->
+            <div id="manualSpanishText" class="d-none">
+              <p><strong>En construcción:</strong> Aquí mostraremos el contenido del manual en Español.</p>
+            </div>
+            <!-- Texto en Criollo (oculto por defecto) -->
+            <div id="manualCreoleText" class="d-none">
+              <p><strong>Ann konstriksyon:</strong> La nou pral montre kontni manyèl la an kreyòl.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
