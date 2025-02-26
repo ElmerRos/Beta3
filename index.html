@@ -1,1401 +1,1213 @@
- /* =========================================================
-   SCRIPTS.JS COMPLETO
-   (Con scale=2, JPEG 0.8, tutorial Intro.js, wizard, etc.)
-   + Ajuste de manual => mostrar en la MISMA pestaña
-========================================================= */
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Beast Reader (BETA) East New York</title>
 
-const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
 
-$(document).ready(function() {
+  <!-- Flatpickr CSS (tema material_blue) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
+    rel="stylesheet"
+  />
 
-  // Extensiones dayjs
-  dayjs.extend(dayjs_plugin_customParseFormat);
-  dayjs.extend(dayjs_plugin_arraySupport);
+  <!-- Bootstrap Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+  />
 
-  let transactionDateTime = '';
-  window.ticketImageDataUrl = null;
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
 
-  let selectedTracksCount = 0;
-  let selectedDaysCount = 0;
-  const MAX_PLAYS = 25;
+  <!-- Intro.js (CSS + JS para el tutorial) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/intro.js/minified/introjs.min.css"
+  />
+  <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 
-  let playCount = 0;         // Filas en la tabla principal
-  let wizardCount = 0;       // Filas en la tabla Wizard
+  <!-- Custom CSS (con estilos neon, etc.) -->
+  <link href="styles.css" rel="stylesheet" />
 
-  // Candados en Wizard
-  const lockedFields = {
-    straight: false,
-    box: false,
-    combo: false
-  };
-
-  // =========================================================
-  // CUTOFF TIMES
-  // =========================================================
-  const cutoffTimes = {
-    "USA": {
-      "New York Mid Day": "14:20",
-      "New York Evening": "22:00",
-      "Georgia Mid Day": "12:20",
-      "Georgia Evening": "18:40",
-      "New Jersey Mid Day": "12:50",
-      "New Jersey Evening": "22:00",
-      "Florida Mid Day": "13:20",
-      "Florida Evening": "21:30",
-      "Connecticut Mid Day": "13:30",
-      "Connecticut Evening": "22:00",
-      "Georgia Night": "22:00",
-      "Pensilvania AM": "12:45",
-      "Pensilvania PM": "18:15",
-      "Venezuela": "00:00",
-      "Brooklyn Midday": "14:20",
-      "Brooklyn Evening": "22:00",
-      "Front Midday": "14:20",
-      "Front Evening": "22:00",
-      "New York Horses": "16:00"
-    },
-    "Santo Domingo": {
-      "Real": "11:45",
-      "Gana mas": "13:25",
-      "Loteka": "18:30",
-      "Nacional": "19:30",
-      "Quiniela Pale": "19:30",
-      "Primera Día": "10:50",
-      "Suerte Día": "11:20",
-      "Lotería Real": "11:50",
-      "Suerte Tarde": "16:50",
-      "Lotedom": "16:50",
-      "Primera Noche": "18:50",
-      "Panama": "16:00"
-    },
-    "Venezuela": {
-      "Venezuela": "00:00"
+  <!-- Estilo para forzar tooltip blanco + texto negro en Intro.js -->
+  <style>
+    .introjs-tooltip {
+      background-color: #fff !important;
+      color: #000 !important;
+      text-align: left;
     }
-  };
-
-  // =========================================================
-  // INIT FLATPICKR (Forzar fecha hoy)
-  // =========================================================
-  const fp = flatpickr("#fecha", {
-    mode: "multiple",
-    dateFormat: "m-d-Y",
-    minDate: "today",
-    defaultDate: [ new Date() ],
-    clickOpens: true,
-    allowInput: false,
-    appendTo: document.body,
-    onOpen: function() {
-      this.calendarContainer.style.transform = 'scale(2.0)';
-      this.calendarContainer.style.transformOrigin = 'top left';
-    },
-    onClose: function() {
-      this.calendarContainer.style.transform = '';
-    },
-    onReady: function(selectedDates, dateStr, instance){
-      if(!dateStr || dateStr.trim()===""){
-        instance.setDate(new Date(), true);
-      }
-    },
-    onChange: (selectedDates) => {
-      selectedDaysCount = selectedDates.length;
-      calculateMainTotal();
-      storeFormState();
-      disableTracksByTime();
+    .introjs-tooltipreferenceLayer,
+    .introjs-overlay {
+      z-index: 99999999 !important;
     }
-  });
-
-  // =========================================================
-  // TRACK CHECKBOXES
-  // =========================================================
-  $(".track-checkbox").change(function(){
-    const arr = $(".track-checkbox:checked")
-      .map(function(){return $(this).val();})
-      .get();
-    selectedTracksCount = arr.filter(x => x !== "Venezuela").length || 1;
-    calculateMainTotal();
-    disableTracksByTime();
-  });
-
-  // =========================================================
-  // MAIN TABLE => Add/Remove
-  // =========================================================
-  $("#agregarJugada").click(function(){
-    const row = addMainRow();
-    if(row) row.find(".betNumber").focus();
-  });
-
-  $("#eliminarJugada").click(function(){
-    if(playCount === 0) {
-      alert("No plays to remove.");
-      return;
-    }
-    $("#tablaJugadas tr:last").remove();
-    playCount--;
-    renumberMainRows();
-    calculateMainTotal();
-    highlightDuplicatesInMain();
-  });
-
-  $("#tablaJugadas").on("click",".removeMainBtn",function(){
-    $(this).closest("tr").remove();
-    playCount--;
-    renumberMainRows();
-    calculateMainTotal();
-    highlightDuplicatesInMain();
-  });
-
-  $("#tablaJugadas").on("input", ".betNumber, .straight, .box, .combo", function(){
-    const row = $(this).closest("tr");
-    recalcMainRow(row);
-    highlightDuplicatesInMain();
-    storeFormState();
-  });
-
-  function addMainRow(){
-    if(playCount >= MAX_PLAYS){
-      alert("You have reached 25 plays in the main form.");
-      return null;
-    }
-    playCount++;
-    const rowIndex = playCount;
-    const rowHTML = `
-      <tr data-playIndex="${rowIndex}">
-        <td>
-          <button type="button" class="btnRemovePlay removeMainBtn" data-row="${rowIndex}">
-            ${rowIndex}
-          </button>
-        </td>
-        <td>
-          <input type="text" class="form-control betNumber" />
-        </td>
-        <td class="gameMode">-</td>
-        <td>
-          <input type="number" class="form-control straight" />
-        </td>
-        <td>
-          <input type="text" class="form-control box" />
-        </td>
-        <td>
-          <input type="number" class="form-control combo" />
-        </td>
-        <td class="total">0.00</td>
-      </tr>
-    `;
-    $("#tablaJugadas").append(rowHTML);
-    return $("#tablaJugadas tr[data-playIndex='"+rowIndex+"']");
-  }
-
-  function renumberMainRows(){
-    let i=0;
-    $("#tablaJugadas tr").each(function(){
-      i++;
-      $(this).attr("data-playIndex", i);
-      $(this).find(".removeMainBtn").attr("data-row", i).text(i);
-    });
-    playCount = i;
-    storeFormState();
-  }
-
-  function recalcMainRow($row){
-    const bn = $row.find(".betNumber").val().trim();
-    const gm = determineGameMode(bn);
-    $row.find(".gameMode").text(gm);
-
-    const stVal = $row.find(".straight").val().trim();
-    const bxVal = $row.find(".box").val().trim();
-    const coVal = $row.find(".combo").val().trim();
-
-    const rowTotal = calculateRowTotal(bn, gm, stVal, bxVal, coVal);
-    $row.find(".total").text(rowTotal);
-    calculateMainTotal();
-  }
-
-  // =========================================================
-  // CALCULATE MAIN TOTAL
-  // =========================================================
-  function calculateMainTotal(){
-    let sum=0;
-    $("#tablaJugadas tr").each(function(){
-      const totalCell= $(this).find(".total").text();
-      const val= parseFloat(totalCell)||0;
-      sum+= val;
-    });
-    if(selectedDaysCount===0){
-      sum=0;
-    } else {
-      sum = sum * selectedTracksCount * selectedDaysCount;
-    }
-    $("#totalJugadas").text( sum.toFixed(2) );
-    storeFormState();
-  }
-
-  // =========================================================
-  // DETERMINE GAME MODE
-  // =========================================================
-  function determineGameMode(betNumber){
-    if(!betNumber) return "-";
-
-    const tracks = $(".track-checkbox:checked")
-      .map(function(){return $(this).val();})
-      .get();
-    const isUSA = tracks.some(t => cutoffTimes.USA[t]);
-    const isSD  = tracks.some(t => cutoffTimes["Santo Domingo"][t]);
-    const includesVenezuela = tracks.includes("Venezuela");
-    const includesHorses = tracks.includes("New York Horses");
-
-    // 1) "NY Horses"
-    if(includesHorses){
-      return "NY Horses";
-    }
-
-    // 2) Single Action => 1 dígito, track de USA (except venezuela/horses)
-    if(isUSA && !includesVenezuela && betNumber.length===1){
-      return "Single Action";
-    }
-
-    // 3) Pale => 2 dígitos, - o x, 2 dígitos
-    const paleRegex = /^(\d{2})(-|x)(\d{2})$/;
-    if(paleRegex.test(betNumber)){
-      if(includesVenezuela && isUSA) {
-        return "Pale-Ven";
-      }
-      if(isSD && !isUSA){
-        return "Pale-RD";
-      }
-      return "-";
-    }
-
-    const length = betNumber.length;
-    if(length<2 || length>4) return "-";
-
-    // 4) Venezuela => 2 dig + track USA
-    if(length===2 && includesVenezuela && isUSA){
-      return "Venezuela";
-    }
-    // 5) Pulito => 2 dig + track USA sin SD
-    if(isUSA && !isSD && length===2){
-      return "Pulito";
-    }
-    // 6) RD-Quiniela => 2 dig + track SD sin USA
-    if(length===2 && isSD && !isUSA){
-      return "RD-Quiniela";
-    }
-    // 7) 3 díg => pick 3
-    if(length===3) return "Pick 3";
-    // 8) 4 díg => win 4
-    if(length===4) return "Win 4";
-
-    return "-";
-  }
-
-  // =========================================================
-  // CALCULATE ROW TOTAL
-  // =========================================================
-  function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
-    if(!bn || gm==="-") return "0.00";
-    const st = parseFloat(stVal) || 0;
-    const combo = parseFloat(coVal)||0;
-
-    // Pulito => si hay box, se multiplica st * #posiciones en box
-    if(gm==="Pulito"){
-      if(bxVal){
-        const positions = bxVal.split(",").map(x=>x.trim()).filter(Boolean);
-        return (st * positions.length).toFixed(2);
-      }
-      return "0.00";
-    }
-
-    // Single Action => st+box+combo
-    if(gm==="Single Action"){
-      const numericBox = parseFloat(bxVal)||0;
-      return (st + numericBox + combo).toFixed(2);
-    }
-
-    // NY Horses => st+box+combo
-    if(gm==="NY Horses"){
-      const numericBox = parseFloat(bxVal)||0;
-      return (st + numericBox + combo).toFixed(2);
-    }
-
-    // Venezuela, Pale-RD, Pale-Ven, RD-Quiniela => solo st
-    if(["Venezuela","Pale-RD","Pale-Ven","RD-Quiniela"].includes(gm)){
-      return st.toFixed(2);
-    }
-
-    // Win4 / Pick3 => combosCount en "combo"
-    if(gm==="Win 4" || gm==="Pick 3"){
-      const numericBox = parseFloat(bxVal)||0;
-      const combosCount = calcCombos(bn);
-      let total = st + numericBox + combo*combosCount;
-      return total.toFixed(2);
-    }
-
-    // default
-    const numericBox = parseFloat(bxVal)||0;
-    return (st + numericBox + combo).toFixed(2);
-  }
-
-  function calcCombos(str){
-    const freq = {};
-    for(let c of str){
-      freq[c] = (freq[c]||0)+1;
-    }
-    const factorial = n => n<=1 ? 1 : n*factorial(n-1);
-    let denom=1;
-    for(let k in freq){
-      denom*= factorial(freq[k]);
-    }
-    return factorial(str.length)/denom;
-  }
-
-  // =========================================================
-  // LOCALSTORAGE => store/load
-  // =========================================================
-  function storeFormState(){
-    const st = {
-      selectedTracksCount,
-      selectedDaysCount,
-      dateVal: $("#fecha").val(),
-      playCount,
-      plays: []
-    };
-    $("#tablaJugadas tr").each(function(){
-      const bn = $(this).find(".betNumber").val();
-      const gm = $(this).find(".gameMode").text();
-      const stv= $(this).find(".straight").val();
-      const bxv= $(this).find(".box").val();
-      const cov= $(this).find(".combo").val();
-      const tot= $(this).find(".total").text();
-      st.plays.push({
-        betNumber: bn || "",
-        gameMode: gm || "-",
-        straight: stv || "",
-        box: bxv || "",
-        combo: cov || "",
-        total: tot || "0.00"
-      });
-    });
-    localStorage.setItem("formState", JSON.stringify(st));
-  }
-
-  function loadFormState(){
-    const data=JSON.parse(localStorage.getItem("formState"));
-    if(!data) return;
-    $("#fecha").val(data.dateVal || "");
-    selectedDaysCount= data.selectedDaysCount||0;
-    selectedTracksCount= data.selectedTracksCount||1;
-    playCount= data.playCount||0;
-
-    $("#tablaJugadas").empty();
-    let i=0;
-    data.plays.forEach((p)=>{
-      i++;
-      const rowHTML = `
-        <tr data-playIndex="${i}">
-          <td>
-            <button type="button" class="btnRemovePlay removeMainBtn" data-row="${i}">${i}</button>
-          </td>
-          <td>
-            <input type="text" class="form-control betNumber" value="${p.betNumber||""}" />
-          </td>
-          <td class="gameMode">${p.gameMode||"-"}</td>
-          <td>
-            <input type="number" class="form-control straight" value="${p.straight||""}" />
-          </td>
-          <td>
-            <input type="text" class="form-control box" value="${p.box||""}" />
-          </td>
-          <td>
-            <input type="number" class="form-control combo" value="${p.combo||""}" />
-          </td>
-          <td class="total">${p.total||"0.00"}</td>
-        </tr>
-      `;
-      $("#tablaJugadas").append(rowHTML);
-    });
-    playCount = i;
-    recalcAllMainRows();
-    calculateMainTotal();
-    highlightDuplicatesInMain();
-  }
-
-  function recalcAllMainRows(){
-    $("#tablaJugadas tr").each(function(){
-      recalcMainRow($(this));
-    });
-  }
-  loadFormState();
-
-  // =========================================================
-  // RESET FORM
-  // =========================================================
-  $("#resetForm").click(function(){
-    if(confirm("Are you sure you want to reset the form?")){
-      resetForm();
-    }
-  });
-  function resetForm(){
-    $("#lotteryForm")[0].reset();
-    $("#tablaJugadas").empty();
-    playCount=0;
-    selectedTracksCount=0;
-    selectedDaysCount=0;
-    window.ticketImageDataUrl=null;
-    $("#totalJugadas").text("0.00");
-    localStorage.removeItem("formState");
-    showCutoffTimes();
-    disableTracksByTime();
-    autoSelectNYTrack();
-  }
-
-  // =========================================================
-  // GENERATE TICKET
-  // =========================================================
-  $("#generarTicket").click(function(){
-    doGenerateTicket();
-  });
-
-  function doGenerateTicket(){
-    const dateVal=$("#fecha").val()||"";
-    if(!dateVal){
-      alert("Please select at least one date.");
-      return;
-    }
-    $("#ticketFecha").text(dateVal);
-
-    const chosenTracks = $(".track-checkbox:checked")
-      .map(function(){return $(this).val();})
-      .get();
-    if(chosenTracks.length===0){
-      alert("Please select at least one track.");
-      return;
-    }
-    $("#ticketTracks").text(chosenTracks.join(", "));
-
-    // Ver cutoff si elige HOY
-    const arrDates = dateVal.split(", ");
-    const today = dayjs().startOf("day");
-    for(let ds of arrDates){
-      const [mm,dd,yy] = ds.split("-").map(Number);
-      const picked = dayjs(new Date(yy, mm-1, dd)).startOf("day");
-      if(picked.isSame(today,"day")){
-        const now=dayjs();
-        for(let t of chosenTracks){
-          if(t==="Venezuela") continue;
-          const raw=getTrackCutoff(t);
-          if(raw){
-            let co= dayjs(raw,"HH:mm");
-            let cf= co.isAfter(dayjs("21:30","HH:mm"))? dayjs("22:00","HH:mm"): co.subtract(10,"minute");
-            if(now.isSame(cf)||now.isAfter(cf)){
-              alert(`Track "${t}" is closed for today.`);
-              return;
-            }
-          }
-        }
-      }
-    }
-
-    // Validar filas
-    const rows = $("#tablaJugadas tr");
-    let valid=true;
-    const errors=[];
-    rows.each(function(){
-      $(this).find(".betNumber,.straight,.box,.combo,.gameMode").removeClass("error-field");
-    });
-
-    rows.each(function(){
-      const rowIndex = parseInt($(this).attr("data-playIndex"));
-      const bn = $(this).find(".betNumber").val().trim();
-      const gm = $(this).find(".gameMode").text();
-      const st = parseFloat($(this).find(".straight").val().trim()||"0");
-      const bx = parseFloat($(this).find(".box").val().trim()||"0");
-      const co = parseFloat($(this).find(".combo").val().trim()||"0");
-
-      let errorHere = false;
-      if(!bn){
-        errorHere=true;
-        errors.push(rowIndex);
-        $(this).find(".betNumber").addClass("error-field");
-      }
-      // Brooklyn/Front => BN=3
-      if(hasBrooklynOrFront(chosenTracks) && bn.length!==3){
-        errorHere=true;
-        errors.push(rowIndex);
-        $(this).find(".betNumber").addClass("error-field");
-      }
-      if(gm==="-"){
-        errorHere=true;
-        errors.push(rowIndex);
-        $(this).find(".gameMode").addClass("error-field");
-      }
-
-      // Requerir Straight>0 en: Venezuela, Pale-Ven, Pulito, RD-Quiniela, Pale-RD
-      if(["Venezuela","Pale-Ven","Pulito","RD-Quiniela","Pale-RD"].includes(gm)){
-        if(st<=0){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".straight").addClass("error-field");
-        }
-      }
-
-      // Requerir al menos algo en Win4 / Pick3 => st, bx o co > 0
-      if(["Win 4","Pick 3"].includes(gm)){
-        if(st<=0 && bx<=0 && co<=0){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".straight,.box,.combo").addClass("error-field");
-        }
-      }
-
-      // Single Action => st+bx+co > 0
-      if(gm==="Single Action"){
-        if(st<=0 && bx<=0 && co<=0){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".straight,.box,.combo").addClass("error-field");
-        }
-      }
-      // NY Horses => st+bx+co > 0
-      if(gm==="NY Horses"){
-        if(st<=0 && bx<=0 && co<=0){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".straight,.box,.combo").addClass("error-field");
-        }
-      }
-
-      // LIMITES
-      if(gm==="Win 4"){
-        if(st>6){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".straight").addClass("error-field");
-        }
-        if(co>6){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".combo").addClass("error-field");
-        }
-        if(bx>40){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".box").addClass("error-field");
-        }
-      }
-      if(gm==="Pick 3"){
-        if(st>35){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".straight").addClass("error-field");
-        }
-        if(co>35){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".combo").addClass("error-field");
-        }
-        if(bx>100){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".box").addClass("error-field");
-        }
-      }
-      if(gm==="Venezuela"){
-        if(st>100){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".straight").addClass("error-field");
-        }
-      }
-      if(gm==="Pulito"){
-        if(st>100){
-          errorHere=true;
-          errors.push(rowIndex);
-          $(this).find(".straight").addClass("error-field");
-        }
-      }
-
-      if(errorHere) valid=false;
-    });
-
-    if(!valid){
-      const uniqueErr=[...new Set(errors)].join(", ");
-      alert(`Some plays have errors or exceed limits (row(s): ${uniqueErr}). Please fix them.`);
-      return;
-    }
-
-    // Llenar la tabla del ticket
-    $("#ticketJugadas").empty();
-    rows.each(function(){
-      const rowIndex=$(this).attr("data-playIndex");
-      const bn  = $(this).find(".betNumber").val().trim();
-      const gm  = $(this).find(".gameMode").text();
-      let stVal = $(this).find(".straight").val().trim() || "0.00";
-      let bxVal = $(this).find(".box").val().trim() || "-";
-      let coVal = $(this).find(".combo").val().trim() || "0.00";
-      let totVal= $(this).find(".total").text() || "0.00";
-
-      const rowHTML=`
-        <tr>
-          <td>${rowIndex}</td>
-          <td>${bn}</td>
-          <td>${gm}</td>
-          <td>${parseFloat(stVal).toFixed(2)}</td>
-          <td>${bxVal==="-"?"-":bxVal}</td>
-          <td>${parseFloat(coVal).toFixed(2)}</td>
-          <td>${parseFloat(totVal).toFixed(2)}</td>
-        </tr>
-      `;
-      $("#ticketJugadas").append(rowHTML);
-    });
-    $("#ticketTotal").text($("#totalJugadas").text());
-    $("#ticketTransaccion").text(dayjs().format("MM/DD/YYYY hh:mm A"));
-    $("#numeroTicket").text("(Not assigned yet)");
-    $("#qrcode").empty();
-
-    const ticketModal=new bootstrap.Modal(document.getElementById("ticketModal"));
-    $("#editButton").removeClass("d-none");
-    $("#shareTicket").addClass("d-none");
-    $("#confirmarTicket").prop("disabled",false);
-    fixTicketLayoutForMobile();
-    ticketModal.show();
-    storeFormState();
-  }
-
-  $("#confirmarTicket").click(function(){
-    $(this).prop("disabled",true);
-    $("#editButton").addClass("d-none");
-
-    const uniqueTicket = generateUniqueTicketNumber();
-    $("#numeroTicket").text(uniqueTicket);
-    transactionDateTime = dayjs().format("MM/DD/YYYY hh:mm A");
-    $("#ticketTransaccion").text(transactionDateTime);
-
-    // Generar QR
-    $("#qrcode").empty();
-    new QRCode(document.getElementById("qrcode"),{
-      text: uniqueTicket,
-      width:128,
-      height:128
-    });
-
-    $("#shareTicket").removeClass("d-none");
-
-    const ticketElement=document.getElementById("preTicket");
-    const originalStyles={
-      width:$(ticketElement).css("width"),
-      height:$(ticketElement).css("height"),
-      maxHeight:$(ticketElement).css("max-height"),
-      overflowY:$(ticketElement).css("overflow-y")
-    };
-    $(ticketElement).css({
-      width:"auto",
-      height:"auto",
-      maxHeight:"none",
-      overflowY:"visible"
-    });
-
-    setTimeout(()=>{
-      // *** scale=2, JPEG ***
-      html2canvas(ticketElement,{scale:2})
-      .then(canvas=>{
-        const dataUrl=canvas.toDataURL("image/jpeg",0.8);
-        window.ticketImageDataUrl=dataUrl;
-
-        // auto download => ticket_{uniqueTicket}.jpg
-        const link=document.createElement("a");
-        link.href=dataUrl;
-        link.download=`ticket_${uniqueTicket}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        alert("Your ticket image was downloaded successfully (JPEG).");
-
-        saveBetDataToSheetDB(uniqueTicket, success=>{
-          if(success){
-            console.log("Bet data sent to SheetDB.");
-          } else {
-            console.error("Failed to send bet data to SheetDB.");
-          }
-        });
-      })
-      .catch(err=>{
-        console.error(err);
-        alert("Problem generating final ticket image. Try again.");
-      })
-      .finally(()=>{
-        $(ticketElement).css(originalStyles);
-      });
-    },500);
-  });
-
-  $("#editButton").click(function(){
-    const ticketModal=bootstrap.Modal.getInstance(document.getElementById("ticketModal"));
-    ticketModal.hide();
-  });
-
-  $("#shareTicket").click(async function(){
-    if(!window.ticketImageDataUrl){
-      alert("No ticket image is available to share.");
-      return;
-    }
-    if(navigator.canShare){
-      try{
-        const resp=await fetch(window.ticketImageDataUrl);
-        const blob=await resp.blob();
-        const file=new File([blob],"ticket.jpg",{type:"image/jpeg"});
-        if(navigator.canShare({files:[file]})){
-          await navigator.share({files:[file], title:"Ticket", text:"Sharing Ticket"});
-        } else {
-          alert("Your browser does not support file sharing. Please share the downloaded image manually.");
-        }
-      } catch(err){
-        console.error(err);
-        alert("Could not share the ticket image. Please try manually.");
-      }
-    } else {
-      alert("Your browser doesn't support the Web Share API with files. Please share manually.");
-    }
-  });
-
-  function generateUniqueTicketNumber(){
-    return Math.floor(10000000 + Math.random()*90000000).toString();
-  }
-
-  function fixTicketLayoutForMobile(){
-    $("#preTicket table, #preTicket th, #preTicket td").css("white-space","nowrap");
-    $("#preTicket").css("overflow-x","auto");
-  }
-
-  function saveBetDataToSheetDB(uniqueTicket, callback){
-    const dateVal = $("#fecha").val()||"";
-    const chosenTracks = $(".track-checkbox:checked")
-      .map(function(){return $(this).val();})
-      .get();
-    const joinedTracks = chosenTracks.join(", ");
-    const nowISO=dayjs().toISOString();
-    let betData=[];
-
-    $("#tablaJugadas tr").each(function(){
-      const rowIndex=$(this).attr("data-playIndex");
-      const bn = $(this).find(".betNumber").val();
-      const gm = $(this).find(".gameMode").text();
-      const st = $(this).find(".straight").val();
-      const bx = $(this).find(".box").val();
-      const co = $(this).find(".combo").val();
-      const tot= $(this).find(".total").text();
-
-      if(gm!=="-"){
-        betData.push({
-          "Ticket Number": uniqueTicket,
-          "Transaction DateTime": transactionDateTime,
-          "Bet Dates": dateVal,
-          "Tracks": joinedTracks,
-          "Bet Number": bn||"",
-          "Game Mode": gm,
-          "Straight ($)": st||"",
-          "Box ($)": bx||"",
-          "Combo ($)": co||"",
-          "Total ($)": tot||"0.00",
-          "Row Number": rowIndex,
-          "Timestamp": nowISO
-        });
-      }
-    });
-
-    fetch(SHEETDB_API_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ data: betData })
-    })
-    .then(r=>{
-      if(!r.ok) throw new Error(`SheetDB error: ${r.status}`);
-      return r.json();
-    })
-    .then(d=>{
-      console.log("Data stored in SheetDB:", d);
-      callback(true);
-    })
-    .catch(e=>{
-      console.error(e);
-      callback(false);
-    });
-  }
-
-  function getTrackCutoff(tn){
-    for(let region in cutoffTimes){
-      if(cutoffTimes[region][tn]){
-        return cutoffTimes[region][tn];
-      }
-    }
-    return null;
-  }
-
-  function hasBrooklynOrFront(tracks){
-    const bfSet = new Set(["Brooklyn Midday","Brooklyn Evening","Front Midday","Front Evening"]);
-    return tracks.some(t=> bfSet.has(t));
-  }
-
-  function userChoseToday(){
-    const val=$("#fecha").val();
-    if(!val) return false;
-    const arr=val.split(", ");
-    const today=dayjs().startOf("day");
-    for(let ds of arr){
-      const [mm,dd,yy]=ds.split("-").map(Number);
-      const picked=dayjs(new Date(yy,mm-1,dd)).startOf("day");
-      if(picked.isSame(today,"day")) return true;
-    }
-    return false;
-  }
-
-  function disableTracksByTime(){
-    if(!userChoseToday()){
-      enableAllTracks();
-      return;
-    }
-    const now=dayjs();
-    $(".track-checkbox").each(function(){
-      const val=$(this).val();
-      if(val==="Venezuela")return;
-      const raw=getTrackCutoff(val);
-      if(raw){
-        let co=dayjs(raw,"HH:mm");
-        let cf= co.isAfter(dayjs("21:30","HH:mm"))? dayjs("22:00","HH:mm"): co.subtract(10,"minute");
-        if(now.isSame(cf)||now.isAfter(cf)){
-          $(this).prop("checked",false).prop("disabled",true);
-          $(this).closest(".track-button-container").find(".track-button").css({
-            opacity:0.5,
-            cursor:"not-allowed"
-          });
-        } else {
-          $(this).prop("disabled",false);
-          $(this).closest(".track-button-container").find(".track-button").css({
-            opacity:1,
-            cursor:"pointer"
-          });
-        }
-      }
-    });
-    storeFormState();
-  }
-
-  function enableAllTracks(){
-    $(".track-checkbox").each(function(){
-      $(this).prop("disabled",false);
-      $(this).closest(".track-button-container").find(".track-button").css({
-        opacity:1,
-        cursor:"pointer"
-      });
-    });
-  }
-
-  function showCutoffTimes(){
-    $(".cutoff-time").each(function(){
-      const track=$(this).data("track");
-      if(track==="Venezuela")return;
-      let raw="";
-      if(cutoffTimes.USA[track]) raw=cutoffTimes.USA[track];
-      else if(cutoffTimes["Santo Domingo"][track]) raw=cutoffTimes["Santo Domingo"][track];
-      else if(cutoffTimes.Venezuela[track]) raw=cutoffTimes.Venezuela[track];
-
-      if(raw){
-        let co=dayjs(raw,"HH:mm");
-        let cf=co.isAfter(dayjs("21:30","HH:mm")) ? dayjs("22:00","HH:mm") : co.subtract(10,"minute");
-        const hh=cf.format("HH");
-        const mm=cf.format("mm");
-        $(this).text(`${hh}:${mm}`);
-      }
-    });
-  }
-
-  showCutoffTimes();
-  disableTracksByTime();
-  setInterval(disableTracksByTime,60000);
-
-  // AUTO-SELECT NY
-  autoSelectNYTrack();
-  function autoSelectNYTrack(){
-    const anyChecked = $(".track-checkbox:checked").length>0;
-    if(anyChecked) return;
-    const now=dayjs();
-    let middayCutoff= dayjs().hour(14).minute(20);
-    if(now.isBefore(middayCutoff)){
-      $("#trackNYMidDay").prop("checked",true);
-    } else {
-      $("#trackNYEvening").prop("checked",true);
-    }
-    $(".track-checkbox").trigger("change");
-  }
-
-  // Duplicates highlight
-  function highlightDuplicatesInMain(){
-    $("#tablaJugadas tr").find(".betNumber").removeClass("duplicado");
-    let counts={};
-    $("#tablaJugadas tr").each(function(){
-      const bn=$(this).find(".betNumber").val().trim();
-      if(!bn) return;
-      counts[bn]=(counts[bn]||0)+1;
-    });
-    $("#tablaJugadas tr").each(function(){
-      const bn=$(this).find(".betNumber").val().trim();
-      if(counts[bn]>1){
-        $(this).find(".betNumber").addClass("duplicado");
-      }
-    });
-  }
-
-  // =========================================================
-  // WIZARD
-  // =========================================================
-  const wizardModal=new bootstrap.Modal(document.getElementById("wizardModal"));
-
-  $("#wizardButton").click(function(){
-    resetWizard();
-    wizardModal.show();
-  });
-
-  function resetWizard(){
-    wizardCount=0;
-    $("#wizardTableBody").empty();
-    lockedFields.straight=false;
-    lockedFields.box=false;
-    lockedFields.combo=false;
-    $("#lockStraight").html(`<i class="bi bi-unlock"></i>`);
-    $("#lockBox").html(`<i class="bi bi-unlock"></i>`);
-    $("#lockCombo").html(`<i class="bi bi-unlock"></i>`);
-    $("#wizardBetNumber").val("");
-    $("#wizardStraight").val("");
-    $("#wizardBox").val("");
-    $("#wizardCombo").val("");
-    $("#qpGameMode").val("Pick 3");
-    $("#qpCount").val("5");
-    $("#rdFirstNumber").val("");
-    $("#rdLastNumber").val("");
-  }
-
-  $(".lockBtn").click(function(){
-    const field=$(this).data("field");
-    lockedFields[field]=!lockedFields[field];
-    if(lockedFields[field]){
-      $(this).html(`<i class="bi bi-lock-fill"></i>`);
-    } else {
-      $(this).html(`<i class="bi bi-unlock"></i>`);
-    }
-  });
-
-  $("#wizardAddNext").click(function(){
-    const bn=$("#wizardBetNumber").val().trim();
-    const gm=determineGameMode(bn);
-    if(gm==="-"){
-      alert(`Cannot determine game mode for "${bn}". Check tracks or length/format.`);
-      return;
-    }
-    let stVal = lockedFields.straight? $("#wizardStraight").val().trim() : $("#wizardStraight").val().trim();
-    let bxVal = lockedFields.box? $("#wizardBox").val().trim() : $("#wizardBox").val().trim();
-    let coVal = lockedFields.combo? $("#wizardCombo").val().trim() : $("#wizardCombo").val().trim();
-
-    const rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
-    addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
-
-    if(!lockedFields.straight) $("#wizardStraight").val("");
-    if(!lockedFields.box) $("#wizardBox").val("");
-    if(!lockedFields.combo) $("#wizardCombo").val("");
-    $("#wizardBetNumber").val("").focus();
-
-    highlightDuplicatesInWizard();
-  });
-
-  function addWizardRow(bn,gm,stVal,bxVal,coVal,total){
-    wizardCount++;
-    const i=wizardCount;
-    const rowHTML=`
-      <tr data-wizardIndex="${i}">
-        <td>
-          <button type="button" class="removeWizardBtn btnRemovePlay" data-row="${i}">${i}</button>
-        </td>
-        <td>${bn}</td>
-        <td>${gm}</td>
-        <td>${stVal||"-"}</td>
-        <td>${bxVal||"-"}</td>
-        <td>${coVal||"-"}</td>
-        <td>${parseFloat(total||0).toFixed(2)}</td>
-      </tr>
-    `;
-    $("#wizardTableBody").append(rowHTML);
-  }
-
-  $("#wizardTableBody").on("click",".removeWizardBtn",function(){
-    $(this).closest("tr").remove();
-    renumberWizard();
-    highlightDuplicatesInWizard();
-  });
-
-  function renumberWizard(){
-    let i=0;
-    $("#wizardTableBody tr").each(function(){
-      i++;
-      $(this).attr("data-wizardIndex",i);
-      $(this).find(".removeWizardBtn").attr("data-row",i).text(i);
-    });
-    wizardCount=i;
-  }
-
-  $("#btnGenerateQuickPick").click(function(){
-    const gm=$("#qpGameMode").val();
-    const countVal= parseInt($("#qpCount").val())||1;
-    if(countVal<1||countVal>25){
-      alert("Please enter a count between 1 and 25.");
-      return;
-    }
-    const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): $("#wizardStraight").val().trim();
-    const bxVal= lockedFields.box? $("#wizardBox").val().trim(): $("#wizardBox").val().trim();
-    const coVal= lockedFields.combo? $("#wizardCombo").val().trim(): $("#wizardCombo").val().trim();
-
-    for(let i=0;i<countVal;i++){
-      let bn = generateRandomNumberForMode(gm);
-      bn= padNumberForMode(bn, gm);
-      let rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
-      addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
-    }
-    highlightDuplicatesInWizard();
-  });
-
-  function generateRandomNumberForMode(mode){
-    if(mode==="NY Horses"){
-      const length = Math.floor(Math.random()*4)+1;
-      const maxVal = Math.pow(10,length)-1;
-      return Math.floor(Math.random()*(maxVal+1));
-    }
-    if(mode==="Single Action"){
-      return Math.floor(Math.random()*10);
-    }
-    if(mode==="Win 4"||mode==="Pale-Ven"||mode==="Pale-RD"){
-      return Math.floor(Math.random()*10000);
-    }
-    if(mode==="Pick 3"){
-      return Math.floor(Math.random()*1000);
-    }
-    if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela"){
-      return Math.floor(Math.random()*100);
-    }
-    return Math.floor(Math.random()*1000);
-  }
-  function padNumberForMode(num, mode){
-    if(mode==="NY Horses" || mode==="Single Action"){
-      return num.toString();
-    }
-    if(mode==="Pale-Ven"||mode==="Pale-RD"||mode==="Win 4"){
-      let s=num.toString();
-      while(s.length<4) s="0"+s;
-      return s;
-    }
-    if(mode==="Pulito"||mode==="RD-Quiniela"||mode==="Venezuela"){
-      let s=num.toString();
-      while(s.length<2) s="0"+s;
-      return s;
-    }
-    if(mode==="Pick 3"){
-      let s=num.toString();
-      while(s.length<3) s="0"+s;
-      return s;
-    }
-    let s=num.toString();
-    while(s.length<3) s="0"+s;
-    return s;
-  }
-
-  $("#btnGenerateRoundDown").click(function(){
-    const firstNum=$("#rdFirstNumber").val().trim();
-    const lastNum =$("#rdLastNumber").val().trim();
-    if(!firstNum||!lastNum){
-      alert("Please enter both first and last number for Round Down.");
-      return;
-    }
-    if(firstNum.length!==lastNum.length){
-      alert("First/Last must have the same length (2,3, or 4 digits).");
-      return;
-    }
-    let start = parseInt(firstNum,10);
-    let end   = parseInt(lastNum,10);
-    if(isNaN(start)||isNaN(end)){
-      alert("Invalid numeric range for Round Down.");
-      return;
-    }
-    if(start> end){
-      [start,end]=[end,start];
-    }
-    const stVal= lockedFields.straight? $("#wizardStraight").val().trim(): $("#wizardStraight").val().trim();
-    const bxVal= lockedFields.box? $("#wizardBox").val().trim(): $("#wizardBox").val().trim();
-    const coVal= lockedFields.combo? $("#wizardCombo").val().trim(): $("#wizardCombo").val().trim();
-
-    for(let i=start;i<=end;i++){
-      let bn=i.toString().padStart(firstNum.length,"0");
-      let gm=determineGameMode(bn);
-      if(gm==="-") continue;
-      const rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
-      addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
-    }
-    highlightDuplicatesInWizard();
-  });
-
-  $("#btnPermute").click(function(){
-    permuteWizardBetNumbers();
-  });
-  function permuteWizardBetNumbers(){
-    const rows = $("#wizardTableBody tr");
-    if(rows.length===0){
-      alert("No plays in the wizard table.");
-      return;
-    }
-    let allDigits=[];
-    let lengths=[];
-    rows.each(function(){
-      const bn=$(this).find("td").eq(1).text().trim();
-      lengths.push(bn.length);
-      for(let c of bn) allDigits.push(c);
-    });
-    if(allDigits.length===0){
-      alert("No digits found to permute.");
-      return;
-    }
-    // shuffle
-    for(let i=allDigits.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [allDigits[i],allDigits[j]]=[allDigits[j],allDigits[i]];
-    }
-    let idx=0;
-    rows.each(function(i){
-      const needed= lengths[i];
-      const subset= allDigits.slice(idx, idx+needed);
-      idx+= needed;
-      const newBN= subset.join("");
-      const gm= determineGameMode(newBN);
-      const stTd = $(this).find("td").eq(3).text().trim();
-      const bxTd = $(this).find("td").eq(4).text().trim();
-      const coTd = $(this).find("td").eq(5).text().trim();
-
-      const newTotal = calculateRowTotal(newBN, gm, stTd==="-"?"0":stTd, bxTd==="-"?"0":bxTd, coTd==="-"?"0":coTd);
-      $(this).find("td").eq(1).text(newBN);
-      $(this).find("td").eq(2).text(gm);
-      $(this).find("td").eq(6).text(parseFloat(newTotal).toFixed(2));
-    });
-    highlightDuplicatesInWizard();
-  }
-
-  $("#wizardAddAllToMain").click(function(){
-    const wizardRows=$("#wizardTableBody tr");
-    if(wizardRows.length===0){
-      alert("No plays in the wizard table.");
-      return;
-    }
-    wizardRows.each(function(){
-      if(playCount>=MAX_PLAYS){
-        alert("Reached 25 plays in the main form. Stopping import.");
-        return false;
-      }
-      const tds=$(this).find("td");
-      const bn=tds.eq(1).text();
-      const gm=tds.eq(2).text();
-      const stVal=(tds.eq(3).text()==="-"?"":tds.eq(3).text());
-      const bxVal=(tds.eq(4).text()==="-"?"":tds.eq(4).text());
-      const coVal=(tds.eq(5).text()==="-"?"":tds.eq(5).text());
-      const total=tds.eq(6).text();
-
-      if(playCount<MAX_PLAYS){
-        playCount++;
-        const rowIndex=playCount;
-        const rowHTML=`
-          <tr data-playIndex="${rowIndex}">
-            <td>
-              <button type="button" class="btnRemovePlay removeMainBtn" data-row="${rowIndex}">
-                ${rowIndex}
+  </style>
+</head>
+<body>
+  <!-- Botones del tutorial en 3 idiomas -->
+  <div style="position: absolute; top: 10px; right: 10px; z-index:99999;">
+    <button id="helpEnglish" class="btn btn-secondary">E</button>
+    <button id="helpSpanish" class="btn btn-secondary">S</button>
+    <button id="helpCreole" class="btn btn-secondary">C</button>
+  </div>
+
+  <div class="container my-5">
+    <h2 class="text-center mb-4">Beast Reader (Cricket) East New York</h2>
+
+    <!-- Main Form -->
+    <form id="lotteryForm">
+      <!-- Date Selection -->
+      <div class="row mb-3">
+        <div class="col-md-4 col-sm-6">
+          <label for="fecha" class="form-label">Bet Dates:</label>
+          <input
+            type="text"
+            id="fecha"
+            class="form-control glow-input"
+            placeholder="Select date(s)"
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Tracks Selection -->
+      <div class="mb-4">
+        <label class="form-label">Select Tracks:</label>
+        <div class="accordion" id="tracksAccordion">
+
+          <!--
+             ================================
+             Sección USA TRACKS
+             ================================
+          -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingUSA">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseUSA"
+                aria-expanded="false"
+                aria-controls="collapseUSA"
+              >
+                USA
               </button>
-            </td>
-            <td>
-              <input type="text" class="form-control betNumber" value="${bn}" />
-            </td>
-            <td class="gameMode">${gm}</td>
-            <td>
-              <input type="number" class="form-control straight" value="${stVal}" />
-            </td>
-            <td>
-              <input type="text" class="form-control box" value="${bxVal}" />
-            </td>
-            <td>
-              <input type="number" class="form-control combo" value="${coVal}" />
-            </td>
-            <td class="total">${parseFloat(total||0).toFixed(2)}</td>
-          </tr>
-        `;
-        $("#tablaJugadas").append(rowHTML);
-      }
-    });
-    $("#wizardTableBody").empty();
-    wizardCount=0;
-    recalcAllMainRows();
-    calculateMainTotal();
-    highlightDuplicatesInMain();
-    storeFormState();
-  });
+            </h2>
+            <div
+              id="collapseUSA"
+              class="accordion-collapse collapse"
+              aria-labelledby="headingUSA"
+              data-bs-parent="#tracksAccordion"
+            >
+              <div class="accordion-body">
+                <!-- New York Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New York Mid Day"
+                    id="trackNYMidDay"
+                  />
+                  <label class="track-button" for="trackNYMidDay">
+                    <span class="track-name">New York Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="New York Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- New York Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New York Evening"
+                    id="trackNYEvening"
+                  />
+                  <label class="track-button" for="trackNYEvening">
+                    <span class="track-name">New York Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="New York Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Georgia Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Mid Day"
+                    id="trackGeorgiaMidDay"
+                  />
+                  <label class="track-button" for="trackGeorgiaMidDay">
+                    <span class="track-name">Georgia Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Georgia Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Georgia Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Evening"
+                    id="trackGeorgiaEvening"
+                  />
+                  <label class="track-button" for="trackGeorgiaEvening">
+                    <span class="track-name">Georgia Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Georgia Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- New Jersey Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New Jersey Mid Day"
+                    id="trackNJMidDay"
+                  />
+                  <label class="track-button" for="trackNJMidDay">
+                    <span class="track-name">New Jersey Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="New Jersey Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- New Jersey Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New Jersey Evening"
+                    id="trackNJEvening"
+                  />
+                  <label class="track-button" for="trackNJEvening">
+                    <span class="track-name">New Jersey Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="New Jersey Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Florida Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Florida Mid Day"
+                    id="trackFloridaMidDay"
+                  />
+                  <label class="track-button" for="trackFloridaMidDay">
+                    <span class="track-name">Florida Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Florida Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Florida Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Florida Evening"
+                    id="trackFloridaEvening"
+                  />
+                  <label class="track-button" for="trackFloridaEvening">
+                    <span class="track-name">Florida Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Florida Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Connecticut Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Connecticut Mid Day"
+                    id="trackConnecticutMidDay"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackConnecticutMidDay"
+                  >
+                    <span class="track-name">Connecticut Mid Day</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Connecticut Mid Day"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Connecticut Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Connecticut Evening"
+                    id="trackConnecticutEvening"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackConnecticutEvening"
+                  >
+                    <span class="track-name">Connecticut Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Connecticut Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Georgia Night -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Night"
+                    id="trackGeorgiaNight"
+                  />
+                  <label class="track-button" for="trackGeorgiaNight">
+                    <span class="track-name">Georgia Night</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Georgia Night"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Pensilvania AM -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Pensilvania AM"
+                    id="trackPennsylvaniaAM"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackPennsylvaniaAM"
+                  >
+                    <span class="track-name">Pensilvania AM</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Pensilvania AM"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Pensilvania PM -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Pensilvania PM"
+                    id="trackPennsylvaniaPM"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackPennsylvaniaPM"
+                  >
+                    <span class="track-name">Pensilvania PM</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Pensilvania PM"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Venezuela -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Venezuela"
+                    id="trackVenezuela"
+                  />
+                  <label class="track-button" for="trackVenezuela">
+                    <span class="track-name">Venezuela</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Venezuela"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Brooklyn Midday -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Brooklyn Midday"
+                    id="trackBrooklynMidday"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackBrooklynMidday"
+                  >
+                    <span class="track-name">Brooklyn Midday</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Brooklyn Midday"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Brooklyn Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Brooklyn Evening"
+                    id="trackBrooklynEvening"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackBrooklynEvening"
+                  >
+                    <span class="track-name">Brooklyn Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Brooklyn Evening"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Front Midday -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Front Midday"
+                    id="trackFrontMidday"
+                  />
+                  <label class="track-button" for="trackFrontMidday">
+                    <span class="track-name">Front Midday</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Front Midday"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Front Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Front Evening"
+                    id="trackFrontEvening"
+                  />
+                  <label class="track-button" for="trackFrontEvening">
+                    <span class="track-name">Front Evening</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Front Evening"
+                    ></span>
+                  </label>
+                </div>
 
-  $("#wizardGenerateTicket").click(function(){
-    $("#wizardAddAllToMain").trigger("click");
-    wizardModal.hide();
-    doGenerateTicket();
-  });
+                <!-- New York Horses (nuevo track) -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New York Horses"
+                    id="trackNYHorses"
+                  />
+                  <label class="track-button" for="trackNYHorses">
+                    <span class="track-name">New York Horses</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="New York Horses"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Fin de tracks USA -->
+              </div>
+            </div>
+          </div>
 
-  $("#wizardEditMainForm").click(function(){
-    wizardModal.hide();
-  });
+          <!--
+             ================================
+             Sección Santo Domingo TRACKS
+             ================================
+          -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingSD">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseSD"
+                aria-expanded="false"
+                aria-controls="collapseSD"
+              >
+                Santo Domingo
+              </button>
+            </h2>
+            <div
+              id="collapseSD"
+              class="accordion-collapse collapse"
+              aria-labelledby="headingSD"
+              data-bs-parent="#tracksAccordion"
+            >
+              <div class="accordion-body">
+                <!-- Real -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Real"
+                    id="trackReal"
+                  />
+                  <label class="track-button" for="trackReal">
+                    <span class="track-name">Real</span>
+                    <span class="cutoff-time" data-track="Real"></span>
+                  </label>
+                </div>
+                <!-- Gana mas -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Gana mas"
+                    id="trackGanamas"
+                  />
+                  <label class="track-button" for="trackGanamas">
+                    <span class="track-name">Gana más</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Gana mas"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Loteka -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Loteka"
+                    id="trackLoteka"
+                  />
+                  <label class="track-button" for="trackLoteka">
+                    <span class="track-name">Loteka</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Loteka"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Nacional -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Nacional"
+                    id="trackNacional"
+                  />
+                  <label class="track-button" for="trackNacional">
+                    <span class="track-name">Nacional</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Nacional"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Quiniela Pale -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Quiniela Pale"
+                    id="trackQuinielaPale"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackQuinielaPale"
+                  >
+                    <span class="track-name">Quiniela Pale</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Quiniela Pale"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Primera Día -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Primera Día"
+                    id="trackPrimeraDia"
+                  />
+                  <label class="track-button" for="trackPrimeraDia">
+                    <span class="track-name">Primera Día</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Primera Día"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Suerte Día -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Suerte Día"
+                    id="trackSuerteDia"
+                  />
+                  <label class="track-button" for="trackSuerteDia">
+                    <span class="track-name">Suerte Día</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Suerte Día"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Lotería Real -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Lotería Real"
+                    id="trackLoteriaReal"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackLoteriaReal"
+                  >
+                    <span class="track-name">Lotería Real</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Lotería Real"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Suerte Tarde -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Suerte Tarde"
+                    id="trackSuerteTarde"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackSuerteTarde"
+                  >
+                    <span class="track-name">Suerte Tarde</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Suerte Tarde"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Lotedom -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Lotedom"
+                    id="trackLotedom"
+                  />
+                  <label class="track-button" for="trackLotedom">
+                    <span class="track-name">Lotedom</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Lotedom"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Primera Noche -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Primera Noche"
+                    id="trackPrimeraNoche"
+                  />
+                  <label
+                    class="track-button"
+                    for="trackPrimeraNoche"
+                  >
+                    <span class="track-name">Primera Noche</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Primera Noche"
+                    ></span>
+                  </label>
+                </div>
+                <!-- Panama -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Panama"
+                    id="trackPanama"
+                  />
+                  <label class="track-button" for="trackPanama">
+                    <span class="track-name">Panamá</span>
+                    <span
+                      class="cutoff-time"
+                      data-track="Panama"
+                    ></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
 
-  function highlightDuplicatesInWizard(){
-    $("#wizardTableBody tr").find("td:nth-child(2)").removeClass("duplicado");
-    let counts={};
-    $("#wizardTableBody tr").each(function(){
-      const bn=$(this).find("td").eq(1).text().trim();
-      if(!bn)return;
-      counts[bn]=(counts[bn]||0)+1;
-    });
-    $("#wizardTableBody tr").each(function(){
-      const bn=$(this).find("td").eq(1).text().trim();
-      if(counts[bn]>1){
-        $(this).find("td").eq(1).addClass("duplicado");
-      }
-    });
-  }
+        </div>
+      </div>
 
+      <!-- Plays Table (Editable) -->
+      <div class="table-responsive mb-4">
+        <table
+          class="table table-dark table-bordered glow-table"
+          id="jugadasTable"
+        >
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>Bet Number</th>
+              <th>Game Mode</th>
+              <th>Straight ($)</th>
+              <th>Box ($)</th>
+              <th>Combo ($)</th>
+              <th>Total ($)</th>
+            </tr>
+          </thead>
+          <tbody id="tablaJugadas">
+            <!-- Rows added dynamically in scripts.js -->
+          </tbody>
+        </table>
+      </div>
 
-  // ======== SECCIÓN AJUSTADA: INTRO.JS + BOTONES DEL MANUAL ========
+      <!-- Buttons: Add, Wizard, Remove Last, Reset -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="button-group">
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="agregarJugada"
+          >
+            <i class="bi bi-plus-circle"></i> Add Play
+          </button>
+          <button
+            type="button"
+            class="btn btn-info"
+            id="wizardButton"
+          >
+            <i class="bi bi-magic"></i> Wizard
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            id="eliminarJugada"
+          >
+            <i class="bi bi-dash-circle"></i> Remove Last Play
+          </button>
+          <button
+            type="button"
+            class="btn btn-warning"
+            id="resetForm"
+          >
+            <i class="bi bi-arrow-clockwise"></i> Reset Form
+          </button>
+        </div>
+        <!-- Make total text bigger -->
+        <div class="total-section" style="font-size:1.25rem;">
+          Total Plays: $
+          <span id="totalJugadas">0.00</span>
+        </div>
+      </div>
 
-  // ----------------------------------------------------------
-  // 1) ACTIVAR TUTORIAL CON INTRO.JS EN TRES IDIOMAS
-  // ----------------------------------------------------------
-  const tutorialStepsEN = [
-    {
-      element: '#fecha',
-      intro: 'Select one or multiple dates here.',
-    },
-    {
-      element: '#tracksAccordion',
-      intro: 'Choose your tracks in this accordion.',
-    },
-    {
-      element: '#agregarJugada',
-      intro: 'Add individual plays (Bet Number, Straight/Box/Combo).'
-    },
-    {
-      element: '#wizardButton',
-      intro: 'Or use the Wizard for quick entry.'
-    },
-    {
-      element: '#generarTicket',
-      intro: 'When ready, click here to generate the ticket.'
-    }
-    // Agrega más pasos según necesites
-  ];
-  const tutorialStepsES = [
-    {
-      element: '#fecha',
-      intro: 'Seleccione una o varias fechas de apuesta aquí.',
-    },
-    {
-      element: '#tracksAccordion',
-      intro: 'Elija los tracks en este acordeón.',
-    },
-    {
-      element: '#agregarJugada',
-      intro: 'Agregue jugadas (número, Straight/Box/Combo).'
-    },
-    {
-      element: '#wizardButton',
-      intro: 'Use el Wizard para entrada rápida.'
-    },
-    {
-      element: '#generarTicket',
-      intro: 'Cuando termine, presione aquí para generar el ticket.'
-    }
-  ];
-  const tutorialStepsHT = [
-    {
-      element: '#fecha',
-      intro: 'Chwazi youn oswa plizyè dat paryaj.',
-    },
-    {
-      element: '#tracksAccordion',
-      intro: 'Chwazi tracks ou yo nan akòdeyon an.',
-    },
-    {
-      element: '#agregarJugada',
-      intro: 'Ajoute jwet yo (Bet Number, Straight/Box/Combo).'
-    },
-    {
-      element: '#wizardButton',
-      intro: 'Ou ka sèvi ak Wizard pou antre rapid.'
-    },
-    {
-      element: '#generarTicket',
-      intro: 'Lè w fini, klike la pou jenere tikè a.'
-    }
-  ];
+      <!-- Generate Ticket -->
+      <div class="d-grid gap-2">
+        <button
+          type="button"
+          class="btn btn-success btn-lg"
+          id="generarTicket"
+        >
+          <i class="bi bi-ticket-detailed-fill"></i> Generate Ticket
+        </button>
+      </div>
+    </form>
+  </div>
 
-  function startTutorial(lang) {
-    let steps = tutorialStepsEN; // por defecto
-    let nextLabel='Next', prevLabel='Back', skipLabel='Skip', doneLabel='Done';
+  <!-- Ticket Preview Window -->
+  <div
+    class="modal fade"
+    id="ticketModal"
+    tabindex="-1"
+    aria-labelledby="ticketModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ticketModalLabel">
+            Ticket Preview
+          </h5>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div id="preTicket" class="p-3">
+            <h4 class="text-center mb-3">East New York Cricket</h4>
+            <p>
+              <strong>Bet Dates:</strong>
+              <span id="ticketFecha"></span>
+            </p>
+            <p>
+              <strong>Selected Tracks:</strong>
+              <span id="ticketTracks"></span>
+            </p>
+            <div class="table-responsive">
+              <table class="table table-dark table-bordered">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Bet Number</th>
+                    <th>Game Mode</th>
+                    <th>Straight ($)</th>
+                    <th>Box ($)</th>
+                    <th>Combo ($)</th>
+                    <th>Total ($)</th>
+                  </tr>
+                </thead>
+                <tbody id="ticketJugadas">
+                  <!-- Filled dynamically in scripts.js -->
+                </tbody>
+              </table>
+            </div>
+            <div class="total-section">
+              Total Plays: $<span id="ticketTotal">0.00</span>
+            </div>
+            <div class="ticket-number my-3">
+              Ticket Number: <span id="numeroTicket"></span>
+            </div>
+            <div class="transaction-date my-3">
+              Transaction Date & Time:
+              <span id="ticketTransaccion"></span>
+            </div>
+            <div class="barcode text-center">
+              <div id="qrcode"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <!-- Edit (close) => user can come back to edit main table -->
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+            id="editButton"
+          >
+            Edit
+          </button>
+          <!-- Confirm & Print -->
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="confirmarTicket"
+          >
+            Confirm & Print
+          </button>
+          <!-- Share (hidden initially) -->
+          <button
+            type="button"
+            class="btn btn-info d-none"
+            id="shareTicket"
+          >
+            Share Ticket
+          </button>
+          <!-- New red "Close" button for easier tapping -->
+          <button
+            type="button"
+            class="btn btn-danger"
+            data-bs-dismiss="modal"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    if(lang==='es'){
-      steps = tutorialStepsES;
-      nextLabel='Siguiente'; 
-      prevLabel='Atrás';
-      skipLabel='Omitir';
-      doneLabel='Listo';
-    } else if(lang==='ht'){
-      steps = tutorialStepsHT;
-      nextLabel='Next';
-      prevLabel='Back';
-      skipLabel='Skip';
-      doneLabel='OK'; 
-      // (Puedes personalizar más en creole)
-    }
+  <!-- 
+       =================================
+       WIZARD WINDOW (Quick Entry)
+       =================================
+  -->
+  <div
+    class="modal fade"
+    id="wizardModal"
+    tabindex="-1"
+    aria-labelledby="wizardModalLabel"
+    aria-hidden="true"
+  >
+    <!-- Fullscreen on small devices -->
+    <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
+      <div class="modal-content">
+        <!-- Encabezado con "Close Window" rojo en top-right -->
+        <div class="modal-header">
+          <h5 class="modal-title" id="wizardModalLabel">Quick Entry Window</h5>
+          <button
+            type="button"
+            class="btn btn-danger"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          >
+            Close Window
+          </button>
+        </div>
 
-    introJs().setOptions({
-      steps: steps,
-      showStepNumbers: true,
-      showProgress: false,
-      exitOnOverlayClick: true,
-      scrollToElement: false,
-      nextLabel,
-      prevLabel,
-      skipLabel,
-      doneLabel
-    }).start();
-  }
+        <div class="modal-body">
+          <!-- FILA 1: Bet Number + Add & Next -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div class="me-2">
+                <label for="wizardBetNumber" class="form-label"
+                  >Bet Number</label
+                >
+                <!-- type="text" => permitir "22-55", "11x22", etc. -->
+                <input
+                  type="text"
+                  class="form-control"
+                  id="wizardBetNumber"
+                  placeholder="2–4 digits or Pale (22-50)"
+                  style="width: 180px;"
+                />
+              </div>
+              <div>
+                <button
+                  type="button"
+                  class="btn btn-primary mt-4"
+                  id="wizardAddNext"
+                >
+                  <i class="bi bi-check2-circle"></i> Add & Next
+                </button>
+              </div>
+            </div>
+          </div>
 
-  // Al hacer clic en los botones E, S, C => arrancamos tutorial
-  $("#helpEnglish").click(()=> startTutorial('en'));
-  $("#helpSpanish").click(()=> startTutorial('es'));
-  $("#helpCreole").click(()=> startTutorial('ht'));
+          <!-- FILA 2: Straight + candado (izq) / Add Main (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardStraight" class="form-label">Straight</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="number"
+                    step="1"
+                    class="form-control"
+                    id="wizardStraight"
+                    placeholder="e.g. 5"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="straight"
+                    id="lockStraight"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-warning"
+                id="wizardAddAllToMain"
+              >
+                <i class="bi bi-hdd-fill"></i> Add Main
+              </button>
+            </div>
+          </div>
 
+          <!-- FILA 3: Box (izq) / Generate (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardBox" class="form-label">Box</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="wizardBox"
+                    placeholder="e.g. 1,2"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="box"
+                    id="lockBox"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-success"
+                id="wizardGenerateTicket"
+              >
+                <i class="bi bi-ticket-detailed"></i> Generate
+              </button>
+            </div>
+          </div>
 
-  // ----------------------------------------------------------
-  // 2) MOSTRAR EL MANUAL EN LA MISMA PÁGINA
-  // ----------------------------------------------------------
-  // En lugar de location.href, aquí solo cambiamos la visibilidad.
-  $("#manualEnglishBtn").click(function(){
-    $("#manualEnglishText").removeClass("d-none");
-    $("#manualSpanishText").addClass("d-none");
-    $("#manualCreoleText").addClass("d-none");
-  });
-  $("#manualSpanishBtn").click(function(){
-    $("#manualEnglishText").addClass("d-none");
-    $("#manualSpanishText").removeClass("d-none");
-    $("#manualCreoleText").addClass("d-none");
-  });
-  $("#manualCreoleBtn").click(function(){
-    $("#manualEnglishText").addClass("d-none");
-    $("#manualSpanishText").addClass("d-none");
-    $("#manualCreoleText").removeClass("d-none");
-  });
+          <!-- FILA 4: Combo (izq) / Edit Main (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardCombo" class="form-label">Combo</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="number"
+                    step="0.1"
+                    class="form-control"
+                    id="wizardCombo"
+                    placeholder="e.g. 3.00"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="combo"
+                    id="lockCombo"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="wizardEditMainForm"
+              >
+                <i class="bi bi-pencil-square"></i> Edit Main
+              </button>
+            </div>
+          </div>
 
-});
-// fin document.ready
+          <!-- Wizard Table (Internal) -->
+          <div class="table-responsive mb-3">
+            <table class="table table-dark table-bordered" id="wizardTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Bet Number</th>
+                  <th>Game Mode</th>
+                  <th>Straight ($)</th>
+                  <th>Box ($)</th>
+                  <th>Combo ($)</th>
+                  <th>Total ($)</th>
+                </tr>
+              </thead>
+              <tbody id="wizardTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Quick Pick Section -->
+          <div class="border p-2 mb-3">
+            <h6>Quick Pick</h6>
+            <div class="row mb-2">
+              <div class="col-6">
+                <label for="qpGameMode" class="form-label">Game Mode</label>
+                <select class="form-select" id="qpGameMode">
+                  <option value="Pick 3">Pick 3</option>
+                  <option value="Win 4">Win 4</option>
+                  <option value="Venezuela">Venezuela</option>
+                  <option value="Pale-Ven">Pale-Ven</option>
+                  <option value="Pulito">Pulito</option>
+                  <option value="RD-Quiniela">RD-Quiniela</option>
+                  <option value="Pale-RD">Pale-RD</option>
+                  <!-- Nueva modalidad Single Action -->
+                  <option value="Single Action">Single Action</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label for="qpCount" class="form-label">How many plays?</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="qpCount"
+                  placeholder="1–25"
+                  min="1"
+                  max="25"
+                  value="5"
+                />
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-info"
+                id="btnGenerateQuickPick"
+              >
+                Quick Pick
+              </button>
+              <button
+                type="button"
+                class="btn btn-info"
+                id="btnPermute"
+              >
+                Permute
+              </button>
+            </div>
+          </div>
+
+          <!-- Round Down Section -->
+          <div class="border p-2 mb-3">
+            <h6>Round Down</h6>
+            <div class="row mb-2">
+              <div class="col-6">
+                <label for="rdFirstNumber" class="form-label"
+                  >First Number</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rdFirstNumber"
+                  placeholder="e.g. 120"
+                />
+              </div>
+              <div class="col-6">
+                <label for="rdLastNumber" class="form-label"
+                  >Last Number</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rdLastNumber"
+                  placeholder="e.g. 129"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-info"
+              id="btnGenerateRoundDown"
+            >
+              Round Down
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Popper.js (for Bootstrap) -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+  ></script>
+  <!-- Bootstrap JS -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
+  ></script>
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
+  ></script>
+  <!-- QRCode.js -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+  ></script>
+  <!-- Day.js -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/customParseFormat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/arraySupport.js"></script>
+  <script>
+    dayjs.extend(dayjs_plugin_customParseFormat);
+    dayjs.extend(dayjs_plugin_arraySupport);
+  </script>
+  <!-- html2canvas -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+  ></script>
+
+  <!-- Nuestro scripts.js final (mantener intacto, luego agregaremos lo nuevo) -->
+  <script src="scripts.js"></script>
+
+  <!-- 
+       =====================
+       MANUAL / INSTRUCTIONS
+       (Accordion con 3 botones de idioma)
+       =====================
+  -->
+  <div class="container mb-5">
+    <div class="accordion" id="manualAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingManual">
+          <button
+            class="accordion-button collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseManual"
+            aria-expanded="false"
+            aria-controls="collapseManual"
+          >
+            Manual / Instructions
+          </button>
+        </h2>
+        <div
+          id="collapseManual"
+          class="accordion-collapse collapse"
+          aria-labelledby="headingManual"
+          data-bs-parent="#manualAccordion"
+        >
+          <div class="accordion-body">
+            <!-- Botones para cambiar el idioma del manual -->
+            <div class="d-flex gap-2 mb-3">
+              <button class="btn btn-secondary" id="manualEnglishBtn">English</button>
+              <button class="btn btn-secondary" id="manualSpanishBtn">Español</button>
+              <button class="btn btn-secondary" id="manualCreoleBtn">Kreyòl</button>
+            </div>
+
+            <!-- Texto en Inglés -->
+            <div id="manualEnglishText">
+              <p><strong>Under construction:</strong> Here we will show the English manual content.</p>
+            </div>
+            <!-- Texto en Español (oculto por defecto) -->
+            <div id="manualSpanishText" class="d-none">
+              <p><strong>En construcción:</strong> Aquí mostraremos el contenido del manual en Español.</p>
+            </div>
+            <!-- Texto en Criollo (oculto por defecto) -->
+            <div id="manualCreoleText" class="d-none">
+              <p><strong>Ann konstriksyon:</strong> La nou pral montre kontni manyèl la an kreyòl.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
