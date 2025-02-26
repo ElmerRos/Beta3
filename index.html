@@ -877,8 +877,244 @@
         </div>
 
         <div class="modal-body">
-          <!-- (Contenido del Wizard) -->
-          <!-- (Igual que tu versión original, sin cambios) -->
+          <!-- FILA 1: Bet Number + Add & Next -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div class="me-2">
+                <label for="wizardBetNumber" class="form-label"
+                  >Bet Number</label
+                >
+                <!-- type="text" => permitir "22-55", "11x22", etc. -->
+                <input
+                  type="text"
+                  class="form-control"
+                  id="wizardBetNumber"
+                  placeholder="2–4 digits or Pale (22-50)"
+                  style="width: 180px;"
+                />
+              </div>
+              <div>
+                <button
+                  type="button"
+                  class="btn btn-primary mt-4"
+                  id="wizardAddNext"
+                >
+                  <i class="bi bi-check2-circle"></i> Add & Next
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- FILA 2: Straight + candado (izq) / Add Main (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardStraight" class="form-label">Straight</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="number"
+                    step="1"
+                    class="form-control"
+                    id="wizardStraight"
+                    placeholder="e.g. 5"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="straight"
+                    id="lockStraight"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-warning"
+                id="wizardAddAllToMain"
+              >
+                <i class="bi bi-hdd-fill"></i> Add Main
+              </button>
+            </div>
+          </div>
+
+          <!-- FILA 3: Box (izq) / Generate (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardBox" class="form-label">Box</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="wizardBox"
+                    placeholder="e.g. 1,2"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="box"
+                    id="lockBox"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-success"
+                id="wizardGenerateTicket"
+              >
+                <i class="bi bi-ticket-detailed"></i> Generate
+              </button>
+            </div>
+          </div>
+
+          <!-- FILA 4: Combo (izq) / Edit Main (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardCombo" class="form-label">Combo</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="number"
+                    step="0.1"
+                    class="form-control"
+                    id="wizardCombo"
+                    placeholder="e.g. 3.00"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="combo"
+                    id="lockCombo"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="wizardEditMainForm"
+              >
+                <i class="bi bi-pencil-square"></i> Edit Main
+              </button>
+            </div>
+          </div>
+
+          <!-- Wizard Table (Internal) -->
+          <div class="table-responsive mb-3">
+            <table class="table table-dark table-bordered" id="wizardTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Bet Number</th>
+                  <th>Game Mode</th>
+                  <th>Straight ($)</th>
+                  <th>Box ($)</th>
+                  <th>Combo ($)</th>
+                  <th>Total ($)</th>
+                </tr>
+              </thead>
+              <tbody id="wizardTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Quick Pick Section -->
+          <div class="border p-2 mb-3">
+            <h6>Quick Pick</h6>
+            <div class="row mb-2">
+              <div class="col-6">
+                <label for="qpGameMode" class="form-label">Game Mode</label>
+                <select class="form-select" id="qpGameMode">
+                  <option value="Pick 3">Pick 3</option>
+                  <option value="Win 4">Win 4</option>
+                  <option value="Venezuela">Venezuela</option>
+                  <option value="Pale-Ven">Pale-Ven</option>
+                  <option value="Pulito">Pulito</option>
+                  <option value="RD-Quiniela">RD-Quiniela</option>
+                  <option value="Pale-RD">Pale-RD</option>
+                  <!-- Nueva modalidad Single Action -->
+                  <option value="Single Action">Single Action</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label for="qpCount" class="form-label">How many plays?</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="qpCount"
+                  placeholder="1–25"
+                  min="1"
+                  max="25"
+                  value="5"
+                />
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-info"
+                id="btnGenerateQuickPick"
+              >
+                Quick Pick
+              </button>
+              <button
+                type="button"
+                class="btn btn-info"
+                id="btnPermute"
+              >
+                Permute
+              </button>
+            </div>
+          </div>
+
+          <!-- Round Down Section -->
+          <div class="border p-2 mb-3">
+            <h6>Round Down</h6>
+            <div class="row mb-2">
+              <div class="col-6">
+                <label for="rdFirstNumber" class="form-label"
+                  >First Number</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rdFirstNumber"
+                  placeholder="e.g. 120"
+                />
+              </div>
+              <div class="col-6">
+                <label for="rdLastNumber" class="form-label"
+                  >Last Number</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rdLastNumber"
+                  placeholder="e.g. 129"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-info"
+              id="btnGenerateRoundDown"
+            >
+              Round Down
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
@@ -916,7 +1152,7 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
   ></script>
 
-  <!-- Nuestro scripts.js final (lo cargas aparte) -->
+  <!-- Nuestro scripts.js final (con wizard, tutorial, manual, etc.) -->
   <script src="scripts.js"></script>
 
   <!-- 
@@ -983,12 +1219,12 @@
             <div id="manualCreoleText" class="d-none">
               <h4>Manyèl Aplikasyon Lòtri (Kreyòl)</h4>
               <p><strong>Chwazi Dat:</strong> Ou ka pran youn oswa plizyè dat, “jodia” default.</p>
-              <p><strong>Tracks:</strong> Louvri “USA” / “Santo Domingo.” “Venezuela” bezwen track USA. “NY Horses” se 1–4 chif.</p>
-              <p><strong>Tab Pari:</strong> Chak ranje gen Bet Number => Pulito, Win4, Pick3, etc. Mete Straight/Box/Combo. Total ranje a multipliye pa dat ak tracks.</p>
-              <p><strong>Single Action:</strong> 1 chif track USA (pa Venezuela ni Horses). “NY Horses” => 1–4 chif.</p>
+              <p><strong>Tracks:</strong> “USA” / “Santo Domingo.” “Venezuela” bezwen track USA. “NY Horses” se 1–4 chif.</p>
+              <p><strong>Tab Pari:</strong> Chak ranje gen Bet Number => Pulito, Win4, Pick3, etc. Mete montan Straight/Box/Combo. Total la miltipliye pa dat ak tracks.</p>
+              <p><strong>Single Action:</strong> 1 chif si se track USA (pa Venezuela, pa Horses). “NY Horses” => 1–4 chif.</p>
               <p><strong>Bouton:</strong> Add Play, Wizard, Remove Last, Reset, Generate Ticket.</p>
-              <p><strong>Fenèt Wizard:</strong> Ka “lock” Straight/Box/Combo, Quick Picks, Round Down, Permute. Apre sa “Add Main” oswa “Generate Ticket.”</p>
-              <p><strong>Preview Ticket:</strong> Montre parye yo, total la, ak kòd QR. Konfime => gen nimewo inik, telechaje imaj, ka pataje li.</p>
+              <p><strong>Fenèt Wizard:</strong> “lock” Straight/Box/Combo, Quick Picks, Round Down, Permute. Apre sa “Add Main” oswa “Generate Ticket.”</p>
+              <p><strong>Preview Ticket:</strong> Montre parye yo, total la, ak kòd QR. Konfime => bay tikè a yon nimewo inik, telechaje imaj, ka pataje li.</p>
             </div>
 
           </div>
