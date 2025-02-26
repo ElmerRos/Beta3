@@ -1,10 +1,6 @@
  /* =========================================================
    SCRIPTS.JS COMPLETO
-   (Mantiene toda la lógica intacta)
-   Cambios mínimos:
-     1) Se añadió wizard modal (HTML) en index
-     2) Se marca Venezuela por defecto (además de NY)
-     3) Resto del tutorial, manual, etc. sigue igual
+   (Mantiene toda la lógica intacta, agregando fixes)
 ========================================================= */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -845,7 +841,7 @@ $(document).ready(function() {
     const now= dayjs();
     $(".track-checkbox").each(function(){
       const val= $(this).val();
-      if(val==="Venezuela") return; 
+      if(val==="Venezuela") return;
       const raw= getTrackCutoff(val);
       if(raw){
         let co= dayjs(raw,"HH:mm");
@@ -939,18 +935,152 @@ $(document).ready(function() {
     });
   }
 
-  // ... (12) WIZARD (AddNext, QuickPick, RoundDown, etc.)
-  // (Tal cual lo tenías)
+  /*
+   ==========================================================
+   WIZARD (aquí iría toda la lógica de QuickPick, RoundDown, etc.)
+   Suponiendo que lo tienes implementado aparte,
+   no hace falta reescribirlo aquí.
+   ==========================================================
+  */
 
-  // ... (13) Intro.js Tutorial (3 idiomas) ...
+  // [ADDED/FIXED #2: Mostrar modal Wizard al hacer click en el botón]
+  $("#wizardButton").click(function() {
+    const wizardModal = new bootstrap.Modal(document.getElementById("wizardModal"));
+    wizardModal.show();
+  });
+
+  /*
+   ==========================================================
+   Intro.js Tutorial (3 idiomas).
+   [ADDED/FIXED #1: Implementación de la función startTutorial(lang)]
+   ==========================================================
+  */
+
+  // Ejemplo de pasos (puedes adaptarlos a tu gusto)
   const tutorialStepsEN = [
-    // ...
+    {
+      intro: "Welcome! This tutorial will guide you through the main features."
+    },
+    {
+      element: "#fecha",
+      title: "Bet Dates",
+      intro: "Select one or more dates for your lottery bets."
+    },
+    {
+      element: ".accordion",
+      title: "Tracks",
+      intro: "Expand a section and pick the tracks you want to bet on."
+    },
+    {
+      element: "#agregarJugada",
+      title: "Add Play",
+      intro: "Click here to add a new play (row) to the table."
+    },
+    {
+      element: "#wizardButton",
+      title: "Wizard",
+      intro: "This button opens a modal for quick entry of multiple plays."
+    },
+    {
+      element: "#resetForm",
+      title: "Reset Form",
+      intro: "Clears everything and resets the form to default."
+    },
+    {
+      element: "#generarTicket",
+      title: "Generate Ticket",
+      intro: "Once everything is correct, generate your ticket here."
+    }
   ];
-  // ... (lo mantienes igual)
-  // ...
+
+  // Pasos en Español
+  const tutorialStepsES = [
+    {
+      intro: "¡Bienvenido! Este tutorial te mostrará cómo usar la aplicación."
+    },
+    {
+      element: "#fecha",
+      title: "Fechas",
+      intro: "Selecciona una o varias fechas para tus jugadas de lotería."
+    },
+    {
+      element: ".accordion",
+      title: "Tracks",
+      intro: "Despliega y marca los sorteos que te interesen."
+    },
+    {
+      element: "#agregarJugada",
+      title: "Agregar Jugada",
+      intro: "Presiona aquí para añadir una nueva línea de jugada."
+    },
+    {
+      element: "#wizardButton",
+      title: "Asistente (Wizard)",
+      intro: "Abre una ventana para entrar jugadas de forma rápida."
+    },
+    {
+      element: "#resetForm",
+      title: "Resetear",
+      intro: "Borra todo y restaura la forma a sus valores iniciales."
+    },
+    {
+      element: "#generarTicket",
+      title: "Generar Ticket",
+      intro: "Cuando todo esté listo, genera el ticket en esta sección."
+    }
+  ];
+
+  // Pasos en Criollo
+  const tutorialStepsHT = [
+    {
+      intro: "Byenvini! Tutorial sa ap moutre w kijan pou itilize aplikasyon an."
+    },
+    {
+      element: "#fecha",
+      title: "Dat",
+      intro: "Chwazi youn oswa plizyè dat pou jwe."
+    },
+    {
+      element: ".accordion",
+      title: "Tracks",
+      intro: "Desann epi chwazi kisa w vle jwe."
+    },
+    {
+      element: "#agregarJugada",
+      title: "Ajoute Jwe",
+      intro: "Peze la pou ajoute yon nouvo ranje jwe."
+    },
+    {
+      element: "#wizardButton",
+      title: "Asistan (Wizard)",
+      intro: "Ou ka antre parye rapidman isi."
+    },
+    {
+      element: "#resetForm",
+      title: "Reyinisyalize",
+      intro: "Efase tout bagay epi retounen aplikasyonnan jan li te ye anvan."
+    },
+    {
+      element: "#generarTicket",
+      title: "Fè Ticket",
+      intro: "Lè ou fini tout jwe yo, kreye ticket la."
+    }
+  ];
+
   function startTutorial(lang){
-    // ...
+    let stepsToUse = tutorialStepsEN; // por defecto
+    if(lang==="es") stepsToUse = tutorialStepsES;
+    if(lang==="ht") stepsToUse = tutorialStepsHT;
+
+    introJs().setOptions({
+      steps: stepsToUse,
+      showProgress: true,
+      showButtons: true,
+      exitOnOverlayClick: false
+    }).start();
   }
+
+  // Listeners de los 3 botones del tutorial:
   $("#helpEnglish").click(()=>startTutorial('en'));
   $("#helpSpanish").click(()=>startTutorial('es'));
   $("#helpCreole").click(()=>startTutorial('ht'));
