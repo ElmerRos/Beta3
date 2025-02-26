@@ -1,13 +1,18 @@
  /* =========================================================
    SCRIPTS.JS COMPLETO
-   (Con scale=2, JPEG 0.8, tutorial Intro.js, wizard, etc.)
-   + Ajuste de manual => abre manual.html en la MISMA pestaña
+   (Con scale=2, JPEG 0.8, wizard, localStorage, combos, etc.)
+   + Ajuste final:
+      1) Se quita location.href = "manual.html"
+      2) Se añade tutorial Intro.js y show/hide del manual
 ========================================================= */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
 $(document).ready(function() {
 
+  // ----------------------------------------------------------------
+  // [1] TUS EXTENSIONES, VARIABLES Y SETUP INICIAL
+  // ----------------------------------------------------------------
   // Extensiones dayjs
   dayjs.extend(dayjs_plugin_customParseFormat);
   dayjs.extend(dayjs_plugin_arraySupport);
@@ -29,9 +34,9 @@ $(document).ready(function() {
     combo: false
   };
 
-  // =========================================================
-  // CUTOFF TIMES
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [2] CUTOFF TIMES
+  // ----------------------------------------------------------------
   const cutoffTimes = {
     "USA": {
       "New York Mid Day": "14:20",
@@ -73,9 +78,9 @@ $(document).ready(function() {
     }
   };
 
-  // =========================================================
-  // INIT FLATPICKR (Forzar fecha hoy)
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [3] INIT FLATPICKR
+  // ----------------------------------------------------------------
   const fp = flatpickr("#fecha", {
     mode: "multiple",
     dateFormat: "m-d-Y",
@@ -104,9 +109,9 @@ $(document).ready(function() {
     }
   });
 
-  // =========================================================
-  // TRACK CHECKBOXES
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [4] TRACK CHECKBOXES
+  // ----------------------------------------------------------------
   $(".track-checkbox").change(function(){
     const arr = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
@@ -116,9 +121,9 @@ $(document).ready(function() {
     disableTracksByTime();
   });
 
-  // =========================================================
-  // MAIN TABLE => Add/Remove
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [5] MAIN TABLE => Add/Remove
+  // ----------------------------------------------------------------
   $("#agregarJugada").click(function(){
     const row = addMainRow();
     if(row) row.find(".betNumber").focus();
@@ -210,9 +215,9 @@ $(document).ready(function() {
     calculateMainTotal();
   }
 
-  // =========================================================
-  // CALCULATE MAIN TOTAL
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [6] CALCULATE MAIN TOTAL
+  // ----------------------------------------------------------------
   function calculateMainTotal(){
     let sum=0;
     $("#tablaJugadas tr").each(function(){
@@ -229,9 +234,9 @@ $(document).ready(function() {
     storeFormState();
   }
 
-  // =========================================================
-  // DETERMINE GAME MODE
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [7] DETERMINE GAME MODE
+  // ----------------------------------------------------------------
   function determineGameMode(betNumber){
     if(!betNumber) return "-";
 
@@ -288,9 +293,9 @@ $(document).ready(function() {
     return "-";
   }
 
-  // =========================================================
-  // CALCULATE ROW TOTAL
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [8] CALCULATE ROW TOTAL
+  // ----------------------------------------------------------------
   function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
     if(!bn || gm==="-") return "0.00";
     const st = parseFloat(stVal) || 0;
@@ -330,7 +335,7 @@ $(document).ready(function() {
       return total.toFixed(2);
     }
 
-    // default
+    // default => st + box + combo
     const numericBox = parseFloat(bxVal)||0;
     return (st + numericBox + combo).toFixed(2);
   }
@@ -348,9 +353,9 @@ $(document).ready(function() {
     return factorial(str.length)/denom;
   }
 
-  // =========================================================
-  // LOCALSTORAGE => store/load
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [9] LOCALSTORAGE => store/load
+  // ----------------------------------------------------------------
   function storeFormState(){
     const st = {
       selectedTracksCount,
@@ -418,17 +423,17 @@ $(document).ready(function() {
     calculateMainTotal();
     highlightDuplicatesInMain();
   }
+  loadFormState();
 
   function recalcAllMainRows(){
     $("#tablaJugadas tr").each(function(){
       recalcMainRow($(this));
     });
   }
-  loadFormState();
 
-  // =========================================================
-  // RESET FORM
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [10] RESET FORM
+  // ----------------------------------------------------------------
   $("#resetForm").click(function(){
     if(confirm("Are you sure you want to reset the form?")){
       resetForm();
@@ -448,9 +453,9 @@ $(document).ready(function() {
     autoSelectNYTrack();
   }
 
-  // =========================================================
-  // GENERATE TICKET
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [11] GENERATE TICKET
+  // ----------------------------------------------------------------
   $("#generarTicket").click(function(){
     doGenerateTicket();
   });
@@ -945,9 +950,9 @@ $(document).ready(function() {
     });
   }
 
-  // =========================================================
-  // WIZARD
-  // =========================================================
+  // ----------------------------------------------------------------
+  // [12] WIZARD
+  // ----------------------------------------------------------------
   const wizardModal=new bootstrap.Modal(document.getElementById("wizardModal"));
 
   $("#wizardButton").click(function(){
@@ -1265,22 +1270,185 @@ $(document).ready(function() {
     });
   }
 
-  // =========================================================
-  // INTRO.JS TUTORIAL (Tus pasos)
-  // =========================================================
-  // ... (Si ya lo tenías, se mantiene)...
+  // ----------------------------------------------------------------
+  // [13] INTRO.JS TUTORIAL (3 IDIOMAS, PASOS EXTENSOS)
+  // ----------------------------------------------------------------
+  const tutorialStepsEN = [
+    {
+      element: '#fecha',
+      intro: 'Select one or multiple betting dates. By default, today is chosen.',
+    },
+    {
+      element: '#tracksAccordion',
+      intro: 'Expand “USA” or “Santo Domingo” to pick your tracks. Some will disable after cutoff time.'
+    },
+    {
+      intro: 'If you pick “Venezuela,” combine it with a USA track. “NY Horses” => 1–4 digits for that mode.'
+    },
+    {
+      element: '#jugadasTable',
+      intro: 'Each row has a Bet Number, automatically detecting the mode (Pulito, Win4, etc.). Then put Straight/Box/Combo.'
+    },
+    {
+      element: '#agregarJugada',
+      intro: 'Use “Add Play” for a new row. You can remove or reset if needed.'
+    },
+    {
+      intro: 'Pulito => 2 digits (USA). Venezuela => 2 digits (USA+Venezuela). Single => 1 digit (USA normal).'
+    },
+    {
+      element: '#wizardButton',
+      intro: 'Wizard => Quick Entry: random picks, Round Down, combos, etc.'
+    },
+    {
+      intro: 'Inside Wizard: lock Straight/Box/Combo, type Bet Number, do Quick Pick, Round Down, Permute, etc.'
+    },
+    {
+      element: '#generarTicket',
+      intro: 'When ready, “Generate Ticket” => see preview.'
+    },
+    {
+      element: '#ticketModal',
+      intro: 'Preview shows your plays, total, QR code. “Edit” or confirm => unique ticket #. Downloads image.'
+    },
+    {
+      intro: 'You can share if your browser supports Web Share. That’s the entire flow.'
+    }
+  ];
 
-  // =========================================================
-  // MANUAL => AHORA ABRE manual.html?lang=XX EN LA MISMA PESTAÑA
-  // =========================================================
+  const tutorialStepsES = [
+    {
+      element: '#fecha',
+      intro: 'Seleccione una o varias fechas. “Hoy” por defecto.'
+    },
+    {
+      element: '#tracksAccordion',
+      intro: 'Expanda “USA” o “Santo Domingo” para elegir tracks. Algunos se cierran tras cutoff.'
+    },
+    {
+      intro: 'Si marca “Venezuela,” use un track USA. “NY Horses” => 1–4 dígitos.'
+    },
+    {
+      element: '#jugadasTable',
+      intro: 'Cada fila (Bet Number) => Pulito, Win4, etc. Ingrese Straight/Box/Combo.'
+    },
+    {
+      element: '#agregarJugada',
+      intro: 'Agregue jugadas con “Add Play.” Puede remover o resetear.'
+    },
+    {
+      intro: 'Pulito => 2 dígitos + track USA. Venezuela => 2 dígitos + track “Venezuela”+USA. Single => 1 dígito (USA).'
+    },
+    {
+      element: '#wizardButton',
+      intro: 'Wizard: Ventana extra para Quick Picks, Round Down, combos, etc.'
+    },
+    {
+      intro: 'Dentro del Wizard: “lock” Straight/Box/Combo, Quick Pick, Round Down, Permute.'
+    },
+    {
+      element: '#generarTicket',
+      intro: 'Cuando termine, “Generate Ticket” => vista previa.'
+    },
+    {
+      element: '#ticketModal',
+      intro: 'Vista previa: jugadas, total, QR. Edite o confirme => # único. Descarga imagen.'
+    },
+    {
+      intro: 'Puede compartir si su navegador lo soporta. ¡Listo!'
+    }
+  ];
+
+  const tutorialStepsHT = [
+    {
+      element: '#fecha',
+      intro: 'Chwazi youn oswa plizyè dat pou parye. “Jodia” se default.'
+    },
+    {
+      element: '#tracksAccordion',
+      intro: 'Louvri “USA” oswa “Santo Domingo” pou chwazi track. Gen ki fèmen apre cutoff.'
+    },
+    {
+      intro: 'Si ou mete “Venezuela,” bezwen track USA. “NY Horses” => 1–4 chif.'
+    },
+    {
+      element: '#jugadasTable',
+      intro: 'Chak ranje gen Bet Number => Pulito, Pick3, Win4, etc. Mete Straight/Box/Combo.'
+    },
+    {
+      element: '#agregarJugada',
+      intro: 'Klike “Add Play” pou ajoute ranje. Ou ka retire oswa reset.'
+    },
+    {
+      intro: 'Pulito => 2 chif + track USA. Venezuela => 2 chif + track Vzla+USA. Single => 1 chif, track USA.'
+    },
+    {
+      element: '#wizardButton',
+      intro: 'Wizard: Fenèt Quick Entry pou picks, Round Down, combos, etc.'
+    },
+    {
+      intro: 'Anndan Wizard la: lock Straight/Box/Combo, Quick Pick, Round Down, Permute.'
+    },
+    {
+      element: '#generarTicket',
+      intro: 'Lè w fini, “Generate Ticket” => preview.'
+    },
+    {
+      element: '#ticketModal',
+      intro: 'Preview: tout parye yo, total, QR. Ou ka edite oswa konfime => # inik. Telechaje imaj.'
+    },
+    {
+      intro: 'Ou ka pataje si navigatè a sipòte. Se pwosesis la!'
+    }
+  ];
+
+  function startTutorial(lang){
+    let steps = tutorialStepsEN;
+    let nextLabel='Next', prevLabel='Back', skipLabel='Skip', doneLabel='Done';
+
+    if(lang==='es'){
+      steps = tutorialStepsES;
+      nextLabel='Siguiente'; prevLabel='Atrás'; skipLabel='Omitir'; doneLabel='Listo';
+    } else if(lang==='ht'){
+      steps = tutorialStepsHT;
+      nextLabel='Next'; prevLabel='Back'; skipLabel='Skip'; doneLabel='Ok';
+    }
+
+    introJs().setOptions({
+      steps,
+      showStepNumbers:true,
+      showProgress:false,
+      exitOnOverlayClick:true,
+      scrollToElement:false,
+      nextLabel,
+      prevLabel,
+      skipLabel,
+      doneLabel
+    }).start();
+  }
+
+  $("#helpEnglish").click(()=>startTutorial('en'));
+  $("#helpSpanish").click(()=>startTutorial('es'));
+  $("#helpCreole").click(()=>startTutorial('ht'));
+
+
+  // ----------------------------------------------------------------
+  // [14] MANUAL => MOSTRAR EN LA MISMA PÁGINA (SIN location.href)
+  // ----------------------------------------------------------------
   $("#manualEnglishBtn").click(function(){
-    location.href = "manual.html?lang=en"; 
+    $("#manualEnglishText").removeClass("d-none");
+    $("#manualSpanishText").addClass("d-none");
+    $("#manualCreoleText").addClass("d-none");
   });
   $("#manualSpanishBtn").click(function(){
-    location.href = "manual.html?lang=es";
+    $("#manualEnglishText").addClass("d-none");
+    $("#manualSpanishText").removeClass("d-none");
+    $("#manualCreoleText").addClass("d-none");
   });
   $("#manualCreoleBtn").click(function(){
-    location.href = "manual.html?lang=ht";
+    $("#manualEnglishText").addClass("d-none");
+    $("#manualSpanishText").addClass("d-none");
+    $("#manualCreoleText").removeClass("d-none");
   });
 
 }); // fin document.ready
