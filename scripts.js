@@ -1,9 +1,12 @@
  /* =========================================================
    SCRIPTS.JS COMPLETO
-   (Con scale=2, JPEG 0.8, wizard, localStorage, combos, etc.)
-   + Ajuste final:
-      1) Se quita location.href = "manual.html"
-      2) Se añade tutorial Intro.js y show/hide del manual
+   (Con scale=2, JPEG 0.8, wizard, localStorage, etc.)
+   Ajustes:
+     1) Se elimina location.href= "manual.html"
+     2) Se restaura Wizard Modal
+     3) "Venezuela" siempre seleccionado
+     4) Fecha de hoy por defecto al iniciar y al reset
+     5) Tutorial Intro.js en 3 idiomas
 ========================================================= */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -11,9 +14,8 @@ const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 $(document).ready(function() {
 
   // ----------------------------------------------------------------
-  // [1] TUS EXTENSIONES, VARIABLES Y SETUP INICIAL
+  // [1] Extensiones dayjs y variables globales
   // ----------------------------------------------------------------
-  // Extensiones dayjs
   dayjs.extend(dayjs_plugin_customParseFormat);
   dayjs.extend(dayjs_plugin_arraySupport);
 
@@ -35,7 +37,7 @@ $(document).ready(function() {
   };
 
   // ----------------------------------------------------------------
-  // [2] CUTOFF TIMES
+  // [2] Cutoff Times
   // ----------------------------------------------------------------
   const cutoffTimes = {
     "USA": {
@@ -79,13 +81,13 @@ $(document).ready(function() {
   };
 
   // ----------------------------------------------------------------
-  // [3] INIT FLATPICKR
+  // [3] Init Flatpickr (fecha hoy por defecto)
   // ----------------------------------------------------------------
   const fp = flatpickr("#fecha", {
     mode: "multiple",
     dateFormat: "m-d-Y",
     minDate: "today",
-    defaultDate: [ new Date() ],
+    defaultDate: [ new Date() ], // hoy
     clickOpens: true,
     allowInput: false,
     appendTo: document.body,
@@ -110,19 +112,20 @@ $(document).ready(function() {
   });
 
   // ----------------------------------------------------------------
-  // [4] TRACK CHECKBOXES
+  // [4] Track Checkboxes
   // ----------------------------------------------------------------
   $(".track-checkbox").change(function(){
     const arr = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
       .get();
+    // si no está Venezuela, multiplica
     selectedTracksCount = arr.filter(x => x !== "Venezuela").length || 1;
     calculateMainTotal();
     disableTracksByTime();
   });
 
   // ----------------------------------------------------------------
-  // [5] MAIN TABLE => Add/Remove
+  // [5] Main Table => Add/Remove
   // ----------------------------------------------------------------
   $("#agregarJugada").click(function(){
     const row = addMainRow();
@@ -216,7 +219,7 @@ $(document).ready(function() {
   }
 
   // ----------------------------------------------------------------
-  // [6] CALCULATE MAIN TOTAL
+  // [6] Calculate Main Total
   // ----------------------------------------------------------------
   function calculateMainTotal(){
     let sum=0;
@@ -235,7 +238,7 @@ $(document).ready(function() {
   }
 
   // ----------------------------------------------------------------
-  // [7] DETERMINE GAME MODE
+  // [7] Determine Game Mode
   // ----------------------------------------------------------------
   function determineGameMode(betNumber){
     if(!betNumber) return "-";
@@ -258,7 +261,7 @@ $(document).ready(function() {
       return "Single Action";
     }
 
-    // 3) Pale => 2 dígitos, - o x, 2 dígitos
+    // 3) Pale => 2 dígitos, - o x, 2 dígitos (22-55, 11x22, etc.)
     const paleRegex = /^(\d{2})(-|x)(\d{2})$/;
     if(paleRegex.test(betNumber)){
       if(includesVenezuela && isUSA) {
@@ -294,7 +297,7 @@ $(document).ready(function() {
   }
 
   // ----------------------------------------------------------------
-  // [8] CALCULATE ROW TOTAL
+  // [8] Calculate Row Total
   // ----------------------------------------------------------------
   function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
     if(!bn || gm==="-") return "0.00";
@@ -335,7 +338,7 @@ $(document).ready(function() {
       return total.toFixed(2);
     }
 
-    // default => st + box + combo
+    // default => st+box+combo
     const numericBox = parseFloat(bxVal)||0;
     return (st + numericBox + combo).toFixed(2);
   }
@@ -354,7 +357,7 @@ $(document).ready(function() {
   }
 
   // ----------------------------------------------------------------
-  // [9] LOCALSTORAGE => store/load
+  // [9] LocalStorage => store/load
   // ----------------------------------------------------------------
   function storeFormState(){
     const st = {
@@ -432,7 +435,7 @@ $(document).ready(function() {
   }
 
   // ----------------------------------------------------------------
-  // [10] RESET FORM
+  // [10] Reset Form
   // ----------------------------------------------------------------
   $("#resetForm").click(function(){
     if(confirm("Are you sure you want to reset the form?")){
@@ -448,13 +451,20 @@ $(document).ready(function() {
     window.ticketImageDataUrl=null;
     $("#totalJugadas").text("0.00");
     localStorage.removeItem("formState");
+
+    // Volver a poner la fecha de HOY
+    fp.clear();
+    fp.setDate([ new Date() ], true);
+
     showCutoffTimes();
     disableTracksByTime();
-    autoSelectNYTrack();
+
+    // Por defecto, "Venezuela" check
+    $("#trackVenezuela").prop("checked", true).trigger("change");
   }
 
   // ----------------------------------------------------------------
-  // [11] GENERATE TICKET
+  // [11] Generate Ticket
   // ----------------------------------------------------------------
   $("#generarTicket").click(function(){
     doGenerateTicket();
@@ -700,7 +710,7 @@ $(document).ready(function() {
     });
 
     setTimeout(()=>{
-      // *** scale=2, JPEG ***
+      // scale=2, JPEG=0.8
       html2canvas(ticketElement,{scale:2})
       .then(canvas=>{
         const dataUrl=canvas.toDataURL("image/jpeg",0.8);
@@ -918,40 +928,11 @@ $(document).ready(function() {
   disableTracksByTime();
   setInterval(disableTracksByTime,60000);
 
-  // AUTO-SELECT NY
-  autoSelectNYTrack();
-  function autoSelectNYTrack(){
-    const anyChecked = $(".track-checkbox:checked").length>0;
-    if(anyChecked) return;
-    const now=dayjs();
-    let middayCutoff= dayjs().hour(14).minute(20);
-    if(now.isBefore(middayCutoff)){
-      $("#trackNYMidDay").prop("checked",true);
-    } else {
-      $("#trackNYEvening").prop("checked",true);
-    }
-    $(".track-checkbox").trigger("change");
-  }
-
-  // Duplicates highlight
-  function highlightDuplicatesInMain(){
-    $("#tablaJugadas tr").find(".betNumber").removeClass("duplicado");
-    let counts={};
-    $("#tablaJugadas tr").each(function(){
-      const bn=$(this).find(".betNumber").val().trim();
-      if(!bn) return;
-      counts[bn]=(counts[bn]||0)+1;
-    });
-    $("#tablaJugadas tr").each(function(){
-      const bn=$(this).find(".betNumber").val().trim();
-      if(counts[bn]>1){
-        $(this).find(".betNumber").addClass("duplicado");
-      }
-    });
-  }
+  // Por defecto, al iniciar, marcamos "Venezuela"
+  $("#trackVenezuela").prop("checked", true).trigger("change");
 
   // ----------------------------------------------------------------
-  // [12] WIZARD
+  // [12] Wizard
   // ----------------------------------------------------------------
   const wizardModal=new bootstrap.Modal(document.getElementById("wizardModal"));
 
@@ -1271,7 +1252,7 @@ $(document).ready(function() {
   }
 
   // ----------------------------------------------------------------
-  // [13] INTRO.JS TUTORIAL (3 IDIOMAS, PASOS EXTENSOS)
+  // [13] INTRO.JS TUTORIAL (E, S, C)
   // ----------------------------------------------------------------
   const tutorialStepsEN = [
     {
@@ -1280,114 +1261,114 @@ $(document).ready(function() {
     },
     {
       element: '#tracksAccordion',
-      intro: 'Expand “USA” or “Santo Domingo” to pick your tracks. Some will disable after cutoff time.'
+      intro: 'Here you can pick “USA” or “Santo Domingo” tracks. “Venezuela” requires a USA track, “NY Horses” is 1–4 digits.'
     },
     {
-      intro: 'If you pick “Venezuela,” combine it with a USA track. “NY Horses” => 1–4 digits for that mode.'
+      intro: 'The app auto-detects game mode: Pulito, Win4, etc. Some tracks close after cutoff time.'
     },
     {
       element: '#jugadasTable',
-      intro: 'Each row has a Bet Number, automatically detecting the mode (Pulito, Win4, etc.). Then put Straight/Box/Combo.'
+      intro: 'Each row has a Bet Number. Then put Straight/Box/Combo amounts.'
     },
     {
       element: '#agregarJugada',
-      intro: 'Use “Add Play” for a new row. You can remove or reset if needed.'
+      intro: 'Click “Add Play” to add rows. Or remove them, or reset the form.'
     },
     {
-      intro: 'Pulito => 2 digits (USA). Venezuela => 2 digits (USA+Venezuela). Single => 1 digit (USA normal).'
+      intro: 'Pulito => 2 digits (USA). Venezuela => 2 digits + track “Venezuela” + track USA. Single => 1 digit (USA).'
     },
     {
       element: '#wizardButton',
-      intro: 'Wizard => Quick Entry: random picks, Round Down, combos, etc.'
+      intro: 'Wizard => Quick Entry Window: random picks, Round Down, combos, etc.'
     },
     {
-      intro: 'Inside Wizard: lock Straight/Box/Combo, type Bet Number, do Quick Pick, Round Down, Permute, etc.'
+      intro: 'In Wizard: lock amounts, type Bet Number, “Add & Next,” Quick Pick, Round Down, Permute, etc.'
     },
     {
       element: '#generarTicket',
-      intro: 'When ready, “Generate Ticket” => see preview.'
+      intro: 'When ready, click “Generate Ticket” => preview.'
     },
     {
       element: '#ticketModal',
-      intro: 'Preview shows your plays, total, QR code. “Edit” or confirm => unique ticket #. Downloads image.'
+      intro: 'Preview: each play, total, QR. Edit or Confirm => unique ticket #, downloads image.'
     },
     {
-      intro: 'You can share if your browser supports Web Share. That’s the entire flow.'
+      intro: 'That’s the entire process. You can share the image if browser supports it.'
     }
   ];
 
   const tutorialStepsES = [
     {
       element: '#fecha',
-      intro: 'Seleccione una o varias fechas. “Hoy” por defecto.'
+      intro: 'Seleccione una o varias fechas, por defecto “hoy.”'
     },
     {
       element: '#tracksAccordion',
-      intro: 'Expanda “USA” o “Santo Domingo” para elegir tracks. Algunos se cierran tras cutoff.'
+      intro: 'Marque tracks en “USA” o “Santo Domingo.” “Venezuela” va con track USA, “NY Horses” => 1–4 dígitos.'
     },
     {
-      intro: 'Si marca “Venezuela,” use un track USA. “NY Horses” => 1–4 dígitos.'
+      intro: 'La app detecta modo: Pulito, Win4, etc. Algunos tracks cierran tras su cutoff.'
     },
     {
       element: '#jugadasTable',
-      intro: 'Cada fila (Bet Number) => Pulito, Win4, etc. Ingrese Straight/Box/Combo.'
+      intro: 'Cada fila con Bet Number; luego ingrese Straight/Box/Combo.'
     },
     {
       element: '#agregarJugada',
-      intro: 'Agregue jugadas con “Add Play.” Puede remover o resetear.'
+      intro: 'Use “Add Play” para añadir jugadas. O removerlas, o resetear todo.'
     },
     {
-      intro: 'Pulito => 2 dígitos + track USA. Venezuela => 2 dígitos + track “Venezuela”+USA. Single => 1 dígito (USA).'
+      intro: 'Pulito => 2 dígitos (USA). Venezuela => 2 dígitos + track “Venezuela” + USA. Single => 1 dígito (USA).'
     },
     {
       element: '#wizardButton',
-      intro: 'Wizard: Ventana extra para Quick Picks, Round Down, combos, etc.'
+      intro: 'Wizard => ventana Quick Entry: Quick Picks, Round Down, combos, etc.'
     },
     {
-      intro: 'Dentro del Wizard: “lock” Straight/Box/Combo, Quick Pick, Round Down, Permute.'
+      intro: 'En Wizard: bloquee montos, escriba Bet Number, “Add & Next,” o Quick Pick, Round Down, Permute.'
     },
     {
       element: '#generarTicket',
-      intro: 'Cuando termine, “Generate Ticket” => vista previa.'
+      intro: 'Al terminar, “Generate Ticket” => vista previa.'
     },
     {
       element: '#ticketModal',
-      intro: 'Vista previa: jugadas, total, QR. Edite o confirme => # único. Descarga imagen.'
+      intro: 'Vista previa: jugadas, total, QR. Editar o Confirmar => ticket único, descarga imagen.'
     },
     {
-      intro: 'Puede compartir si su navegador lo soporta. ¡Listo!'
+      intro: 'Puede compartir si su navegador lo soporta. ¡Ese es todo el flujo!'
     }
   ];
 
   const tutorialStepsHT = [
     {
       element: '#fecha',
-      intro: 'Chwazi youn oswa plizyè dat pou parye. “Jodia” se default.'
+      intro: 'Chwazi youn oswa plizyè dat, “jodia” default.'
     },
     {
       element: '#tracksAccordion',
-      intro: 'Louvri “USA” oswa “Santo Domingo” pou chwazi track. Gen ki fèmen apre cutoff.'
+      intro: 'Mak track “USA” oswa “Santo Domingo.” “Venezuela” bezwen track USA, “NY Horses” => 1–4 chif.'
     },
     {
-      intro: 'Si ou mete “Venezuela,” bezwen track USA. “NY Horses” => 1–4 chif.'
+      intro: 'App la detekte mode: Pulito, Win4, etc. Gen cutoff time.'
     },
     {
       element: '#jugadasTable',
-      intro: 'Chak ranje gen Bet Number => Pulito, Pick3, Win4, etc. Mete Straight/Box/Combo.'
+      intro: 'Chak ranje gen Bet Number. Ou mete Straight/Box/Combo.'
     },
     {
       element: '#agregarJugada',
       intro: 'Klike “Add Play” pou ajoute ranje. Ou ka retire oswa reset.'
     },
     {
-      intro: 'Pulito => 2 chif + track USA. Venezuela => 2 chif + track Vzla+USA. Single => 1 chif, track USA.'
+      intro: 'Pulito => 2 chif (USA). Venezuela => 2 chif + track Vzla + USA. Single => 1 chif (USA).'
     },
     {
       element: '#wizardButton',
-      intro: 'Wizard: Fenèt Quick Entry pou picks, Round Down, combos, etc.'
+      intro: 'Wizard => fenèt Quick Entry: Quick Pick, Round Down, combos, elatriye.'
     },
     {
-      intro: 'Anndan Wizard la: lock Straight/Box/Combo, Quick Pick, Round Down, Permute.'
+      intro: 'Nan Wizard la: lock montan, ekri Bet Number, Quick Pick, Round Down, Permute.'
     },
     {
       element: '#generarTicket',
@@ -1395,10 +1376,10 @@ $(document).ready(function() {
     },
     {
       element: '#ticketModal',
-      intro: 'Preview: tout parye yo, total, QR. Ou ka edite oswa konfime => # inik. Telechaje imaj.'
+      intro: 'Preview: tout parye, total, kòd QR. Edit oswa Confirm => ticket inik, telechaje imaj.'
     },
     {
-      intro: 'Ou ka pataje si navigatè a sipòte. Se pwosesis la!'
+      intro: 'Ou ka pataje si navigatè sipòte. Se tout pwosesis la!'
     }
   ];
 
@@ -1431,9 +1412,8 @@ $(document).ready(function() {
   $("#helpSpanish").click(()=>startTutorial('es'));
   $("#helpCreole").click(()=>startTutorial('ht'));
 
-
   // ----------------------------------------------------------------
-  // [14] MANUAL => MOSTRAR EN LA MISMA PÁGINA (SIN location.href)
+  // [14] MANUAL => MOSTRAR EN LA MISMA PÁGINA (sin location.href)
   // ----------------------------------------------------------------
   $("#manualEnglishBtn").click(function(){
     $("#manualEnglishText").removeClass("d-none");
