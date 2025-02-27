@@ -1,132 +1,305 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Reporte Diario y Semanal</title>
-  <!-- No se requiere frameworks, todo inline -->
+  <title>Reporte Diario y Semanal (Neón/Dark)</title>
+
   <style>
-    /* --- ESTILOS GENERALES --- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      color: #000;
-      margin: 0;
-      overflow: hidden; /* manejaremos scroll interno en contenedores */
-    }
-    h2, h3, h4 {
-      margin-bottom: 0.5rem;
-    }
-    .hidden { display: none !important; }
-    .locked {
-      pointer-events: none;
-      opacity: 0.6;
-    }
-    .container {
-      display: flex;
-      height: 100vh;
-      width: 100vw;
+    /**************************************************
+     * ESTILOS GLOBALES (Neón / Dark por defecto)
+     **************************************************/
+    :root {
+      --main-bg: #111;          /* fondo principal */
+      --main-text: #eee;        /* color texto principal */
+      --accent-color: #0ff;     /* neón celeste */
+      --danger-color: #f33;     /* rojo para eliminar */
+      --lock-color: #fb0;       /* candado */
+      --purple-color: #a0f;     /* morado para pendientes */
+      --day1-color: #334;       /* colores suaves para tabs: Lunes */
+      --day2-color: #343;       /* Martes */
+      --day3-color: #433;       /* Miércoles */
+      --day4-color: #353;       /* Jueves */
+      --day5-color: #434;       /* Viernes */
+      --day6-color: #443;       /* Sábado */
+      --day7-color: #533;       /* Domingo */
+      --weekly-color: #222;     /* Semanal */
+      --manual-color: #223;     /* Manual */
+
+      --light-bg: #f9f9f9;
+      --light-text: #000;
+      --light-accent: #00f;
     }
 
-    /* --- SIDEBAR DE PESTAÑAS (TABS) --- */
-    .sidebar {
-      width: 220px;
-      background: #333;
-      color: #fff;
-      flex-shrink: 0;
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: var(--main-bg);
+      color: var(--main-text);
+      font-size: 18px;
+      overflow: hidden; /* usaremos contenedor con scroll interno */
+    }
+
+    /* Modo claro */
+    body.light-mode {
+      background: var(--light-bg);
+      color: var(--light-text);
+    }
+
+    /**************************************************
+     * CONTENEDOR PRINCIPAL
+     **************************************************/
+    .container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /**************************************************
+     * PIN OVERLAY
+     **************************************************/
+    .pin-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      padding-top: 1rem;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+    }
+    .pin-dialog {
+      background: #222;
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 2rem;
+      width: 400px;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 0 10px var(--accent-color);
+    }
+    .pin-dialog h2 {
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+      font-size: 1.5rem;
+      text-shadow: 0 0 5px var(--accent-color);
+    }
+    .pin-dialog input {
+      font-size: 2rem;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 1rem;
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 0.5rem;
+      box-shadow: inset 0 0 5px var(--accent-color);
+    }
+    .pin-dialog button {
+      font-size: 1.5rem;
+      padding: 0.5rem 2rem;
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--accent-color);
+    }
+    .pin-dialog button:hover {
+      background: var(--accent-color);
+      color: #000;
+    }
+
+    /**************************************************
+     * SIDEBAR (TABS)
+     **************************************************/
+    .sidebar {
+      width: 220px;
+      background: #000;
+      border-right: 2px solid var(--accent-color);
+      display: flex;
+      flex-direction: column;
       overflow-y: auto;
+      align-items: stretch;
     }
     .sidebar button {
+      display: block;
       width: 100%;
       padding: 1rem;
       background: transparent;
-      color: #fff;
       border: none;
-      text-align: left;
-      cursor: pointer;
-      font-size: 1rem;
+      color: var(--accent-color);
+      font-size: 1.1rem;
       border-bottom: 1px solid #444;
-      transition: background 0.3s;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      text-align: left;
+      text-shadow: 0 0 3px var(--accent-color);
     }
     .sidebar button:hover {
-      background: #444;
+      background: #111;
+      color: #fff;
     }
     .sidebar button.active {
-      background: #555;
+      background: #222;
+      color: #0ff;
       font-weight: bold;
     }
 
-    /* --- CONTENIDO PRINCIPAL --- */
+    /**************************************************
+     * MAIN CONTENT
+     **************************************************/
     .main-content {
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
     }
 
-    /* --- NAV SUPERIOR (PIN, RESET, ETC.) --- */
     .top-bar {
-      background: #eee;
-      padding: 0.5rem 1rem;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid #ccc;
-    }
-    .top-bar .btnLock {
-      background: #bbb;
+      justify-content: space-between;
       padding: 0.5rem 1rem;
-      border: none;
+      background: #000;
+      border-bottom: 2px solid var(--accent-color);
+    }
+    .top-bar-left, .top-bar-right {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .btnNeon {
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
       cursor: pointer;
+      box-shadow: 0 0 5px var(--accent-color);
+      font-size: 1rem;
+    }
+    .btnNeon:hover {
+      background: var(--accent-color);
+      color: #000;
+    }
+    .btnLockDay {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: var(--lock-color);
+      border: 2px solid var(--lock-color);
+      border-radius: 50%;
+      width: 50px; height: 50px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--lock-color);
+    }
+    .btnLockDay.locked {
+      background: var(--lock-color);
+      color: #000;
     }
 
-    /* --- SCROLL INTERNO DEL CONTENIDO --- */
     .scroll-area {
       flex: 1;
       overflow-y: auto;
       padding: 1rem;
-      background: #fff;
     }
 
-    /* --- TABLA DE PÁGINAS DIARIAS --- */
+    /**************************************************
+     * TABS -> Cada tab con un color de fondo
+     **************************************************/
+    .tabContent {
+      display: none;
+      padding: 1rem;
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      min-height: 90%;
+    }
+    /* Colores suaves */
+    #tabDay1 { background: var(--day1-color); }
+    #tabDay2 { background: var(--day2-color); }
+    #tabDay3 { background: var(--day3-color); }
+    #tabDay4 { background: var(--day4-color); }
+    #tabDay5 { background: var(--day5-color); }
+    #tabDay6 { background: var(--day6-color); }
+    #tabDay7 { background: var(--day7-color); }
+    #tabWeekly { background: var(--weekly-color); }
+    #tabManual { background: var(--manual-color); }
+
+    .tabContent.active {
+      display: block;
+    }
+
+    /**************************************************
+     * TABLA DE PAGINAS
+     **************************************************/
     table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 1rem;
+      color: var(--main-text);
+      font-size: 1rem;
     }
-    table thead th {
-      background: #f0f0f0;
-      border-bottom: 2px solid #ccc;
+    thead th {
+      background: rgba(0,0,0,0.4);
+      color: var(--accent-color);
+      border-bottom: 2px solid var(--accent-color);
       padding: 0.5rem;
-      text-align: left;
+      text-shadow: 0 0 3px var(--accent-color);
     }
-    table td, table th {
+    td, th {
       padding: 0.5rem;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid #444;
     }
-    .btnRemove {
-      background: red;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      padding: 0.2rem 0.5rem;
+    input[type="number"], input[type="text"] {
+      width: 100px;
+      background: #000;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
       border-radius: 4px;
+      text-align: right;
+      padding: 0.3rem;
+      box-shadow: inset 0 0 5px var(--accent-color);
+    }
+    input[type="number"]:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: #fff;
     }
 
-    /* --- CAMPOS DE TOTLES / CUADRE / ETC. --- */
+    /* Botón circular con el #Página en rojo */
+    .pageBtn {
+      background: var(--danger-color);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 0 5px var(--danger-color);
+    }
+    .pageBtn:hover {
+      background: #f66;
+    }
+
+    /**************************************************
+     * TOTALS / CUADRE
+     **************************************************/
     .totals-section, .cuadre-section {
-      border: 2px solid #ccc;
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
       padding: 1rem;
       margin-bottom: 1rem;
-      border-radius: 4px;
+      background: #000;
+      box-shadow: 0 0 8px var(--accent-color);
+    }
+    .totals-section h3, .cuadre-section h3 {
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+      text-shadow: 0 0 3px var(--accent-color);
+    }
+    .totals-section p, .cuadre-section p {
+      margin: 0.4rem 0;
     }
     .form-group {
       display: flex;
@@ -134,123 +307,129 @@
       margin-bottom: 0.5rem;
     }
     .form-group label {
-      width: 120px;
+      width: 140px;
       font-weight: bold;
-      margin-right: 0.5rem;
+      color: var(--accent-color);
+      text-shadow: 0 0 2px var(--accent-color);
     }
-    .form-group input {
-      width: 120px;
-      padding: 0.3rem;
-      text-align: right;
+    .form-group input[type="number"], .form-group input[type="text"] {
+      margin-left: auto;
     }
 
-    /* Colores específicos: */
-    .text-red { color: red; }
-    .text-green { color: green; }
-    .text-blue { color: blue; }
-    .text-purple { color: purple; }
-    .text-orange { color: orange; }
-
-    /* --- MODAL DE PREMIOS PENDIENTES/PAGADOS --- */
+    /**************************************************
+     * MODAL DE SALIDAS
+     **************************************************/
     .modal-overlay {
       position: fixed;
-      top:0; left:0; right:0; bottom:0;
-      background: rgba(0,0,0,0.6);
+      inset: 0;
+      background: rgba(0,0,0,0.7);
       display: none;
       justify-content: center;
       align-items: center;
       z-index: 99999;
     }
     .modal {
-      background: #fff;
+      background: #000;
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
       padding: 1rem;
       width: 90%;
-      max-width: 400px;
-      border-radius: 8px;
+      max-width: 500px;
+      box-shadow: 0 0 10px var(--accent-color);
       position: relative;
+      color: var(--accent-color);
     }
     .modal h3 {
-      margin-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 2px var(--accent-color);
+    }
+    .closeModal {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: var(--danger-color);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--danger-color);
     }
     .modal table {
       width: 100%;
       margin: 0.5rem 0;
+      border-collapse: collapse;
     }
     .modal table td {
-      border: none;
+      border-bottom: 1px solid #444;
+      padding: 0.3rem;
     }
-    .closeModal {
-      position: absolute;
-      top: 8px;
-      right: 8px;
+    .modal table input {
+      width: 80px;
+    }
+    .addPrizeBtn {
+      background: #000;
+      color: var(--purple-color);
+      border: 1px solid var(--purple-color);
+      border-radius: 4px;
       cursor: pointer;
-      background: #888;
+      padding: 0.3rem 0.6rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 0 5px var(--purple-color);
+    }
+    .addPrizeBtn:hover {
+      background: var(--purple-color);
+      color: #000;
+    }
+    .paidBtn {
+      background: var(--danger-color);
       color: #fff;
       border: none;
       border-radius: 4px;
-      padding: 0.2rem 0.5rem;
-    }
-
-    /* --- MODAL DE PIN --- */
-    .pin-overlay {
-      position: fixed;
-      top:0; left:0; right:0; bottom:0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 999999;
-    }
-    .pin-dialog {
-      background: #fff;
-      width: 300px;
-      padding: 2rem;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .pin-dialog input {
-      font-size: 2rem;
-      text-align: center;
-      width: 100%;
-      margin-bottom: 1rem;
-    }
-    .pin-dialog button {
-      font-size: 1.2rem;
-      padding: 0.5rem 1rem;
+      padding: 0.2rem 0.4rem;
       cursor: pointer;
+      box-shadow: 0 0 3px var(--danger-color);
     }
-
-    /* --- BOTONES FLOTANTES O ZONA DE CONTROLES --- */
-    .actions {
-      margin-bottom: 1rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    /* --- ESTILOS DE LA PESTAÑA "MANUAL" --- */
-    .manual-content h4 {
-      margin-top: 1rem;
-      margin-bottom: 0.2rem;
-      color: #333;
-    }
-    .manual-content p {
-      margin-bottom: 0.8rem;
-      line-height: 1.4;
-    }
-
-    /* Estilo del botón Exportar PDF */
-    .btnExportPDF {
-      background: #666;
+    .pendingBtn {
+      background: var(--purple-color);
       color: #fff;
       border: none;
-      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      padding: 0.2rem 0.4rem;
       cursor: pointer;
+      box-shadow: 0 0 3px var(--purple-color);
     }
+
+    /**************************************************
+     * MANUAL
+     **************************************************/
+    .manual-content {
+      background: #000;
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 0 8px var(--accent-color);
+    }
+    .manual-content h3, .manual-content h4 {
+      color: var(--accent-color);
+      text-shadow: 0 0 2px var(--accent-color);
+      margin-bottom: 0.5rem;
+    }
+    .manual-content p {
+      margin-bottom: 1rem;
+    }
+    .manual-content ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .manual-content li {
+      margin-bottom: 0.5rem;
+    }
+
   </style>
 </head>
 <body>
 
-  <!-- CAPA DE PIN / ACCESO -->
+  <!-- OVERLAY DEL PIN -->
   <div class="pin-overlay" id="pinOverlay">
     <div class="pin-dialog">
       <h2>Ingrese PIN (4 dígitos)</h2>
@@ -259,314 +438,459 @@
     </div>
   </div>
 
-  <!-- CONTENEDOR PRINCIPAL (sidebar + main content) -->
+  <!-- CONTENEDOR PRINCIPAL -->
   <div class="container hidden" id="mainContainer">
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR: 7 días + 1 Semanal + 1 Manual -->
     <div class="sidebar" id="sidebar">
-      <!-- 7 días, 1 semanal, 1 manual => 9 tabs -->
-      <button class="tabBtn active" data-tab="tabDay1">Lunes (mm/dd/aaaa)</button>
-      <button class="tabBtn" data-tab="tabDay2">Martes (mm/dd/aaaa)</button>
-      <button class="tabBtn" data-tab="tabDay3">Miércoles (mm/dd/aaaa)</button>
-      <button class="tabBtn" data-tab="tabDay4">Jueves (mm/dd/aaaa)</button>
-      <button class="tabBtn" data-tab="tabDay5">Viernes (mm/dd/aaaa)</button>
-      <button class="tabBtn" data-tab="tabDay6">Sábado (mm/dd/aaaa)</button>
-      <button class="tabBtn" data-tab="tabDay7">Domingo (mm/dd/aaaa)</button>
-      <button class="tabBtn" data-tab="tabWeekly">Resumen Semanal</button>
+      <button class="tabBtn active" data-tab="tabDay1">Lunes (XX/XX/XXXX)</button>
+      <button class="tabBtn" data-tab="tabDay2">Martes (XX/XX/XXXX)</button>
+      <button class="tabBtn" data-tab="tabDay3">Miércoles (XX/XX/XXXX)</button>
+      <button class="tabBtn" data-tab="tabDay4">Jueves (XX/XX/XXXX)</button>
+      <button class="tabBtn" data-tab="tabDay5">Viernes (XX/XX/XXXX)</button>
+      <button class="tabBtn" data-tab="tabDay6">Sábado (XX/XX/XXXX)</button>
+      <button class="tabBtn" data-tab="tabDay7">Domingo (XX/XX/XXXX)</button>
+      <button class="tabBtn" data-tab="tabWeekly">Semanal</button>
       <button class="tabBtn" data-tab="tabManual">Manual</button>
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT (TOP BAR + scroll) -->
     <div class="main-content">
       <!-- TOP BAR -->
       <div class="top-bar">
-        <div>
-          <button class="btnLock" id="btnLockAll">Bloquear Todo</button>
-          <button class="btnLock" id="btnUnlockAll">Desbloquear</button>
-          <button class="btnExportPDF" id="btnExportPDF">Exportar PDF</button>
+        <div class="top-bar-left">
+          <button class="btnNeon" id="btnToggleTheme">Dark/Light</button>
         </div>
-        <button id="btnResetWeek" style="background:#f90;color:#fff;border:none;padding:0.5rem 1rem;">Reset Semana</button>
+        <div class="top-bar-right">
+          <button class="btnNeon" id="btnExportPDF">Exportar PDF</button>
+        </div>
       </div>
 
-      <!-- AREA DE SCROLL (las tabs) -->
+      <!-- SCROLL AREA -->
       <div class="scroll-area">
-        <!-- Cada tab es un div oculto excepto el primero -->
+        <!-- 7 + 1 + 1 tabs -->
         <!-- TAB DIA1 -->
-        <div id="tabDay1" class="tabContent">
-          <h2>Reporte Diario - Lunes</h2>
-          <div class="actions">
-            <button onclick="addPageRow('day1')">+ Agregar Página</button>
-            <button onclick="sendDayToSheets('day1')">Enviar a Sheets</button>
-            <button onclick="resetDay('day1')">Reset (Día)</button>
+        <div id="tabDay1" class="tabContent active">
+          <!-- Título + Botones -->
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h2>Reporte Diario - Lunes</h2>
+            <div style="display:flex;gap:1rem;">
+              <button class="btnNeon" onclick="sendDayToSheets('day1')">Enviar a Sheets</button>
+              <button class="btnNeon" onclick="resetDay('day1')">Reset Día</button>
+              <button class="btnLockDay" id="lockDay1Btn" data-day="day1">
+                <i>🔓</i>
+              </button>
+            </div>
           </div>
-          <div id="day1Container">
-            <!-- Se genera tabla dinámica (páginas) -->
-          </div>
+          <div id="day1Container"></div>
         </div>
 
         <!-- TAB DIA2 -->
-        <div id="tabDay2" class="tabContent hidden">
-          <h2>Reporte Diario - Martes</h2>
-          <div class="actions">
-            <button onclick="addPageRow('day2')">+ Agregar Página</button>
-            <button onclick="sendDayToSheets('day2')">Enviar a Sheets</button>
-            <button onclick="resetDay('day2')">Reset (Día)</button>
+        <div id="tabDay2" class="tabContent">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h2>Reporte Diario - Martes</h2>
+            <div style="display:flex;gap:1rem;">
+              <button class="btnNeon" onclick="sendDayToSheets('day2')">Enviar a Sheets</button>
+              <button class="btnNeon" onclick="resetDay('day2')">Reset Día</button>
+              <button class="btnLockDay" id="lockDay2Btn" data-day="day2">
+                <i>🔓</i>
+              </button>
+            </div>
           </div>
           <div id="day2Container"></div>
         </div>
 
-        <!-- TAB DIA3 -->
-        <div id="tabDay3" class="tabContent hidden">
-          <h2>Reporte Diario - Miércoles</h2>
-          <div class="actions">
-            <button onclick="addPageRow('day3')">+ Agregar Página</button>
-            <button onclick="sendDayToSheets('day3')">Enviar a Sheets</button>
-            <button onclick="resetDay('day3')">Reset (Día)</button>
+        <!-- DIA3 -->
+        <div id="tabDay3" class="tabContent">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h2>Reporte Diario - Miércoles</h2>
+            <div style="display:flex;gap:1rem;">
+              <button class="btnNeon" onclick="sendDayToSheets('day3')">Enviar a Sheets</button>
+              <button class="btnNeon" onclick="resetDay('day3')">Reset Día</button>
+              <button class="btnLockDay" id="lockDay3Btn" data-day="day3">
+                <i>🔓</i>
+              </button>
+            </div>
           </div>
           <div id="day3Container"></div>
         </div>
 
-        <!-- TAB DIA4 -->
-        <div id="tabDay4" class="tabContent hidden">
-          <h2>Reporte Diario - Jueves</h2>
-          <div class="actions">
-            <button onclick="addPageRow('day4')">+ Agregar Página</button>
-            <button onclick="sendDayToSheets('day4')">Enviar a Sheets</button>
-            <button onclick="resetDay('day4')">Reset (Día)</button>
+        <!-- DIA4 -->
+        <div id="tabDay4" class="tabContent">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h2>Reporte Diario - Jueves</h2>
+            <div style="display:flex;gap:1rem;">
+              <button class="btnNeon" onclick="sendDayToSheets('day4')">Enviar a Sheets</button>
+              <button class="btnNeon" onclick="resetDay('day4')">Reset Día</button>
+              <button class="btnLockDay" id="lockDay4Btn" data-day="day4">
+                <i>🔓</i>
+              </button>
+            </div>
           </div>
           <div id="day4Container"></div>
         </div>
 
-        <!-- TAB DIA5 -->
-        <div id="tabDay5" class="tabContent hidden">
-          <h2>Reporte Diario - Viernes</h2>
-          <div class="actions">
-            <button onclick="addPageRow('day5')">+ Agregar Página</button>
-            <button onclick="sendDayToSheets('day5')">Enviar a Sheets</button>
-            <button onclick="resetDay('day5')">Reset (Día)</button>
+        <!-- DIA5 -->
+        <div id="tabDay5" class="tabContent">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h2>Reporte Diario - Viernes</h2>
+            <div style="display:flex;gap:1rem;">
+              <button class="btnNeon" onclick="sendDayToSheets('day5')">Enviar a Sheets</button>
+              <button class="btnNeon" onclick="resetDay('day5')">Reset Día</button>
+              <button class="btnLockDay" id="lockDay5Btn" data-day="day5">
+                <i>🔓</i>
+              </button>
+            </div>
           </div>
           <div id="day5Container"></div>
         </div>
 
-        <!-- TAB DIA6 -->
-        <div id="tabDay6" class="tabContent hidden">
-          <h2>Reporte Diario - Sábado</h2>
-          <div class="actions">
-            <button onclick="addPageRow('day6')">+ Agregar Página</button>
-            <button onclick="sendDayToSheets('day6')">Enviar a Sheets</button>
-            <button onclick="resetDay('day6')">Reset (Día)</button>
+        <!-- DIA6 -->
+        <div id="tabDay6" class="tabContent">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h2>Reporte Diario - Sábado</h2>
+            <div style="display:flex;gap:1rem;">
+              <button class="btnNeon" onclick="sendDayToSheets('day6')">Enviar a Sheets</button>
+              <button class="btnNeon" onclick="resetDay('day6')">Reset Día</button>
+              <button class="btnLockDay" id="lockDay6Btn" data-day="day6">
+                <i>🔓</i>
+              </button>
+            </div>
           </div>
           <div id="day6Container"></div>
         </div>
 
-        <!-- TAB DIA7 -->
-        <div id="tabDay7" class="tabContent hidden">
-          <h2>Reporte Diario - Domingo</h2>
-          <div class="actions">
-            <button onclick="addPageRow('day7')">+ Agregar Página</button>
-            <button onclick="sendDayToSheets('day7')">Enviar a Sheets</button>
-            <button onclick="resetDay('day7')">Reset (Día)</button>
+        <!-- DIA7 -->
+        <div id="tabDay7" class="tabContent">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h2>Reporte Diario - Domingo</h2>
+            <div style="display:flex;gap:1rem;">
+              <button class="btnNeon" onclick="sendDayToSheets('day7')">Enviar a Sheets</button>
+              <button class="btnNeon" onclick="resetDay('day7')">Reset Día</button>
+              <button class="btnLockDay" id="lockDay7Btn" data-day="day7">
+                <i>🔓</i>
+              </button>
+            </div>
           </div>
           <div id="day7Container"></div>
         </div>
 
         <!-- TAB SEMANAL -->
-        <div id="tabWeekly" class="tabContent hidden">
-          <h2>Resumen Semanal</h2>
-          <div class="actions">
-            <button onclick="sendWeekToSheets()">Guardar Semana</button>
+        <div id="tabWeekly" class="tabContent">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h2>Resumen Semanal</h2>
+            <div style="display:flex;gap:1rem;">
+              <button class="btnNeon" onclick="sendWeekToSheets()">Guardar Semana</button>
+              <button class="btnNeon" onclick="resetWeek()">Reset Semana</button>
+              <!-- Bloquear TODO / Desbloquear TODO -->
+              <button class="btnLockDay" id="lockAllBtn">
+                <i>🔒</i>
+              </button>
+              <button class="btnLockDay" id="unlockAllBtn">
+                <i>🔓</i>
+              </button>
+            </div>
           </div>
-          <div id="weeklyContainer">
-            <!-- Contenido de la semana (sumas) -->
-          </div>
+          <div id="weeklyContainer"></div>
         </div>
 
         <!-- TAB MANUAL -->
-        <div id="tabManual" class="tabContent hidden">
+        <div id="tabManual" class="tabContent">
           <h2>Manual / Ayuda</h2>
           <div class="manual-content">
-            <h4>Objetivo</h4>
-            <p>Este módulo registra las ventas (centenas, pulitos) y salidas de premios diarios, para luego consolidar en un reporte semanal.</p>
+            <h3>Nueve pestañas en total:</h3>
+            <p>
+              1. Lunes <br/>
+              2. Martes <br/>
+              3. Miércoles <br/>
+              4. Jueves <br/>
+              5. Viernes <br/>
+              6. Sábado <br/>
+              7. Domingo <br/>
+              8. Semanal (consolidado) <br/>
+              9. Manual (explicación detallada)
+            </p>
+            <p>Control de acceso con PIN (8325) antes de mostrar esta interfaz.</p>
+            <p>Botón en cada pestaña diaria para “Enviar a Sheets” (o AppSheet) y “Reset Día” (si lo deseas).</p>
+            <p>Botón en la pestaña Semanal para “Enviar/Guardar” y “Reset Semana”.</p>
+            <p>Suma de ventas/centenas/pulitos/salidas y manejo de premios pendientes/pagados en un modal.</p>
+            <p>Botón Exportar PDF usando html2canvas.</p>
+            <p>Bloqueo parcial (candado) para que no se editen celdas una vez listo. Cada día tiene su candado propio, y en el Semanal hay otro que bloquea/desbloquea toda la semana.</p>
+            <p>LocalStorage: los datos no se borran al recargar excepto si el usuario usa “Reset” o elimina filas manualmente.</p>
 
-            <h4>Uso Diario</h4>
-            <p>Cada pestaña (Lunes a Domingo) corresponde a un día. Se pueden añadir “Páginas” (lotes de tickets). En cada fila se registran:</p>
-            <ul>
-              <li><strong>Centenas</strong>: Monto en la columna de cientos.</li>
-              <li><strong>Pulitos</strong>: Monto en la columna de pulitos.</li>
-              <li><strong>Salidas</strong>: Premiación total (con la posibilidad de desglosar en <em>pendientes</em> y <em>pagados</em>).</li>
-              <li><strong>Total</strong>: Suma de Centenas + Pulitos.</li>
-            </ul>
-
-            <h4>Cuadre del Día</h4>
-            <p>Al final de la tabla, se encuentran los totales de Centenas, Pulitos, Salidas y un “Cuadre” con diferentes campos (Cash, Sucursal, etc.) para balancear hasta lograr un <em>Net Balance</em> = 0 (idealmente).</p>
+            <h4>Flujo de uso diario</h4>
+            <p>
+              Cada día inicia con 20 filas (páginas) por defecto. En cada fila se ingresa:
+              <ul>
+                <li>Centenas (monto de hasta 900,000)</li>
+                <li>Pulitos (monto de hasta 900,000)</li>
+                <li>Salidas (se abre un modal con “pendientes” y “pagados”)</li>
+                <li>Total (suma de Centenas + Pulitos)</li>
+              </ul>
+              Al final, hay un bloque de <em>totales</em> (Centenas, Pulitos, Salidas) y un <em>cuadre</em> (cash, sucursal, etc.) que lleva a un Net Balance.
+            </p>
 
             <h4>Resumen Semanal</h4>
-            <p>La octava pestaña muestra la suma de todos los días (Lunes-Domingo). Allí se calcula también la comisión y un <em>Balance Oficina</em> según tus reglas (25% de Centenas, 10% de Pulitos, etc.).</p>
+            <p>La pestaña “Semanal” combina la suma de cada día (Lunes-Domingo) y permite calcular comisiones, caídas, y el balance final de oficina.</p>
 
-            <h4>Botones y Funcionalidades</h4>
-            <ul>
-              <li><em>Enviar a Sheets</em>: Llama a una función para subir datos a Google Sheets o AppSheet.</li>
-              <li><em>Reset</em>: Borra la data de ese día o de toda la semana en localStorage.</li>
-              <li><em>Bloquear</em>: Evita edición accidental; <em>Desbloquear</em> para reactivar.</li>
-              <li><em>Exportar PDF</em>: Genera un PDF o imagen del estado actual.</li>
-            </ul>
+            <h4>Envío a Google Sheets / AppSheet</h4>
+            <p>Los botones “Enviar a Sheets” están vacíos (placeholder). Posteriormente se podrá integrar con la API de Google Sheets, SheetDB, o AppSheet.</p>
 
-            <h4>Salidas: Premios Pendientes/Pagados</h4>
-            <p>Al hacer clic en la celda “Salidas” de una fila, se abre un modal. Allí puedes ingresar varias líneas de premios <strong>pendientes</strong> (morado) o <strong>pagados</strong> (rojo). La suma total aparece en la tabla. Si hay pendientes, la celda se pinta de morado; si todo está pagado, se pinta de rojo.</p>
-
-            <h4>Más Detalles</h4>
-            <p>Puedes editar manualmente el campo de “Caídas” en el resumen semanal (aunque se calcule automático). De igual forma, se guardan los datos en localStorage hasta que resetees.</p>
-
+            <h4>Otras Funciones</h4>
+            <p>
+              <strong>Exportar PDF</strong>: Genera una imagen de la parte visible para imprimir/guardar. <br/>
+              <strong>Bloqueo</strong>: Evita la edición accidental de campos. Cada día es independiente, y en la vista Semanal hay un candado global para toda la semana. <br/>
+              <strong>Reset</strong>: Borra por completo los datos del día o de la semana, según el botón.
+            </p>
           </div>
         </div>
 
-      </div> <!-- scroll-area -->
+      </div>
+    </div>
+  </div>
 
-    </div> <!-- main-content -->
-  </div> <!-- container -->
-
-
-  <!-- MODAL PREMIOS PEND/PAG -->
+  <!-- MODAL DE SALIDAS (Pendientes/Pagados) -->
   <div class="modal-overlay" id="modalOverlay">
-    <div class="modal" id="prizesModal">
+    <div class="modal">
       <button class="closeModal" id="closePrizeModal">X</button>
-      <h3>Premios de la Página <span id="prizeModalPageNo"></span></h3>
+      <h3>Premios de Página <span id="prizeModalPageNo"></span></h3>
       <div style="display:flex;gap:1rem;flex-wrap:wrap;">
-        <!-- Lista de PENDIENTES -->
         <div style="flex:1; min-width:150px;">
-          <h4 style="color:purple">Pendientes</h4>
+          <h4 style="color:var(--purple-color);">Pendientes</h4>
           <table>
             <tbody id="pendingTbody"></tbody>
           </table>
-          <button onclick="addPrizeRow('pending')">+ Pendiente</button>
+          <button class="addPrizeBtn" onclick="addPrizeRow('pending')">+ Pendiente</button>
         </div>
-        <!-- Lista de PAGADOS -->
         <div style="flex:1; min-width:150px;">
-          <h4 style="color:red">Pagados</h4>
+          <h4 style="color:var(--danger-color);">Pagados</h4>
           <table>
             <tbody id="paidTbody"></tbody>
           </table>
-          <button onclick="addPrizeRow('paid')">+ Pagado</button>
+          <button class="addPrizeBtn" style="color:var(--danger-color);border-color:var(--danger-color);box-shadow:0 0 5px var(--danger-color);" onclick="addPrizeRow('paid')">+ Pagado</button>
         </div>
       </div>
     </div>
   </div>
 
-
+  <!-- Librería para export PDF -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <script>
-    /***********************************************************
-     * SCRIPTS PRINCIPALES
-     * - Manejamos localStorage para cada día y la semana
-     * - 9 tabs: Lunes..Domingo, Semanal, Manual
-     * - Pin code: 8325
-     ***********************************************************/
-
+    /*****************************************************************
+     * VARIABLES Y ESTRUCTURA
+     *****************************************************************/
     const PIN_CODE = "8325";
+    let lockedDays = {};   // day1..day7 => boolean
+    let lockedAll = false; // si se bloqueó toda la semana
+    let isDarkMode = true; // Por defecto en modo oscuro
 
-    let currentTab = "tabDay1";
-    let lockedAll = false;
-
-    // Estructura para guardar datos: day1, day2, ... day7, weekly
-    // Cada dayN => { pages:[], overlook:0, ...?
-    // Each page => { pageNo, centenas, pulitos, pendingPrizes:[], paidPrizes:[], total, ...}
+    // Data local
     let dataStore = {
-      day1:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 },
-      day2:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 },
-      day3:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 },
-      day4:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 },
-      day5:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 },
-      day6:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 },
-      day7:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 },
-      weekly:{
-        //Lo que requieras: caidas, etc
-        caidas:0,
-        adelantoOficina:0
-      }
+      day1:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
+      day2:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
+      day3:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
+      day4:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
+      day5:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
+      day6:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
+      day7:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
+      weekly:{ caidas:0, adelantoOficina:0 }
     };
 
+    // Mapeo de dayKey -> (nombre dia, offset en la semana)
+    const dayMappings = [
+      { key:"day1", label:"Lunes", offset:0 },
+      { key:"day2", label:"Martes", offset:1 },
+      { key:"day3", label:"Miércoles", offset:2 },
+      { key:"day4", label:"Jueves", offset:3 },
+      { key:"day5", label:"Viernes", offset:4 },
+      { key:"day6", label:"Sábado", offset:5 },
+      { key:"day7", label:"Domingo", offset:6 }
+    ];
 
-    /***********************************************************
-     *  AL CARGAR -> VERIFICAR localStorage y PIN
-     ***********************************************************/
+    /*****************************************************************
+     * AL CARGAR
+     *****************************************************************/
     window.addEventListener("DOMContentLoaded", ()=>{
-      // Revisar si existe data en localStorage
-      let stored = localStorage.getItem("dailyReportData");
+      // Cargar localStorage
+      let stored = localStorage.getItem("dailyReportNeonData");
       if(stored){
         dataStore = JSON.parse(stored);
       }
-      // Pintar la interfaz
-      initAllDays();
-      updateWeeklyView();
-      // Manejo de tabs
+
+      // Init lockedDays
+      for(let i=1; i<=7; i++){ lockedDays["day"+i] = false; }
+
+      // Generar las 20 filas por defecto si no hay páginas
+      for(let i=1; i<=7; i++){
+        let dk = "day"+i;
+        if(dataStore[dk].pages.length<1) {
+          for(let r=1; r<=20; r++){
+            dataStore[dk].pages.push({
+              pageNo: r,
+              centenas:0,
+              pulitos:0,
+              pendingPrizes:[],
+              paidPrizes:[],
+              totalSalidas:0
+            });
+          }
+        }
+      }
+
+      // Asignar fechas a tabs
+      let startOfWeek = findMondayOfCurrentWeek();
+      dayMappings.forEach(dm=>{
+        let thisDate = new Date(startOfWeek.getTime());
+        thisDate.setDate(thisDate.getDate() + dm.offset);
+        let dStr = formatDateMMDDYYYY(thisDate);
+        // Buscar el button del tab
+        let btn = document.querySelector(`.sidebar button[data-tab="tab${dm.key.charAt(0).toUpperCase()+dm.key.slice(1)}"]`);
+        if(btn){
+          btn.textContent = `${dm.label} (${dStr})`;
+        }
+      });
+
+      // Render
       initTabs();
-      // Manejo de candado
-      initLockButtons();
-      // Manejo PDF
-      document.getElementById("btnExportPDF").addEventListener("click", exportPDF);
-      // Botón reset semana
-      document.getElementById("btnResetWeek").addEventListener("click", resetWeek);
-      // Manejo PIN
       initPinOverlay();
+      initLockButtons();
+      initToggleTheme();
+      renderAllDays();
+      updateWeeklyView();
     });
 
+    /*****************************************************************
+     * OBTENER LUNES DE LA SEMANA
+     *****************************************************************/
+    function findMondayOfCurrentWeek(){
+      // Tomamos la fecha actual y buscamos el lunes de esta semana
+      let now = new Date();
+      let dayOfWeek = now.getDay(); // 0=Dom,1=Lun,...6=Sab
+      let diff = (dayOfWeek+6) %7; // si es lunes, diff=1
+      let monday = new Date(now);
+      monday.setDate(now.getDate() - diff + 1); 
+      // (esto ajusta para que dayOfWeek=1 sea lunes)
+      // Chequea caso edge si dayOfWeek=0 (domingo)
+      return monday;
+    }
+    function formatDateMMDDYYYY(date){
+      let mm = (date.getMonth()+1).toString().padStart(2,"0");
+      let dd = date.getDate().toString().padStart(2,"0");
+      let yyyy = date.getFullYear();
+      return `${mm}/${dd}/${yyyy}`;
+    }
 
+    /*****************************************************************
+     * PIN OVERLAY
+     *****************************************************************/
     function initPinOverlay(){
-      //El pinOverlay está visible. Hasta que se introduzca el PIN correcto no se muestra la app
       const pinOverlay = document.getElementById("pinOverlay");
       const mainContainer = document.getElementById("mainContainer");
       const btnPin = document.getElementById("btnPinSubmit");
       btnPin.addEventListener("click", ()=>{
-        const val = document.getElementById("pinInput").value.trim();
+        let val = document.getElementById("pinInput").value.trim();
         if(val===PIN_CODE){
-          //Acceso concedido
           pinOverlay.style.display = "none";
           mainContainer.classList.remove("hidden");
-        }else{
+        } else {
           alert("PIN incorrecto");
         }
       });
     }
 
-    /***********************************************************
-     *  TABS
-     ***********************************************************/
+    /*****************************************************************
+     * TABS
+     *****************************************************************/
     function initTabs(){
-      const tabBtns = document.querySelectorAll(".tabBtn");
+      let tabBtns = document.querySelectorAll(".sidebar .tabBtn");
       tabBtns.forEach(btn=>{
         btn.addEventListener("click", (e)=>{
-          // quitar active de todos
           tabBtns.forEach(b=> b.classList.remove("active"));
-          e.target.classList.add("active");
-          // esconder todos tabContent
-          document.querySelectorAll(".tabContent").forEach(tc => tc.classList.add("hidden"));
-          // mostrar la que corresponde
-          const targetId = e.target.dataset.tab;
-          currentTab = targetId;
-          document.getElementById(targetId).classList.remove("hidden");
+          e.currentTarget.classList.add("active");
+          let targetId = e.currentTarget.dataset.tab;
+          document.querySelectorAll(".tabContent").forEach(tc=> tc.classList.remove("active"));
+          document.getElementById(targetId).classList.add("active");
         });
       });
     }
 
-    /***********************************************************
-     *  INICIALIZAR (O RE-DIBUJAR) LOS 7 DÍAS
-     ***********************************************************/
-    function initAllDays(){
+    /*****************************************************************
+     * LOCK BUTTONS
+     *****************************************************************/
+    function initLockButtons(){
+      // Cada día => un candado
+      for(let i=1; i<=7; i++){
+        let btn = document.getElementById("lockDay"+i+"Btn");
+        if(btn){
+          btn.addEventListener("click", (e)=>{
+            let dayKey = e.currentTarget.dataset.day;
+            lockedDays[dayKey] = !lockedDays[dayKey];
+            renderDay(dayKey);
+            // Cambiar icono
+            e.currentTarget.classList.toggle("locked", lockedDays[dayKey]);
+            e.currentTarget.innerHTML = lockedDays[dayKey]? "<i>🔒</i>" : "<i>🔓</i>";
+          });
+        }
+      }
+      // LockAll y UnlockAll en semanal
+      document.getElementById("lockAllBtn").addEventListener("click", ()=>{
+        lockedAll = true;
+        for(let i=1; i<=7; i++){
+          lockedDays["day"+i]=true;
+          let b = document.getElementById("lockDay"+i+"Btn");
+          if(b){
+            b.classList.add("locked");
+            b.innerHTML="<i>🔒</i>";
+          }
+        }
+        renderAllDays();
+      });
+      document.getElementById("unlockAllBtn").addEventListener("click", ()=>{
+        lockedAll = false;
+        for(let i=1; i<=7; i++){
+          lockedDays["day"+i]=false;
+          let b = document.getElementById("lockDay"+i+"Btn");
+          if(b){
+            b.classList.remove("locked");
+            b.innerHTML="<i>🔓</i>";
+          }
+        }
+        renderAllDays();
+      });
+    }
+
+    /*****************************************************************
+     * TOGGLE THEME (Dark / Light)
+     *****************************************************************/
+    function initToggleTheme(){
+      const btn = document.getElementById("btnToggleTheme");
+      btn.addEventListener("click", ()=>{
+        isDarkMode=!isDarkMode;
+        if(isDarkMode){
+          document.body.classList.remove("light-mode");
+        } else {
+          document.body.classList.add("light-mode");
+        }
+      });
+    }
+
+    /*****************************************************************
+     * RENDERIZAR LOS 7 DIAS
+     *****************************************************************/
+    function renderAllDays(){
       for(let i=1; i<=7; i++){
         renderDay("day"+i);
       }
+      updateWeeklyView();
+      storeData();
     }
 
-    /***********************************************************
-     *  RENDERIZAR UN DÍA
-     ***********************************************************/
     function renderDay(dayKey){
-      // day1Container, day2Container, etc.
-      const container = document.getElementById(dayKey+"Container");
+      let container = document.getElementById(dayKey+"Container");
       if(!container) return;
-      const dayData = dataStore[dayKey];
+      let dayData = dataStore[dayKey];
+      let locked = lockedDays[dayKey] || lockedAll;
 
-      // construimos HTML => tabla con pages, totales, cuadro
       let html = `
         <table>
           <thead>
@@ -576,99 +900,107 @@
               <th>Pulitos</th>
               <th>Salidas</th>
               <th>Total</th>
-              <th>Eliminar</th>
             </tr>
           </thead>
           <tbody>
       `;
       dayData.pages.forEach((p, idx)=>{
+        let rowIndex = p.pageNo;
+        let totalCP = (p.centenas + p.pulitos);
+        // color de salidas => si pending>0 => morado, else => rojo
+        let hasPending = (p.pendingPrizes||[]).length>0 && (p.pendingPrizes.reduce((a,v)=>a+v,0)>0);
+        let salidasColor = hasPending? "var(--purple-color)" : "var(--danger-color)";
+        let salidasStr = `$${p.totalSalidas.toFixed(2)}`;
+
         html += `
           <tr>
-            <td>${p.pageNo}</td>
-            <td><input type="number" value="${p.centenas||0}" data-day="${dayKey}" data-pindex="${idx}" data-field="centenas" oninput="updatePageField(this)"></td>
-            <td><input type="number" value="${p.pulitos||0}" data-day="${dayKey}" data-pindex="${idx}" data-field="pulitos" oninput="updatePageField(this)"></td>
-            <td>
-              <div style="cursor:pointer; color:${(p.pendingPrizes&&p.pendingPrizes.length>0)?'purple':'red'}" onclick="openPrizesModal('${dayKey}', ${idx})">
-                $${(p.totalSalidas||0).toFixed(2)}
-              </div>
+            <td style="text-align:center;">
+              <button class="pageBtn" onclick="deletePageRow('${dayKey}', ${idx})" ${locked?'disabled':''}>
+                ${rowIndex}
+              </button>
             </td>
-            <td>${(p.centenas + p.pulitos).toFixed(2)}</td>
-            <td><button class="btnRemove" onclick="deletePageRow('${dayKey}', ${idx})">X</button></td>
+            <td>
+              <input type="number" max="900000" value="${p.centenas}" data-day="${dayKey}" data-pindex="${idx}" data-field="centenas"
+                oninput="updatePageField(this)" ${locked?'disabled':''}>
+            </td>
+            <td>
+              <input type="number" max="900000" value="${p.pulitos}" data-day="${dayKey}" data-pindex="${idx}" data-field="pulitos"
+                oninput="updatePageField(this)" ${locked?'disabled':''}>
+            </td>
+            <td style="cursor:pointer;color:${salidasColor};" onclick="openPrizesModal('${dayKey}',${idx})">
+              ${salidasStr}
+            </td>
+            <td>$${totalCP.toFixed(2)}</td>
           </tr>
         `;
       });
-      html += `
-          </tbody>
-        </table>
-      `;
+
+      html += `</tbody></table>`;
 
       // TOTALSECTION
       let totals = calcDayTotals(dayKey);
+      let subTotal = totals.totalVentas - totals.totalSalidas;
+      let netBalance = subTotal - (dayData.cash + dayData.sucursal + dayData.credito + dayData.descuento + dayData.tickets);
+      let nbColor = (netBalance===0)?"#fff":(netBalance<0?"#f33":"#0ff");
       html += `
         <div class="totals-section">
           <h3>Totales</h3>
           <p><strong>Total Centenas:</strong> $${totals.totalCentenas.toFixed(2)}</p>
           <p><strong>Total Pulitos:</strong> $${totals.totalPulitos.toFixed(2)}</p>
-          <p><strong>Overlook:</strong> <input type="number" value="${dayData.overlook||0}" style="width:80px;" data-day="${dayKey}" data-field="overlook" oninput="updateDayField(this)" /></p>
-          <p><strong>Total Salidas:</strong> <span style="color:red;">$${totals.totalSalidas.toFixed(2)}</span></p>
-          <p><strong>Total Ventas (Centenas + Pulitos):</strong> $${totals.totalVentas.toFixed(2)}</p>
+          <p><strong>Overlook:</strong>
+            <input type="number" max="900000" value="${dayData.overlook||0}"
+              data-day="${dayKey}" data-field="overlook" oninput="updateDayField(this)" ${locked?'disabled':''} />
+          </p>
+          <p><strong>Total Salidas:</strong> <span style="color:var(--danger-color);">$${totals.totalSalidas.toFixed(2)}</span></p>
+          <p><strong>Total Ventas:</strong> $${totals.totalVentas.toFixed(2)}</p>
         </div>
-      `;
-
-      // CUADRE
-      // Subtotal = Ventas - Salidas
-      let subT = totals.totalVentas - totals.totalSalidas;
-      let colorST = "purple";
-      // Campos varios: Cash, Sucursal, Credito, Descuento, Tickets
-      let dayCash = dayData.cash||0;
-      let daySucursal = dayData.sucursal||0;
-      let dayCredito = dayData.credito||0;
-      let dayDesc = dayData.descuento||0;
-      let dayTickets = dayData.tickets||0;
-      // netBalance = subT - (cash + sucursal + credito + descuento + tickets) (puedes ajustar la lógica)
-      let nb = subT - (dayCash + daySucursal + dayCredito + dayDesc + dayTickets);
-      let nbColor = nb===0?"black":(nb<0?"red":"blue");
-
-      html += `
         <div class="cuadre-section">
           <h3>Cuadre del Día</h3>
           <div class="form-group">
             <label>Ventas</label>
-            <input type="text" readonly value="${totals.totalVentas.toFixed(2)}" />
+            <input type="text" readonly value="${totals.totalVentas.toFixed(2)}">
           </div>
           <div class="form-group">
             <label>Salidas</label>
-            <input type="text" readonly value="${totals.totalSalidas.toFixed(2)}" style="color:red;" />
+            <input type="text" readonly value="${totals.totalSalidas.toFixed(2)}" style="color:#f33;">
           </div>
           <div class="form-group">
             <label>Sub Total</label>
-            <input type="text" readonly style="color:${colorST};" value="${subT.toFixed(2)}" />
+            <input type="text" readonly value="${subTotal.toFixed(2)}" style="color:#ff0;">
           </div>
-          <!-- Campos con botoncito "X" se omite para la demo, 
-               pero si quieres, cada uno podría tener su delete. -->
           <div class="form-group">
             <label>Cash</label>
-            <input type="number" data-day="${dayKey}" data-field="cash" value="${dayCash}" oninput="updateDayField(this)" style="color:green;" />
+            <input type="number" max="900000" value="${dayData.cash}"
+              data-day="${dayKey}" data-field="cash" oninput="updateDayField(this)"
+              ${locked?'disabled':''} style="color:#0f0;">
           </div>
           <div class="form-group">
             <label>Sucursal</label>
-            <input type="number" data-day="${dayKey}" data-field="sucursal" value="${daySucursal}" oninput="updateDayField(this)" />
+            <input type="number" max="900000" value="${dayData.sucursal}"
+              data-day="${dayKey}" data-field="sucursal" oninput="updateDayField(this)"
+              ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Crédito</label>
-            <input type="number" data-day="${dayKey}" data-field="credito" value="${dayCredito}" oninput="updateDayField(this)" />
+            <input type="number" max="900000" value="${dayData.credito}"
+              data-day="${dayKey}" data-field="credito" oninput="updateDayField(this)"
+              ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Descuento</label>
-            <input type="number" data-day="${dayKey}" data-field="descuento" value="${dayDesc}" oninput="updateDayField(this)" />
+            <input type="number" max="900000" value="${dayData.descuento}"
+              data-day="${dayKey}" data-field="descuento" oninput="updateDayField(this)"
+              ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Tickets</label>
-            <input type="number" data-day="${dayKey}" data-field="tickets" value="${dayTickets}" oninput="updateDayField(this)" />
+            <input type="number" max="900000" value="${dayData.tickets}"
+              data-day="${dayKey}" data-field="tickets" oninput="updateDayField(this)"
+              ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Net Balance</label>
-            <input type="text" readonly value="${nb.toFixed(2)}" style="color:${nbColor}" />
+            <input type="text" readonly value="${netBalance.toFixed(2)}" style="color:${nbColor};">
           </div>
         </div>
       `;
@@ -676,157 +1008,140 @@
       container.innerHTML = html;
     }
 
-
     function calcDayTotals(dayKey){
-      const dayData = dataStore[dayKey];
-      let totalCentenas=0, totalPulitos=0, totalSalidas=0;
+      let dayData = dataStore[dayKey];
+      let tc=0, tp=0, ts=0;
       dayData.pages.forEach(p=>{
-        totalCentenas += (p.centenas||0);
-        totalPulitos += (p.pulitos||0);
-        totalSalidas += (p.totalSalidas||0);
+        tc+=p.centenas;
+        tp+=p.pulitos;
+        ts+=p.totalSalidas;
       });
-      totalSalidas += (dayData.overlook||0);
-
-      let totalVentas = totalCentenas + totalPulitos;
+      ts+= dayData.overlook;
+      let tv = tc+tp;
       return {
-        totalCentenas, totalPulitos, totalSalidas, totalVentas
+        totalCentenas: tc,
+        totalPulitos: tp,
+        totalSalidas: ts,
+        totalVentas: tv
       };
     }
 
-    /***********************************************************
-     *  CAMBIO DE UN CAMPO EN LA TABLA DE PAGINAS
-     ***********************************************************/
     function updatePageField(input){
-      const dayKey = input.dataset.day;
-      const pindex = parseInt(input.dataset.pindex);
-      const field = input.dataset.field;
+      let dayKey = input.dataset.day;
+      let pindex = parseInt(input.dataset.pindex);
+      let field = input.dataset.field;
       let val = parseFloat(input.value)||0;
+      if(val>900000) val=900000;
       dataStore[dayKey].pages[pindex][field] = val;
-      // Recalcular totales
-      renderDay(dayKey);
       storeData();
+      renderDay(dayKey);
     }
-
     function updateDayField(input){
-      const dayKey = input.dataset.day;
-      const field = input.dataset.field;
+      let dayKey = input.dataset.day;
+      let field = input.dataset.field;
       let val = parseFloat(input.value)||0;
+      if(val>900000) val=900000;
       dataStore[dayKey][field] = val;
-      renderDay(dayKey);
       storeData();
+      renderDay(dayKey);
     }
 
-    /***********************************************************
-     *  AGREGAR FILA (PAGINA) AL DIA
-     ***********************************************************/
-    function addPageRow(dayKey){
-      let dayData = dataStore[dayKey];
-      let newPageNo = dayData.pages.length+1;
-      dayData.pages.push({
-        pageNo: newPageNo,
-        centenas:0,
-        pulitos:0,
-        totalSalidas:0,
-        pendingPrizes:[],
-        paidPrizes:[]
-      });
-      renderDay(dayKey);
-      storeData();
-    }
     function deletePageRow(dayKey, idx){
       if(!confirm("¿Eliminar esta página?")) return;
       dataStore[dayKey].pages.splice(idx,1);
-      // Reordenar pageNo
-      dataStore[dayKey].pages.forEach((p, i)=> p.pageNo = i+1);
-      renderDay(dayKey);
+      // re-ordenar pageNo
+      dataStore[dayKey].pages.forEach((p,i)=> p.pageNo=i+1);
       storeData();
+      renderDay(dayKey);
     }
 
-    /***********************************************************
-     *  PREMIO PENDIENTE / PAGADO => MODAL
-     ***********************************************************/
-    let currentDayKeyForModal="";
-    let currentPageIndex=0;
+    /*****************************************************************
+     * SALIDAS (PENDIENTES/PAGADOS)
+     *****************************************************************/
+    let currentModalDayKey="";
+    let currentModalIndex=0;
 
-    function openPrizesModal(dayKey, pindex){
-      currentDayKeyForModal = dayKey;
-      currentPageIndex = pindex;
-      const pageData = dataStore[dayKey].pages[pindex];
+    function openPrizesModal(dayKey, idx){
+      let modalOverlay = document.getElementById("modalOverlay");
+      let pageData = dataStore[dayKey].pages[idx];
+      currentModalDayKey = dayKey;
+      currentModalIndex = idx;
       document.getElementById("prizeModalPageNo").textContent = pageData.pageNo;
-      // Pintar las tablas pending / paid
       paintPrizeLists();
-      // mostrar modal
-      document.getElementById("modalOverlay").style.display = "flex";
+      modalOverlay.style.display = "flex";
     }
+    document.getElementById("closePrizeModal").addEventListener("click", ()=>{
+      document.getElementById("modalOverlay").style.display="none";
+    });
 
     function paintPrizeLists(){
-      const pageData = dataStore[currentDayKeyForModal].pages[currentPageIndex];
-      const pendingTbody = document.getElementById("pendingTbody");
-      const paidTbody = document.getElementById("paidTbody");
+      let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
+      let pendingTbody = document.getElementById("pendingTbody");
+      let paidTbody = document.getElementById("paidTbody");
 
-      // pending
-      let pendingHTML = "";
-      (pageData.pendingPrizes||[]).forEach((val, idx)=>{
-        pendingHTML += `
+      // Pending
+      let pendHTML = "";
+      pageData.pendingPrizes.forEach((val, i)=>{
+        pendHTML += `
           <tr>
-            <td style="width:70px;">
-              <input type="number" value="${val}" style="width:60px;" oninput="updatePrizeValue(${idx}, 'pending', this.value)">
+            <td>
+              <input type="number" max="900000" value="${val}" oninput="updatePrizeValue(${i}, 'pending', this.value)">
             </td>
             <td>
-              <button style="background:orange;" onclick="movePrizeToPaid(${idx}, 'pending')">→ Pagado</button>
-              <button style="background:red;color:#fff;" onclick="deletePrize(${idx}, 'pending')">X</button>
+              <button class="paidBtn" onclick="movePrize(${i}, 'pending')">→Pagado</button>
+              <button class="paidBtn" onclick="deletePrize(${i}, 'pending')">X</button>
             </td>
           </tr>
         `;
       });
-      pendingTbody.innerHTML = pendingHTML;
+      pendingTbody.innerHTML= pendHTML;
 
-      // paid
+      // Paid
       let paidHTML = "";
-      (pageData.paidPrizes||[]).forEach((val, idx)=>{
+      pageData.paidPrizes.forEach((val, i)=>{
         paidHTML += `
           <tr>
-            <td style="width:70px;">
-              <input type="number" value="${val}" style="width:60px;" oninput="updatePrizeValue(${idx}, 'paid', this.value)">
+            <td>
+              <input type="number" max="900000" value="${val}" oninput="updatePrizeValue(${i}, 'paid', this.value)">
             </td>
             <td>
-              <button style="background:purple;color:#fff;" onclick="movePrizeToPaid(${idx}, 'paid')">← Pend</button>
-              <button style="background:red;color:#fff;" onclick="deletePrize(${idx}, 'paid')">X</button>
+              <button class="pendingBtn" onclick="movePrize(${i}, 'paid')">→Pend</button>
+              <button class="paidBtn" onclick="deletePrize(${i}, 'paid')">X</button>
             </td>
           </tr>
         `;
       });
       paidTbody.innerHTML = paidHTML;
-      // Recalcular totalSalidas
-      recalcPageSalidas();
     }
 
     function addPrizeRow(type){
-      const pageData = dataStore[currentDayKeyForModal].pages[currentPageIndex];
-      if(type==="pending"){
-        pageData.pendingPrizes.push(0);
-      } else {
-        pageData.paidPrizes.push(0);
-      }
+      let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
+      if(type==="pending") pageData.pendingPrizes.push(0);
+      else pageData.paidPrizes.push(0);
       paintPrizeLists();
+      recalcPageSalidas();
       storeData();
     }
     function updatePrizeValue(idx, type, val){
-      const pageData = dataStore[currentDayKeyForModal].pages[currentPageIndex];
-      let arr = (type==="pending")? pageData.pendingPrizes : pageData.paidPrizes;
-      arr[idx] = parseFloat(val)||0;
+      let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
+      if(type==="pending"){
+        pageData.pendingPrizes[idx] = parseFloat(val)||0;
+      } else {
+        pageData.paidPrizes[idx] = parseFloat(val)||0;
+      }
       recalcPageSalidas();
       storeData();
     }
     function deletePrize(idx, type){
-      const pageData = dataStore[currentDayKeyForModal].pages[currentPageIndex];
-      let arr = (type==="pending")? pageData.pendingPrizes : pageData.paidPrizes;
-      arr.splice(idx,1);
+      let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
+      if(type==="pending") pageData.pendingPrizes.splice(idx,1);
+      else pageData.paidPrizes.splice(idx,1);
       paintPrizeLists();
+      recalcPageSalidas();
       storeData();
     }
-    function movePrizeToPaid(idx, fromType){
-      const pageData = dataStore[currentDayKeyForModal].pages[currentPageIndex];
+    function movePrize(idx, fromType){
+      let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
       if(fromType==="pending"){
         let val = pageData.pendingPrizes[idx];
         pageData.pendingPrizes.splice(idx,1);
@@ -837,196 +1152,201 @@
         pageData.pendingPrizes.push(val);
       }
       paintPrizeLists();
+      recalcPageSalidas();
       storeData();
     }
     function recalcPageSalidas(){
-      const pageData = dataStore[currentDayKeyForModal].pages[currentPageIndex];
-      let sumPend = (pageData.pendingPrizes||[]).reduce((acc,v)=> acc+v,0);
-      let sumPaid = (pageData.paidPrizes||[]).reduce((acc,v)=> acc+v,0);
-      pageData.totalSalidas = sumPend + sumPaid;
+      let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
+      let sumPend = pageData.pendingPrizes.reduce((a,v)=>a+v,0);
+      let sumPaid = pageData.paidPrizes.reduce((a,v)=>a+v,0);
+      pageData.totalSalidas = sumPend+ sumPaid;
       storeData();
-      renderDay(currentDayKeyForModal);
+      renderDay(currentModalDayKey);
     }
 
-    // Cerrar modal
-    document.getElementById("closePrizeModal").addEventListener("click", ()=>{
-      document.getElementById("modalOverlay").style.display = "none";
-    });
-
-
-    /***********************************************************
-     *  BOTONES DE GUARDAR A SHEETS / RESET
-     ***********************************************************/
-    function sendDayToSheets(dayKey){
-      // placeholder para tu fetch/POST a Google Sheets
-      alert("Enviar datos de " + dayKey + " a Google Sheets (placeholder).");
-    }
-    function resetDay(dayKey){
-      if(!confirm("¿Resetear todos los datos del día?")) return;
-      dataStore[dayKey] = { pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 };
-      renderDay(dayKey);
-      storeData();
-    }
-    function sendWeekToSheets(){
-      // placeholder
-      alert("Enviar la semana completa a Google Sheets (placeholder).");
-    }
-    function resetWeek(){
-      if(!confirm("¿Borrar toda la semana (todos los días) y empezar de cero?")) return;
-      for(let i=1; i<=7; i++){
-        dataStore["day"+i] = { pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0, netBalance:0 };
-      }
-      dataStore.weekly={ caidas:0, adelantoOficina:0 };
-      initAllDays();
-      updateWeeklyView();
-      storeData();
-    }
-
-    /***********************************************************
-     *  SEMANA (TAB WEEKLY)
-     ***********************************************************/
+    /*****************************************************************
+     * WEEKLY
+     *****************************************************************/
     function updateWeeklyView(){
-      const wCont = document.getElementById("weeklyContainer");
+      let wCont = document.getElementById("weeklyContainer");
       if(!wCont) return;
-      // Calcular totales de day1..day7
-      let dayTotals = [];
-      let grandCent=0, grandPul=0, grandSal=0, grandVent=0;
-      for(let i=1; i<=7; i++){
-        let dKey = "day"+i;
-        let t = calcDayTotals(dKey);
-        grandCent += t.totalCentenas;
-        grandPul  += t.totalPulitos;
-        grandSal  += t.totalSalidas;
-        grandVent += t.totalVentas;
+      // Calcular totales
+      let dayTotals=[];
+      let sumCent=0, sumPul=0, sumSal=0, sumVent=0;
+      for(let i=1;i<=7;i++){
+        let dk="day"+i;
+        let t=calcDayTotals(dk);
+        sumCent+= t.totalCentenas;
+        sumPul += t.totalPulitos;
+        sumSal += t.totalSalidas;
+        sumVent+= t.totalVentas;
         dayTotals.push(t);
       }
-
-      //Comisiones: 25% de Centenas, 10% de Pulitos
-      let c25 = grandCent*0.25;
-      let p10 = grandPul*0.10;
+      let c25= sumCent*0.25;
+      let p10= sumPul*0.10;
       let totalComision = c25 + p10;
-      let totalSalidas = grandSal;
-      let subTotal = grandVent - (totalSalidas + totalComision);
-
-      // Caidas (puede modificarse a mano)
+      let subTotal = sumVent - (sumSal + totalComision);
       let caidas = dataStore.weekly.caidas||0;
-      // AdelantoOficina
-      let adelanto = dataStore.weekly.adelantoOficina||0;
+      let adelanto= dataStore.weekly.adelantoOficina||0;
+      let balOfic = subTotal - caidas - adelanto;
+      let balColor = (balOfic===0)?"#fff":(balOfic<0?"#f33":"#0ff");
 
-      let balanceOficina = subTotal - caidas - adelanto;
-      let balColor = balanceOficina===0?"black":(balanceOficina<0?"red":"blue");
-
-      let html = `
-      <h3>Totales Semanales (Lunes-Domingo)</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Dia</th>
-            <th>Centenas</th>
-            <th>Pulitos</th>
-            <th>Salidas</th>
-            <th>Ventas</th>
-          </tr>
-        </thead>
-        <tbody>
-      `;
       const dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-      for(let i=0; i<7; i++){
+      let html=`
+        <table>
+          <thead>
+            <tr>
+              <th>Día</th>
+              <th>Centenas</th>
+              <th>Pulitos</th>
+              <th>Salidas</th>
+              <th>Ventas</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      for(let i=0;i<7;i++){
         html += `
           <tr>
             <td>${dayNames[i]}</td>
             <td>$${dayTotals[i].totalCentenas.toFixed(2)}</td>
             <td>$${dayTotals[i].totalPulitos.toFixed(2)}</td>
-            <td style="color:red;">$${dayTotals[i].totalSalidas.toFixed(2)}</td>
+            <td style="color:#f33;">$${dayTotals[i].totalSalidas.toFixed(2)}</td>
             <td>$${dayTotals[i].totalVentas.toFixed(2)}</td>
           </tr>
         `;
       }
       html += `
-        <tr style="font-weight:bold;">
-          <td>Totales</td>
-          <td>$${grandCent.toFixed(2)}</td>
-          <td>$${grandPul.toFixed(2)}</td>
-          <td style="color:red;">$${grandSal.toFixed(2)}</td>
-          <td>$${grandVent.toFixed(2)}</td>
-        </tr>
+          <tr style="font-weight:bold;">
+            <td>Totales</td>
+            <td>$${sumCent.toFixed(2)}</td>
+            <td>$${sumPul.toFixed(2)}</td>
+            <td style="color:#f33;">$${sumSal.toFixed(2)}</td>
+            <td>$${sumVent.toFixed(2)}</td>
+          </tr>
         </tbody>
-      </table>
+        </table>
 
-      <div class="cuadre-section">
-        <h3>Cuadre Semanal</h3>
-        <p><strong>Total Ventas:</strong> $${grandVent.toFixed(2)}</p>
-        <p><strong>Centenas 25%:</strong> $${c25.toFixed(2)}</p>
-        <p><strong>Pulitos 10%:</strong> $${p10.toFixed(2)}</p>
-        <p><strong>Total Comision:</strong> $${totalComision.toFixed(2)}</p>
-        <p><strong>Total Salidas:</strong> <span style="color:red;">$${totalSalidas.toFixed(2)}</span></p>
-        <p><strong>Sub Total (Ventas - Salidas - Comisión):</strong> $${subTotal.toFixed(2)}</p>
-        <p>
-          <label>Caídas (20% aprox):</label>
-          <input type="number" style="width:100px;" value="${caidas}"
-                 oninput="updateWeeklyField('caidas', this.value)" />
-        </p>
-        <p>
-          <label>Adelanto Oficina:</label>
-          <input type="number" style="width:100px;" value="${adelanto}"
-                 oninput="updateWeeklyField('adelantoOficina', this.value)" />
-        </p>
-        <p><strong>Balance Oficina:</strong>
-          <span style="color:${balColor};">$${balanceOficina.toFixed(2)}</span>
-        </p>
-      </div>
+        <div class="cuadre-section">
+          <h3>Cuadre Semanal</h3>
+          <div class="form-group">
+            <label>Total Ventas</label>
+            <input type="text" readonly value="${sumVent.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Centenas 25%</label>
+            <input type="text" readonly value="${c25.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Pulitos 10%</label>
+            <input type="text" readonly value="${p10.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Total Comisión</label>
+            <input type="text" readonly value="${totalComision.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Total Salidas</label>
+            <input type="text" readonly style="color:#f33;" value="${sumSal.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Sub Total</label>
+            <input type="text" readonly style="color:#ff0;" value="${subTotal.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Caídas (20%)</label>
+            <input type="number" max="900000" value="${caidas}" oninput="updateWeeklyField('caidas', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Adelanto Oficina</label>
+            <input type="number" max="900000" value="${adelanto}" oninput="updateWeeklyField('adelantoOficina', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Balance Oficina</label>
+            <input type="text" readonly value="${balOfic.toFixed(2)}" style="color:${balColor};">
+          </div>
+        </div>
       `;
-      wCont.innerHTML = html;
+      wCont.innerHTML= html;
     }
-
-    function updateWeeklyField(field, val){
-      dataStore.weekly[field] = parseFloat(val)||0;
+    function updateWeeklyField(field,val){
+      let n = parseFloat(val)||0;
+      if(n>900000) n=900000;
+      dataStore.weekly[field]=n;
       storeData();
       updateWeeklyView();
     }
 
-    /***********************************************************
-     *  GUARDAR / CARGAR localStorage
-     ***********************************************************/
+    /*****************************************************************
+     * SEND/RESET
+     *****************************************************************/
+    function sendDayToSheets(dayKey){
+      alert("Placeholder: Enviar datos de "+dayKey+" a Sheets.");
+    }
+    function resetDay(dayKey){
+      if(!confirm("¿Resetear todos los datos del día?")) return;
+      dataStore[dayKey] = { pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 };
+      // Re-crear 20 filas
+      for(let r=1;r<=20;r++){
+        dataStore[dayKey].pages.push({
+          pageNo:r,
+          centenas:0, pulitos:0,
+          pendingPrizes:[], paidPrizes:[],
+          totalSalidas:0
+        });
+      }
+      storeData();
+      renderDay(dayKey);
+    }
+    function sendWeekToSheets(){
+      alert("Placeholder: Enviar la semana completa a Sheets.");
+    }
+    function resetWeek(){
+      if(!confirm("¿Resetear toda la semana?")) return;
+      for(let i=1;i<=7;i++){
+        dataStore["day"+i]={ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 };
+        for(let r=1; r<=20; r++){
+          dataStore["day"+i].pages.push({
+            pageNo:r,
+            centenas:0, pulitos:0,
+            pendingPrizes:[], paidPrizes:[],
+            totalSalidas:0
+          });
+        }
+      }
+      dataStore.weekly={ caidas:0, adelantoOficina:0 };
+      storeData();
+      renderAllDays();
+    }
+
+    /*****************************************************************
+     * STORE DATA
+     *****************************************************************/
     function storeData(){
-      localStorage.setItem("dailyReportData", JSON.stringify(dataStore));
-      // actualizar la vista semanal
-      updateWeeklyView();
+      localStorage.setItem("dailyReportNeonData", JSON.stringify(dataStore));
     }
 
-    /***********************************************************
-     *  BLOQUEO / DESBLOQUEO
-     ***********************************************************/
-    function initLockButtons(){
-      document.getElementById("btnLockAll").addEventListener("click", ()=>{
-        lockedAll = true;
-        document.querySelector(".main-content").classList.add("locked");
-      });
-      document.getElementById("btnUnlockAll").addEventListener("click", ()=>{
-        lockedAll = false;
-        document.querySelector(".main-content").classList.remove("locked");
-      });
-    }
-
-    /***********************************************************
-     *  EXPORTAR PDF (html2canvas)
-     ***********************************************************/
-    function exportPDF(){
-      alert("Generando captura... Espere un momento.");
-      html2canvas(document.querySelector(".scroll-area"), {scale:1.5})
-      .then(canvas=>{
+    /*****************************************************************
+     * EXPORT PDF
+     *****************************************************************/
+    document.getElementById("btnExportPDF").addEventListener("click", ()=>{
+      alert("Generando captura de pantalla...");
+      let scrollArea = document.querySelector(".scroll-area .tabContent.active");
+      if(!scrollArea){
+        alert("No hay contenido activo. Selecciona una pestaña.");
+        return;
+      }
+      html2canvas(scrollArea, {scale:1.5}).then(canvas=>{
         let link = document.createElement("a");
-        link.download = "ReporteDiarioSemanal.png";
+        link.download = "Reporte.png";
         link.href = canvas.toDataURL("image/png");
         link.click();
-      })
-      .catch(err=>{
+      }).catch(err=>{
         console.error(err);
-        alert("Error al generar la imagen/PDF.");
+        alert("Error al generar la imagen.");
       });
-    }
+    });
 
   </script>
-
 </body>
 </html>
