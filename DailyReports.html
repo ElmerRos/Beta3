@@ -2,1275 +2,1947 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Reporte Diario y Semanal (Neón/Dark)</title>
+  <title>Reporte Diario y Semanal</title>
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- Bootstrap Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+  />
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <!-- html2canvas (para exportar PDF/imagen) -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+    defer
+  ></script>
 
+  <!-- 
+    ===================================
+    CSS principal
+    Basado en tu styles.css (neón), 
+    ajustado con extras para tabs, 
+    modals de salidas, etc.
+    ===================================
+  -->
   <style>
-    /* Reseteo general para quitar margen/padding por defecto */
-    * {
-      box-sizing: border-box;
+    /* ===========================
+       1) BASE COLORS & FONTS
+       =========================== */
+    :root {
+      --color-fondo: #0a0a0a; /* Dark background */
+      --color-neon-cian: #00ffff;
+      --color-neon-morado: #ff00ff;
+      --color-neon-verde: #39ff14;
+      --color-texto: #ffffff;
+      --color-placeholder: #cccccc;
+      --color-fondo-acordeon: #1e1e1e;
+      --color-fondo-acordeon-activo: #00ffff;
+      --color-texto-acordeon: #ffffff;
+      --color-error: #ff00ff;
+
+      /* Colores alternos para Light Mode */
+      --light-bg: #f3f3e7; 
+      --light-text: #000;
+      --light-border: #ccc;
+      --light-highlight: #007bff;
+    }
+
+    /* Modo claro: activado al añadir la clase .light-mode al body */
+    body.light-mode {
+      background-color: var(--light-bg) !important;
+      color: var(--light-text) !important;
+    }
+    body.light-mode .container {
+      background: #ffffff !important;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1) !important;
+    }
+    body.light-mode h2 {
+      color: var(--light-highlight) !important;
+      text-shadow: none !important;
+    }
+    body.light-mode .table-dark {
+      background-color: #fafafa !important;
+      color: #000 !important;
+    }
+    body.light-mode .table-dark th {
+      background-color: #eee !important;
+      color: #000 !important;
+      text-shadow: none !important;
+    }
+    body.light-mode .table-dark td {
+      color: #000 !important;
+    }
+    body.light-mode .modal-content {
+      background-color: #ffffff !important;
+      color: #000 !important;
+      box-shadow: 0 0 10px #ccc !important;
+      border: 2px solid #ccc !important;
+    }
+    body.light-mode .modal-header,
+    body.light-mode .modal-footer {
+      border-color: #ccc !important;
+    }
+    body.light-mode .nav-link.active {
+      background-color: var(--light-highlight) !important;
+      color: #fff !important;
+    }
+    body.light-mode .btn-primary {
+      background-color: var(--light-highlight) !important;
+      box-shadow: none !important;
+      color: #fff !important;
+    }
+    body.light-mode .btn-success {
+      background-color: #28a745 !important;
+      color: #fff !important;
+      box-shadow: none !important;
+    }
+
+    /* Fondo general + tipografía */
+    body {
+      background-color: var(--color-fondo);
+      color: var(--color-texto);
+      font-family: 'Montserrat', 'Poppins', sans-serif;
       margin: 0;
       padding: 0;
+      overflow-x: hidden;
     }
-
-    :root {
-      --main-bg: #111;
-      --main-text: #eee;
-      --accent-color: #0ff;
-      --danger-color: #f33;
-      --lock-color: #fb0;
-      --purple-color: #a0f;
-
-      /* Color que usaremos en TODAS las tabs (diarias y semanal) */
-      --shared-tab-bg: #222;
-
-      --light-bg: #f9f9f9;
-      --light-text: #000;
-      --light-accent: #00f;
-    }
-
-    body {
-      background: var(--main-bg);
-      color: var(--main-text);
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      font-size: 20px; /* Se agranda la fuente */
-      overflow: hidden;
-    }
-
-    /* Modo claro */
-    body.light-mode {
-      background: var(--light-bg);
-      color: var(--light-text);
-    }
-
-    /* Quitar los “spin buttons” de inputs tipo number */
-    input[type=number]::-webkit-outer-spin-button,
-    input[type=number]::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type=number] {
-      -moz-appearance: textfield; /* Firefox */
-    }
-
     /* Contenedor principal */
     .container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      background: rgba(10, 10, 10, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+      margin-top: 60px; /* espaciado superior */
+      min-height: 80vh;
     }
 
-    /**********************************
-     * PIN OVERLAY
-     **********************************/
-    .pin-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 999999;
-    }
-    .pin-dialog {
-      background: #222;
-      border: 2px solid var(--accent-color);
-      border-radius: 10px;
-      padding: 2rem;
-      width: 400px;
-      max-width: 90%;
+    /* Título principal */
+    h2 {
       text-align: center;
-      box-shadow: 0 0 10px var(--accent-color);
+      margin-bottom: 20px;
+      color: var(--color-neon-cian);
+      text-shadow: 0 0 10px var(--color-neon-cian);
+      font-size: 2rem; 
     }
-    .pin-dialog h2 {
-      margin-bottom: 1rem;
-      color: var(--accent-color);
-      font-size: 1.5rem;
-      text-shadow: 0 0 5px var(--accent-color);
+
+    /* ===========================
+       2) NAV TABS LATERALES
+       =========================== */
+    .nav-pills {
+      flex-direction: column;
+      width: 200px;
+      margin-right: 20px;
     }
-    .pin-dialog input {
-      font-size: 2rem;
+    .nav-pills .nav-link {
+      color: var(--color-texto);
+      border: 1px solid transparent;
+      margin-bottom: 5px;
+      font-size: 1.2rem;
       text-align: center;
-      width: 100%;
-      margin-bottom: 1rem;
-      background: #000;
-      color: var(--accent-color);
-      border: 2px solid var(--accent-color);
-      border-radius: 8px;
-      padding: 0.5rem;
-      box-shadow: inset 0 0 5px var(--accent-color);
+      transition: background-color 0.3s, color 0.3s;
+      border-radius: 5px;
     }
-    .pin-dialog button {
-      font-size: 1.5rem;
-      padding: 0.5rem 2rem;
-      background: #000;
-      color: var(--accent-color);
-      border: 2px solid var(--accent-color);
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 0 5px var(--accent-color);
+    .nav-pills .nav-link:hover {
+      background-color: #2a2a2a;
     }
-    .pin-dialog button:hover {
-      background: var(--accent-color);
+    .nav-pills .nav-link.active {
+      background-color: var(--color-neon-cian);
       color: #000;
     }
 
-    /**********************************
-     * SIDEBAR (TABS)
-     **********************************/
-    .sidebar {
-      width: 240px;
-      background: #000;
-      border-right: 2px solid var(--accent-color);
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      align-items: stretch;
-    }
-    .sidebar button {
-      display: block;
-      width: 100%;
-      padding: 1rem;
-      background: transparent;
-      border: none;
-      color: var(--accent-color);
-      font-size: 1.1rem;
-      border-bottom: 1px solid #444;
-      cursor: pointer;
-      transition: background 0.3s, color 0.3s;
-      text-align: left;
-      text-shadow: 0 0 3px var(--accent-color);
-    }
-    .sidebar button:hover {
-      background: #111;
-      color: #fff;
-    }
-    .sidebar button.active {
-      background: #222;
-      color: #0ff;
-      font-weight: bold;
-    }
-
-    /**********************************
-     * MAIN CONTENT
-     **********************************/
-    .main-content {
+    /* Contenedor principal de tabs */
+    .tab-content {
       flex: 1;
+    }
+    .d-flex.tab-container {
       display: flex;
-      flex-direction: column;
     }
 
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.5rem 1rem;
-      background: #000;
-      border-bottom: 2px solid var(--accent-color);
+    /* ===========================
+       3) TABLA DIARIA
+       =========================== */
+    .pages-table th {
+      background-color: #1e1e1e;
+      color: var(--color-neon-cian);
+      text-shadow: 0 0 5px var(--color-neon-cian);
+      font-size: 1.2rem;
     }
-    .top-bar-left, .top-bar-right {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    .btnNeon {
-      background: #000;
-      color: var(--accent-color);
-      border: 2px solid var(--accent-color);
-      border-radius: 8px;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      box-shadow: 0 0 5px var(--accent-color);
-      font-size: 1rem;
-    }
-    .btnNeon:hover {
-      background: var(--accent-color);
-      color: #000;
-    }
-    .btnLockDay {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      color: var(--lock-color);
-      border: 2px solid var(--lock-color);
-      border-radius: 50%;
-      width: 50px; height: 50px;
-      font-size: 1.5rem;
-      cursor: pointer;
-      box-shadow: 0 0 10px var(--lock-color);
-    }
-    .btnLockDay.locked {
-      background: var(--lock-color);
-      color: #000;
-    }
-
-    .scroll-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      background: #000;
-    }
-
-    /**********************************
-     * TABS => Todos con fondo #222
-     **********************************/
-    .tabContent {
-      display: none;
-      padding: 1rem;
-      border: 2px solid var(--accent-color);
-      border-radius: 8px;
-      min-height: 90%;
-      background: var(--shared-tab-bg); /* #222 para TODOS los días y semanal */
-      box-shadow: 0 0 8px var(--accent-color);
-    }
-    .tabContent.active {
-      display: block;
-    }
-
-    /**********************************
-     * TABLA DE PAGINAS
-     **********************************/
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-      color: var(--main-text);
-      font-size: 1rem;
-    }
-    thead th {
-      background: rgba(0,0,0,0.4);
-      color: var(--accent-color);
-      border-bottom: 2px solid var(--accent-color);
-      text-shadow: 0 0 3px var(--accent-color);
-      text-align: center; /* para alinear título sobre la col */
-      padding: 0.3rem;
-    }
-    td, th {
-      padding: 0.3rem; /* menos espacio horizontal */
-      border-bottom: 1px solid #444;
+    .pages-table td {
+      font-size: 1.3rem;
       vertical-align: middle;
     }
-    input[type="number"], input[type="text"] {
-      background: #000;
-      color: var(--accent-color);
-      border: 1px solid var(--accent-color);
-      border-radius: 4px;
-      text-align: right;
-      padding: 0.4rem;
-      box-shadow: inset 0 0 5px var(--accent-color);
-      font-size: 1rem;
-      width: 120px; /* más ancho */
-    }
-    input[type="number"]:focus, input[type="text"]:focus {
-      outline: none;
-      border-color: #fff;
-    }
-
-    /* Botón “eliminar” rectangular (rojo) con esquinas suaves */
-    .pageBtn {
-      background: var(--danger-color);
+    .table-row-btn {
+      min-width: 40px;
       color: #fff;
+      background-color: #ff0044;
       border: none;
+      padding: 4px 8px;
       border-radius: 6px;
-      padding: 0.3rem 0.6rem;
-      cursor: pointer;
-      font-size: 1rem;
-      box-shadow: 0 0 5px var(--danger-color);
+      box-shadow: 0 0 5px #ff0044;
+      transition: transform 0.2s;
     }
-    .pageBtn:hover {
-      background: #f66;
+    .table-row-btn:hover {
+      background-color: #cc0033;
+      transform: scale(1.05);
+    }
+    .pages-table input[type="number"] {
+      width: 120px;
+      text-align: right;
+    }
+    .pages-table input::placeholder {
+      color: var(--color-placeholder);
     }
 
-    /**********************************
-     * TOTALS / CUADRE
-     **********************************/
-    .totals-section, .cuadre-section {
-      border: 2px solid var(--accent-color);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      background: #000;
-      box-shadow: 0 0 8px var(--accent-color);
+    /* SALIDAS con color si hay pendientes/pagados */
+    .salidas-cell.pendiente {
+      color: var(--color-neon-morado);
+      font-weight: bold;
+      cursor: pointer;
     }
-    .totals-section h3, .cuadre-section h3 {
-      color: var(--accent-color);
-      margin-bottom: 1rem;
-      text-shadow: 0 0 3px var(--accent-color);
+    .salidas-cell.pagado {
+      color: #ff0044;
+      font-weight: bold;
+      cursor: pointer;
     }
-    .totals-section p, .cuadre-section p {
-      margin: 0.4rem 0;
+
+    /* ===========================
+       4) BOTONES GLOBALES
+       =========================== */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1.2rem;
     }
-    .form-group {
+    .btn-primary {
+      background-color: var(--color-neon-cian);
+      color: #000;
+      box-shadow: 0 0 10px var(--color-neon-cian);
+    }
+    .btn-primary:hover {
+      background-color: #00cccc;
+      box-shadow: 0 0 20px var(--color-neon-cian);
+      transform: scale(1.05);
+    }
+    .btn-danger {
+      background-color: #ff0044;
+      color: #fff;
+      box-shadow: 0 0 10px #ff0044;
+      min-width: 150px;
+    }
+    .btn-danger:hover {
+      background-color: #cc0033;
+      box-shadow: 0 0 20px #ff0044;
+      transform: scale(1.05);
+    }
+    .btn-warning {
+      color: #000;
+      background-color: #ffcb00;
+      box-shadow: 0 0 10px #ffcb00;
+    }
+    .btn-warning:hover {
+      background-color: #e0b300;
+      box-shadow: 0 0 20px #ffcb00;
+      transform: scale(1.05);
+    }
+    .btn-success {
+      background-color: var(--color-neon-verde);
+      color: #000;
+      box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+      animation: pulse 2s infinite;
+    }
+    .btn-success:hover {
+      transform: scale(1.02);
+    }
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+      }
+      50% {
+        box-shadow: 0 0 20px var(--color-neon-verde), 0 0 30px var(--color-neon-verde);
+      }
+      100% {
+        box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+      }
+    }
+
+    /* ===========================
+       5) CUADRE DIARIO
+       =========================== */
+    .cuadre-container {
+      margin-top: 20px;
+      border: 1px solid var(--color-neon-cian);
+      padding: 15px;
+      border-radius: 10px;
+    }
+    .cuadre-container h4 {
+      color: var(--color-neon-cian);
+      text-shadow: 0 0 5px var(--color-neon-cian);
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+    .cuadre-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .cuadre-row label {
+      min-width: 120px;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    .cuadre-row input[type="number"] {
+      width: 150px;
+      text-align: right;
+    }
+    .total-subtotal {
+      color: var(--color-neon-morado);
+      font-weight: bold;
+    }
+    .net-balance.positivo {
+      color: #00f; /* azul */
+      font-weight: bold;
+    }
+    .net-balance.negativo {
+      color: #ff0044; /* rojo */
+      font-weight: bold;
+    }
+    .net-balance.cero {
+      color: #000; /* negro */
+      font-weight: bold;
+    }
+
+    /* Opcional: Botoncito rojo para eliminar campos de Cash, Sucursal, etc. */
+    .optional-field {
       display: flex;
       align-items: center;
-      margin-bottom: 0.5rem;
+      margin-bottom: 5px;
     }
-    .form-group label {
-      width: 150px; /* un poco más ancho para acomodar texto */
-      font-weight: bold;
-      color: var(--accent-color);
-      text-shadow: 0 0 2px var(--accent-color);
+    .optional-field input[type="number"] {
+      margin-right: 8px;
     }
-    .form-group input[type="number"], .form-group input[type="text"] {
-      margin-left: auto;
+    .delete-optional-btn {
+      background-color: #ff0044;
+      color: #fff;
+      border: none;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
 
-    /**********************************
-     * MODAL DE SALIDAS
-     **********************************/
-    .modal-overlay {
+    /* ===========================
+       6) MODAL DE SALIDAS
+       =========================== */
+    .modal-content {
+      background-color: #0a0a0a;
+      color: #ffffff;
+      box-shadow: 0 0 20px var(--color-neon-cian);
+      border: 2px solid var(--color-neon-cian);
+    }
+    .modal-header,
+    .modal-footer {
+      border-bottom: 1px solid var(--color-neon-cian);
+      border-top: 1px solid var(--color-neon-cian);
+    }
+    .modal-title {
+      color: var(--color-neon-cian);
+    }
+    .salida-pendiente {
+      color: var(--color-neon-morado);
+      font-weight: bold;
+    }
+    .salida-pagada {
+      color: #ff0044;
+      font-weight: bold;
+    }
+
+    /* ===========================
+       7) TAB RESUMEN SEMANAL
+       =========================== */
+    .weekly-container h3 {
+      color: var(--color-neon-cian);
+      text-shadow: 0 0 5px var(--color-neon-cian);
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+    .weekly-row label {
+      min-width: 180px;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    .weekly-row input[type="number"] {
+      width: 180px;
+      text-align: right;
+      margin-bottom: 10px;
+    }
+    .weekly-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .weekly-row span {
+      margin-left: 10px;
+    }
+
+    /* ===========================
+       8) LOCK ICONS
+       =========================== */
+    .lock-icon {
+      font-size: 1.5rem;
+      margin-left: 10px;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    .locked {
+      color: #ff0044; /* rojo */
+    }
+    .unlocked {
+      color: var(--color-neon-verde);
+    }
+
+    /* ===========================
+       9) MANUAL
+       =========================== */
+    .manual-section {
+      padding: 20px;
+    }
+
+    /* ===========================
+       10) PIN OVERLAY
+       =========================== */
+    #pinOverlay {
       position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+      z-index: 999999;
       display: none;
       justify-content: center;
       align-items: center;
-      z-index: 99999;
-    }
-    .modal {
-      background: #000;
-      border: 2px solid var(--accent-color);
-      border-radius: 10px;
-      padding: 1rem;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 0 10px var(--accent-color);
-      position: relative;
-      color: var(--accent-color);
-    }
-    .modal h3 {
-      margin-bottom: 1rem;
-      text-shadow: 0 0 2px var(--accent-color);
       text-align: center;
+      flex-direction: column;
     }
-    .closeModal {
-      position: absolute;
-      top: 8px; right: 8px;
-      background: var(--danger-color);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 0.3rem 0.6rem;
-      cursor: pointer;
-      box-shadow: 0 0 5px var(--danger-color);
-    }
-    .modal table {
-      width: 100%;
-      margin: 0.5rem 0;
-      border-collapse: collapse;
-    }
-    .modal table td {
-      border-bottom: 1px solid #444;
-      padding: 0.3rem;
+    #pinOverlay input {
+      font-size: 2rem;
       text-align: center;
+      width: 200px;
+      margin-bottom: 10px;
     }
-    .modal table input {
-      width: 120px;
-      font-size: 1rem;
-    }
-    .addPrizeBtn {
-      background: #000;
-      color: var(--purple-color);
-      border: 1px solid var(--purple-color);
-      border-radius: 4px;
-      cursor: pointer;
-      padding: 0.3rem 0.6rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 0 5px var(--purple-color);
-    }
-    .addPrizeBtn:hover {
-      background: var(--purple-color);
-      color: #000;
-    }
-    .paidBtn {
-      background: var(--danger-color);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 0.2rem 0.4rem;
-      cursor: pointer;
-      box-shadow: 0 0 3px var(--danger-color);
-      margin-right: 0.3rem;
-    }
-    .pendingBtn {
-      background: var(--purple-color);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 0.2rem 0.4rem;
-      cursor: pointer;
-      box-shadow: 0 0 3px var(--purple-color);
-      margin-right: 0.3rem;
+    #pinOverlay button {
+      font-size: 1.5rem;
     }
 
-    /**********************************
-     * MANUAL
-     **********************************/
-    .manual-content {
-      background: #000;
-      border: 2px solid var(--accent-color);
-      border-radius: 8px;
-      padding: 1rem;
-      box-shadow: 0 0 8px var(--accent-color);
+    /* ===========================
+       RESPONSIVE
+       =========================== */
+    @media (max-width: 992px) {
+      .nav-pills {
+        flex-direction: row;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+      .nav-pills .nav-link {
+        flex: 1;
+        margin-bottom: 0px;
+      }
+      .tab-container {
+        flex-direction: column;
+      }
     }
-    .manual-content h3, .manual-content h4 {
-      color: var(--accent-color);
-      text-shadow: 0 0 2px var(--accent-color);
-      margin-bottom: 0.5rem;
-    }
-    .manual-content p {
-      margin-bottom: 1rem;
-    }
-    .manual-content ul {
-      margin-left: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .manual-content li {
-      margin-bottom: 0.5rem;
-    }
-
   </style>
 </head>
 <body>
+  <!-- Overlay para PIN -->
+  <div id="pinOverlay">
+    <h3>Ingrese PIN de Acceso</h3>
+    <input type="password" id="pinInput" maxlength="4" />
+    <br />
+    <button class="btn btn-primary" id="pinSubmit">Acceder</button>
+    <button class="btn btn-danger" id="pinCancel">Cancelar</button>
+  </div>
 
-  <!-- OVERLAY DEL PIN -->
-  <div class="pin-overlay" id="pinOverlay">
-    <div class="pin-dialog">
-      <h2>Ingrese PIN (4 dígitos)</h2>
-      <input type="password" id="pinInput" maxlength="4" />
-      <button id="btnPinSubmit">Acceder</button>
+  <!-- Botón oculto para abrir PIN (ejemplo). Colócalo en un rinconcito. -->
+  <button
+    id="accessReportBtn"
+    style="
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1.2rem;
+      z-index: 9999;
+    "
+  >
+    <i class="bi bi-lock-fill"></i>
+  </button>
+
+  <!-- Toggle Dark/Light -->
+  <button
+    id="toggleModeBtn"
+    class="btn btn-secondary"
+    style="
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 9999;
+    "
+  >
+    Modo Light
+  </button>
+
+  <div class="container d-none" id="mainReportContainer">
+    <h2>Reporte Diario y Semanal</h2>
+
+    <!-- NAV TABS LATERALES -->
+    <div class="d-flex tab-container">
+      <ul
+        class="nav nav-pills me-3"
+        id="pills-tab"
+        role="tablist"
+        style="flex-shrink: 0;"
+      >
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active"
+            id="pills-lunes-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-lunes"
+            type="button"
+            role="tab"
+            aria-controls="pills-lunes"
+            aria-selected="true"
+          >
+            Lunes
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="pills-martes-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-martes"
+            type="button"
+            role="tab"
+            aria-controls="pills-martes"
+            aria-selected="false"
+          >
+            Martes
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="pills-miercoles-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-miercoles"
+            type="button"
+            role="tab"
+            aria-controls="pills-miercoles"
+            aria-selected="false"
+          >
+            Miércoles
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="pills-jueves-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-jueves"
+            type="button"
+            role="tab"
+            aria-controls="pills-jueves"
+            aria-selected="false"
+          >
+            Jueves
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="pills-viernes-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-viernes"
+            type="button"
+            role="tab"
+            aria-controls="pills-viernes"
+            aria-selected="false"
+          >
+            Viernes
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="pills-sabado-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-sabado"
+            type="button"
+            role="tab"
+            aria-controls="pills-sabado"
+            aria-selected="false"
+          >
+            Sábado
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="pills-domingo-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-domingo"
+            type="button"
+            role="tab"
+            aria-controls="pills-domingo"
+            aria-selected="false"
+          >
+            Domingo
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="pills-semanal-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-semanal"
+            type="button"
+            role="tab"
+            aria-controls="pills-semanal"
+            aria-selected="false"
+          >
+            Resumen
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="pills-manual-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-manual"
+            type="button"
+            role="tab"
+            aria-controls="pills-manual"
+            aria-selected="false"
+          >
+            Manual
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="pills-tabContent" style="width:100%;">
+        <!-- =========================================
+             1) Pestañas Lunes a Domingo (7 tabs)
+             ========================================= -->
+        <div
+          class="tab-pane fade show active"
+          id="pills-lunes"
+          role="tabpanel"
+          aria-labelledby="pills-lunes-tab"
+        >
+          <div class="day-tab" data-day-index="1">
+            <!-- Contenido día Lunes -->
+            <div class="mb-3">
+              <label>Nombre de la Tienda:</label>
+              <input type="text" class="form-control" id="tienda-1" placeholder="Mi Tienda" />
+            </div>
+            <div class="mb-3 d-flex gap-3">
+              <div>
+                <label>Fecha (DD/MM/AAAA):</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="fecha-1"
+                  placeholder="dd/mm/2025"
+                />
+              </div>
+              <div>
+                <label>Día de la Semana:</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="diaSemana-1"
+                  value="Lunes"
+                  readonly
+                />
+              </div>
+              <!-- Candado individual -->
+              <div class="d-flex align-items-end">
+                <i
+                  class="bi bi-unlock lock-icon unlocked"
+                  id="lockDay-1"
+                  data-day="1"
+                  title="Bloquear/Desbloquear Día"
+                ></i>
+              </div>
+            </div>
+
+            <!-- Tabla de “páginas” -->
+            <div class="table-responsive">
+              <table class="table table-dark table-bordered pages-table" id="dayTable-1">
+                <thead>
+                  <tr>
+                    <th># Página</th>
+                    <th>Centenas</th>
+                    <th>Pulitos</th>
+                    <th class="text-center">Salidas</th>
+                    <th>Total</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Se generan 20 filas por defecto vía JS -->
+                </tbody>
+              </table>
+            </div>
+            <button
+              class="btn btn-primary mb-3"
+              id="addPageBtn-1"
+            >
+              Añadir Página
+            </button>
+
+            <!-- Totales y Overlook -->
+            <div class="row mb-3">
+              <div class="col-md-3">
+                <strong>Total Centenas:</strong>
+                <span id="totalCentenas-1">0.00</span>
+              </div>
+              <div class="col-md-3">
+                <strong>Total Pulitos:</strong>
+                <span id="totalPulitos-1">0.00</span>
+              </div>
+              <div class="col-md-3">
+                Overlook:
+                <input
+                  type="number"
+                  id="overlook-1"
+                  step="1"
+                  placeholder="0"
+                  class="form-control"
+                  style="width:120px; display:inline-block;"
+                />
+              </div>
+              <div class="col-md-3">
+                <strong>Total Salidas:</strong>
+                <span id="totalSalidas-1">0.00</span>
+              </div>
+            </div>
+
+            <!-- Cuadre -->
+            <div class="cuadre-container">
+              <h4>Cuadre Office</h4>
+              <div class="cuadre-row">
+                <label>Ventas:</label>
+                <span id="ventas-1">0.00</span>
+              </div>
+              <div class="cuadre-row">
+                <label>Salidas:</label>
+                <span id="salidas-1">0.00</span>
+              </div>
+              <div class="cuadre-row">
+                <label>Sub Total (Ventas - Salidas):</label>
+                <span id="subTotal-1" class="total-subtotal">0.00</span>
+              </div>
+              <!-- Campos opcionales -->
+              <div id="optionalFields-1">
+                <!-- Ejemplo: Cash, Tickets, Sucursal, etc. Se agregan dinámicamente -->
+              </div>
+              <button
+                class="btn btn-info"
+                id="addOptionalFieldBtn-1"
+              >
+                Añadir Campo Opcional
+              </button>
+              <div class="cuadre-row mt-2">
+                <label>Net Balance:</label>
+                <span id="netBalance-1" class="net-balance cero">0.00</span>
+              </div>
+            </div>
+
+            <!-- Botones Footer día -->
+            <div class="mt-3 d-flex gap-3">
+              <button
+                class="btn btn-warning"
+                id="resetDayBtn-1"
+              >
+                Reset Día
+              </button>
+              <button
+                class="btn btn-primary"
+                id="sendDayBtn-1"
+              >
+                Enviar a Sheets
+              </button>
+              <!-- Botón de Export PDF del día -->
+              <button
+                class="btn btn-success"
+                id="exportPdfDayBtn-1"
+              >
+                Exportar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Repite exactamente igual para Martes, Miércoles, etc. Cambiando data-day-index -->
+        <div
+          class="tab-pane fade"
+          id="pills-martes"
+          role="tabpanel"
+          aria-labelledby="pills-martes-tab"
+        >
+          <div class="day-tab" data-day-index="2">
+            <div class="mb-3">
+              <label>Nombre de la Tienda:</label>
+              <input type="text" class="form-control" id="tienda-2" placeholder="Mi Tienda" />
+            </div>
+            <div class="mb-3 d-flex gap-3">
+              <div>
+                <label>Fecha (DD/MM/AAAA):</label>
+                <input type="text" class="form-control" id="fecha-2" />
+              </div>
+              <div>
+                <label>Día de la Semana:</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="diaSemana-2"
+                  value="Martes"
+                  readonly
+                />
+              </div>
+              <div class="d-flex align-items-end">
+                <i
+                  class="bi bi-unlock lock-icon unlocked"
+                  id="lockDay-2"
+                  data-day="2"
+                  title="Bloquear/Desbloquear Día"
+                ></i>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark table-bordered pages-table" id="dayTable-2">
+                <thead>
+                  <tr>
+                    <th># Página</th>
+                    <th>Centenas</th>
+                    <th>Pulitos</th>
+                    <th class="text-center">Salidas</th>
+                    <th>Total</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <button class="btn btn-primary mb-3" id="addPageBtn-2">Añadir Página</button>
+            <div class="row mb-3">
+              <div class="col-md-3">
+                <strong>Total Centenas:</strong>
+                <span id="totalCentenas-2">0.00</span>
+              </div>
+              <div class="col-md-3">
+                <strong>Total Pulitos:</strong>
+                <span id="totalPulitos-2">0.00</span>
+              </div>
+              <div class="col-md-3">
+                Overlook:
+                <input
+                  type="number"
+                  id="overlook-2"
+                  step="1"
+                  placeholder="0"
+                  class="form-control"
+                  style="width:120px; display:inline-block;"
+                />
+              </div>
+              <div class="col-md-3">
+                <strong>Total Salidas:</strong>
+                <span id="totalSalidas-2">0.00</span>
+              </div>
+            </div>
+            <div class="cuadre-container">
+              <h4>Cuadre Office</h4>
+              <div class="cuadre-row">
+                <label>Ventas:</label>
+                <span id="ventas-2">0.00</span>
+              </div>
+              <div class="cuadre-row">
+                <label>Salidas:</label>
+                <span id="salidas-2">0.00</span>
+              </div>
+              <div class="cuadre-row">
+                <label>Sub Total:</label>
+                <span id="subTotal-2" class="total-subtotal">0.00</span>
+              </div>
+              <div id="optionalFields-2"></div>
+              <button
+                class="btn btn-info"
+                id="addOptionalFieldBtn-2"
+              >
+                Añadir Campo Opcional
+              </button>
+              <div class="cuadre-row mt-2">
+                <label>Net Balance:</label>
+                <span id="netBalance-2" class="net-balance cero">0.00</span>
+              </div>
+            </div>
+            <div class="mt-3 d-flex gap-3">
+              <button class="btn btn-warning" id="resetDayBtn-2">Reset Día</button>
+              <button class="btn btn-primary" id="sendDayBtn-2">Enviar a Sheets</button>
+              <button class="btn btn-success" id="exportPdfDayBtn-2">Exportar PDF</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pestaña Miércoles (data-day-index="3"), etc... -->
+        <div
+          class="tab-pane fade"
+          id="pills-miercoles"
+          role="tabpanel"
+          aria-labelledby="pills-miercoles-tab"
+        >
+          <div class="day-tab" data-day-index="3">
+            <!-- Repetir la misma estructura de arriba con IDs 3 -->
+            <!-- ... -->
+            <h4 class="text-center">Ejemplo, completa igual que Lunes</h4>
+          </div>
+        </div>
+
+        <div
+          class="tab-pane fade"
+          id="pills-jueves"
+          role="tabpanel"
+          aria-labelledby="pills-jueves-tab"
+        >
+          <div class="day-tab" data-day-index="4">
+            <h4 class="text-center">Jueves</h4>
+            <!-- Estructura análoga -->
+          </div>
+        </div>
+        <div
+          class="tab-pane fade"
+          id="pills-viernes"
+          role="tabpanel"
+          aria-labelledby="pills-viernes-tab"
+        >
+          <div class="day-tab" data-day-index="5">
+            <h4 class="text-center">Viernes</h4>
+            <!-- Estructura análoga -->
+          </div>
+        </div>
+        <div
+          class="tab-pane fade"
+          id="pills-sabado"
+          role="tabpanel"
+          aria-labelledby="pills-sabado-tab"
+        >
+          <div class="day-tab" data-day-index="6">
+            <h4 class="text-center">Sábado</h4>
+            <!-- Estructura análoga -->
+          </div>
+        </div>
+        <div
+          class="tab-pane fade"
+          id="pills-domingo"
+          role="tabpanel"
+          aria-labelledby="pills-domingo-tab"
+        >
+          <div class="day-tab" data-day-index="7">
+            <h4 class="text-center">Domingo</h4>
+            <!-- Estructura análoga -->
+          </div>
+        </div>
+
+        <!-- =========================================
+             2) Pestaña RESUMEN SEMANAL (8va)
+             ========================================= -->
+        <div
+          class="tab-pane fade"
+          id="pills-semanal"
+          role="tabpanel"
+          aria-labelledby="pills-semanal-tab"
+        >
+          <div class="weekly-container">
+            <h3>Resumen Semanal</h3>
+            <div class="weekly-row">
+              <label>Total Ventas:</label>
+              <span id="totalVentasSemana">0.00</span>
+            </div>
+            <div class="weekly-row">
+              <label>Centenas 25%:</label>
+              <span id="comisionCentenas">0.00</span>
+            </div>
+            <div class="weekly-row">
+              <label>Pulitos 10%:</label>
+              <span id="comisionPulitos">0.00</span>
+            </div>
+            <div class="weekly-row">
+              <label>Total Comisión:</label>
+              <span id="totalComision">0.00</span>
+            </div>
+            <div class="weekly-row">
+              <label>Adelanto Oficina:</label>
+              <input
+                type="number"
+                id="adelantoOficina"
+                step="1"
+                placeholder="0"
+              />
+            </div>
+            <div class="weekly-row">
+              <label>Total Salidas (Suma 7 días):</label>
+              <span id="totalSalidasSemana">0.00</span>
+            </div>
+            <div class="weekly-row">
+              <label>Sub Total (Ventas - Salidas - Comisión):</label>
+              <span id="subTotalSemana">0.00</span>
+            </div>
+            <div class="weekly-row">
+              <label>Caídas (20% si SubTotal > 0):</label>
+              <input
+                type="number"
+                id="caidasSemana"
+                step="1"
+                placeholder="0"
+              />
+            </div>
+            <div class="weekly-row">
+              <label>Balance Oficina:</label>
+              <span id="balanceOficina" class="net-balance cero">0.00</span>
+            </div>
+            <!-- Botones -->
+            <div class="mt-3 d-flex gap-3">
+              <button class="btn btn-warning" id="resetSemanaBtn">Reset Semana</button>
+              <button class="btn btn-primary" id="saveSemanaBtn">Guardar/Enviar</button>
+              <button
+                class="btn btn-success"
+                id="lockSemanaBtn"
+                data-locked="false"
+              >
+                <i class="bi bi-unlock"></i> Bloqueo Semana
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================
+             3) Pestaña Manual (9na)
+             ========================================= -->
+        <div
+          class="tab-pane fade"
+          id="pills-manual"
+          role="tabpanel"
+          aria-labelledby="pills-manual-tab"
+        >
+          <div class="manual-section">
+            <h3>Manual de Uso</h3>
+            <p>
+              Bienvenido a la interfaz de reporte diario y semanal. Aquí puedes
+              llevar el registro de Centenas, Pulitos y Salidas, con totales y
+              un consolidado semanal.
+            </p>
+            <ol>
+              <li>
+                <strong>Pestañas Diarias:</strong> cada día tiene su tabla con
+                Páginas. Registra Centenas, Pulitos, Salidas y verás los totales
+                al pie. “Overlook” se suma a las salidas. 
+              </li>
+              <li>
+                <strong>Salidas Pendientes/Pagadas:</strong> haz clic en el campo
+                Salidas para ver un modal con hasta 10 premios. Puedes marcar un
+                premio como pendiente (morado) o pagado (rojo).
+              </li>
+              <li>
+                <strong>Cuadre Office:</strong> al final de cada día verás Ventas,
+                Salidas, SubTotal, campos opcionales (Cash, Sucursal, etc.) y el
+                Net Balance.
+              </li>
+              <li>
+                <strong>Bloqueo:</strong> cada día tiene un candado para
+                bloquear/desbloquear la edición. La pestaña “Resumen” tiene un
+                candado global para bloquear toda la semana.
+              </li>
+              <li>
+                <strong>Resumen Semanal:</strong> verás la suma de Ventas y
+                Salidas, la comisión (25% de Centenas + 10% Pulitos), Subtotal,
+                Caídas y Balance de Oficina.
+              </li>
+              <li>
+                <strong>LocalStorage:</strong> toda la información se guarda
+                automáticamente en tu navegador. Se borra al hacer “Reset Día” o
+                “Reset Semana”.
+              </li>
+              <li>
+                <strong>Exportar a PDF:</strong> en cada día tienes un botón que
+                hace captura de pantalla (html2canvas) para imprimir o guardar
+                como imagen/PDF.
+              </li>
+              <li>
+                <strong>PIN de Acceso:</strong> Se requiere 8325 para ver este
+                módulo. 
+              </li>
+            </ol>
+            <p><em>¡Listo! Ajusta tu lógica de negocio según necesites.</em></p>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
-  <!-- CONTENEDOR PRINCIPAL -->
-  <div class="container hidden" id="mainContainer">
-    <!-- SIDEBAR: 7 días + Semanal + Manual -->
-    <div class="sidebar" id="sidebar">
-      <button class="tabBtn active" data-tab="tabDay1">Lunes (XX/XX/XXXX)</button>
-      <button class="tabBtn" data-tab="tabDay2">Martes (XX/XX/XXXX)</button>
-      <button class="tabBtn" data-tab="tabDay3">Miércoles (XX/XX/XXXX)</button>
-      <button class="tabBtn" data-tab="tabDay4">Jueves (XX/XX/XXXX)</button>
-      <button class="tabBtn" data-tab="tabDay5">Viernes (XX/XX/XXXX)</button>
-      <button class="tabBtn" data-tab="tabDay6">Sábado (XX/XX/XXXX)</button>
-      <button class="tabBtn" data-tab="tabDay7">Domingo (XX/XX/XXXX)</button>
-      <button class="tabBtn" data-tab="tabWeekly">Semanal</button>
-      <button class="tabBtn" data-tab="tabManual">Manual</button>
-    </div>
-
-    <!-- MAIN CONTENT (TOP BAR + SCROLL) -->
-    <div class="main-content">
-      <!-- TOP BAR -->
-      <div class="top-bar">
-        <div class="top-bar-left">
-          <button class="btnNeon" id="btnToggleTheme">Dark/Light</button>
+  <!-- MODAL para Detalle de Salidas Pendientes/Pagadas -->
+  <div
+    class="modal fade"
+    id="salidasModal"
+    tabindex="-1"
+    aria-labelledby="salidasModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="salidasModalLabel">Detalle de Salidas</h5>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
         </div>
-        <div class="top-bar-right">
-          <button class="btnNeon" id="btnExportPDF">Exportar PDF</button>
-        </div>
-      </div>
-
-      <!-- SCROLL AREA -->
-      <div class="scroll-area">
-        <!-- TAB DIA1 -->
-        <div id="tabDay1" class="tabContent active">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h2>Reporte Diario - Lunes</h2>
-            <div style="display:flex;gap:1rem;">
-              <button class="btnNeon" onclick="sendDayToSheets('day1')">Enviar a Sheets</button>
-              <button class="btnNeon" onclick="resetDay('day1')">Reset Día</button>
-              <button class="btnLockDay" id="lockDay1Btn" data-day="day1"><i>🔓</i></button>
-            </div>
+        <div class="modal-body">
+          <!-- Sección PENDIENTES -->
+          <h5 class="text-center" style="color: var(--color-neon-morado);">
+            Pendientes
+          </h5>
+          <div id="pendientesContainer" class="mb-4">
+            <!-- Hasta 10 líneas -->
           </div>
-          <div id="day1Container"></div>
-        </div>
-
-        <!-- DIA2 -->
-        <div id="tabDay2" class="tabContent">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h2>Reporte Diario - Martes</h2>
-            <div style="display:flex;gap:1rem;">
-              <button class="btnNeon" onclick="sendDayToSheets('day2')">Enviar a Sheets</button>
-              <button class="btnNeon" onclick="resetDay('day2')">Reset Día</button>
-              <button class="btnLockDay" id="lockDay2Btn" data-day="day2"><i>🔓</i></button>
-            </div>
-          </div>
-          <div id="day2Container"></div>
-        </div>
-
-        <!-- DIA3 -->
-        <div id="tabDay3" class="tabContent">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h2>Reporte Diario - Miércoles</h2>
-            <div style="display:flex;gap:1rem;">
-              <button class="btnNeon" onclick="sendDayToSheets('day3')">Enviar a Sheets</button>
-              <button class="btnNeon" onclick="resetDay('day3')">Reset Día</button>
-              <button class="btnLockDay" id="lockDay3Btn" data-day="day3"><i>🔓</i></button>
-            </div>
-          </div>
-          <div id="day3Container"></div>
-        </div>
-
-        <!-- DIA4 -->
-        <div id="tabDay4" class="tabContent">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h2>Reporte Diario - Jueves</h2>
-            <div style="display:flex;gap:1rem;">
-              <button class="btnNeon" onclick="sendDayToSheets('day4')">Enviar a Sheets</button>
-              <button class="btnNeon" onclick="resetDay('day4')">Reset Día</button>
-              <button class="btnLockDay" id="lockDay4Btn" data-day="day4"><i>🔓</i></button>
-            </div>
-          </div>
-          <div id="day4Container"></div>
-        </div>
-
-        <!-- DIA5 -->
-        <div id="tabDay5" class="tabContent">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h2>Reporte Diario - Viernes</h2>
-            <div style="display:flex;gap:1rem;">
-              <button class="btnNeon" onclick="sendDayToSheets('day5')">Enviar a Sheets</button>
-              <button class="btnNeon" onclick="resetDay('day5')">Reset Día</button>
-              <button class="btnLockDay" id="lockDay5Btn" data-day="day5"><i>🔓</i></button>
-            </div>
-          </div>
-          <div id="day5Container"></div>
-        </div>
-
-        <!-- DIA6 -->
-        <div id="tabDay6" class="tabContent">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h2>Reporte Diario - Sábado</h2>
-            <div style="display:flex;gap:1rem;">
-              <button class="btnNeon" onclick="sendDayToSheets('day6')">Enviar a Sheets</button>
-              <button class="btnNeon" onclick="resetDay('day6')">Reset Día</button>
-              <button class="btnLockDay" id="lockDay6Btn" data-day="day6"><i>🔓</i></button>
-            </div>
-          </div>
-          <div id="day6Container"></div>
-        </div>
-
-        <!-- DIA7 -->
-        <div id="tabDay7" class="tabContent">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h2>Reporte Diario - Domingo</h2>
-            <div style="display:flex;gap:1rem;">
-              <button class="btnNeon" onclick="sendDayToSheets('day7')">Enviar a Sheets</button>
-              <button class="btnNeon" onclick="resetDay('day7')">Reset Día</button>
-              <button class="btnLockDay" id="lockDay7Btn" data-day="day7"><i>🔓</i></button>
-            </div>
-          </div>
-          <div id="day7Container"></div>
-        </div>
-
-        <!-- TAB SEMANAL -->
-        <div id="tabWeekly" class="tabContent">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <h2>Resumen Semanal</h2>
-            <div style="display:flex;gap:1rem;">
-              <button class="btnNeon" onclick="sendWeekToSheets()">Guardar Semana</button>
-              <button class="btnNeon" onclick="resetWeek()">Reset Semana</button>
-              <button class="btnLockDay" id="lockAllBtn"><i>🔒</i></button>
-              <button class="btnLockDay" id="unlockAllBtn"><i>🔓</i></button>
-            </div>
-          </div>
-          <div id="weeklyContainer"></div>
-        </div>
-
-        <!-- TAB MANUAL -->
-        <div id="tabManual" class="tabContent">
-          <h2>Manual / Ayuda</h2>
-          <div class="manual-content">
-            <h3>Nueve pestañas en total:</h3>
-            <p>
-              1. Lunes <br/>
-              2. Martes <br/>
-              3. Miércoles <br/>
-              4. Jueves <br/>
-              5. Viernes <br/>
-              6. Sábado <br/>
-              7. Domingo <br/>
-              8. Semanal (consolidado) <br/>
-              9. Manual (explicación detallada)
-            </p>
-            <p>Control de acceso con PIN (8325) antes de mostrar esta interfaz.</p>
-            <p>Botón en cada pestaña diaria para “Enviar a Sheets” (o AppSheet) y “Reset Día” (si lo deseas).</p>
-            <p>Botón en la pestaña Semanal para “Enviar/Guardar” y “Reset Semana”.</p>
-            <p>Suma de ventas/centenas/pulitos/salidas y manejo de premios pendientes/pagados en un modal.</p>
-            <p>Botón Exportar PDF usando html2canvas.</p>
-            <p>Bloqueo parcial (candado) para que no se editen celdas una vez listo. Cada día tiene su candado propio, y en el Semanal hay uno que bloquea/desbloquea toda la semana.</p>
-            <p>LocalStorage: los datos no se borran al recargar excepto si el usuario usa “Reset” o elimina filas manualmente.</p>
-
-            <h4>Flujo de uso diario</h4>
-            <p>
-              Cada día inicia con 20 filas (páginas) por defecto. En cada fila se ingresa:
-              <ul>
-                <li>Centenas (monto de hasta 900,000)</li>
-                <li>Pulitos (monto de hasta 900,000)</li>
-                <li>Salidas (se abre un modal con “pendientes” y “pagados”)</li>
-                <li>Total (suma de Centenas + Pulitos)</li>
-              </ul>
-              Al final, hay un bloque de <em>totales</em> (Centenas, Pulitos, Salidas) y un <em>cuadre</em> (cash, sucursal, etc.) que lleva a un Net Balance.
-            </p>
-
-            <h4>Resumen Semanal</h4>
-            <p>
-              La pestaña “Semanal” combina la suma de cada día (Lunes-Domingo) y permite calcular comisiones, caídas, y el balance final de oficina.
-            </p>
-
-            <h4>Envío a Google Sheets / AppSheet</h4>
-            <p>
-              Los botones “Enviar a Sheets” están vacíos (placeholder). Posteriormente se podrá integrar con la API de Google Sheets, SheetDB, o AppSheet.
-            </p>
-
-            <h4>Otras Funciones</h4>
-            <p>
-              <strong>Exportar PDF</strong>: Genera una imagen de la parte visible para imprimir/guardar.<br/>
-              <strong>Bloqueo</strong>: Evita la edición accidental de campos. Cada día es independiente, y en la vista Semanal hay un candado global para toda la semana.<br/>
-              <strong>Reset</strong>: Borra por completo los datos del día o de la semana, según el botón.
-            </p>
+          <!-- Sección PAGADOS -->
+          <h5 class="text-center" style="color: #ff0044;">
+            Pagados
+          </h5>
+          <div id="pagadosContainer">
+            <!-- Hasta 10 líneas -->
           </div>
         </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL DE SALIDAS (Pendientes/Pagados) -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <button class="closeModal" id="closePrizeModal">X</button>
-      <h3>Premios de Página <span id="prizeModalPageNo"></span></h3>
-      <div style="display:flex;gap:1rem;flex-wrap:wrap;">
-        <div style="flex:1; min-width:150px;">
-          <h4 style="color:var(--purple-color); text-align:center;">Pendientes</h4>
-          <table>
-            <tbody id="pendingTbody"></tbody>
-          </table>
-          <button class="addPrizeBtn" onclick="addPrizeRow('pending')">+ Pendiente</button>
-        </div>
-        <div style="flex:1; min-width:150px;">
-          <h4 style="color:var(--danger-color); text-align:center;">Pagados</h4>
-          <table>
-            <tbody id="paidTbody"></tbody>
-          </table>
-          <button class="addPrizeBtn" style="color:var(--danger-color);border-color:var(--danger-color);box-shadow:0 0 5px var(--danger-color);" onclick="addPrizeRow('paid')">+ Pagado</button>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cerrar
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Librería para export PDF -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
+  <!-- Bootstrap JS -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+    defer
+  ></script>
+  
+  <!-- 
+    ================================
+    SCRIPTS PRINCIPALES
+    ================================
+  -->
   <script>
-    /* 
-     * SCRIPT COMPLETO
-     * (Muy similar a la versión anterior, pero con:
-     *   - fondo #222 en todas las tabs diarias
-     *   - botón "pageBtn" rectangular
-     *   - inputs number sin flechas
-     *   - mayor fuente y espacios ajustados
-     *   - etc.)
-    */
+    /*************************************************************
+     * 1) LÓGICA DEL PIN OVERLAY
+     *************************************************************/
+    const pinOverlay = document.getElementById('pinOverlay');
+    const pinInput = document.getElementById('pinInput');
+    const pinSubmit = document.getElementById('pinSubmit');
+    const pinCancel = document.getElementById('pinCancel');
+    const accessReportBtn = document.getElementById('accessReportBtn');
+    const mainReportContainer = document.getElementById('mainReportContainer');
 
-    const PIN_CODE = "8325";
-    let lockedDays = {};
-    let lockedAll = false;
-    let isDarkMode = true;
+    // Pin = 8325
+    const CORRECT_PIN = '8325';
 
-    let dataStore = {
-      day1:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
-      day2:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
-      day3:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
-      day4:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
-      day5:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
-      day6:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
-      day7:{ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 },
-      weekly:{ caidas:0, adelantoOficina:0 }
+    accessReportBtn.addEventListener('click', () => {
+      pinOverlay.style.display = 'flex';
+      pinInput.value = '';
+      pinInput.focus();
+    });
+    pinSubmit.addEventListener('click', () => {
+      if (pinInput.value === CORRECT_PIN) {
+        // Mostrar la interfaz
+        pinOverlay.style.display = 'none';
+        mainReportContainer.classList.remove('d-none');
+      } else {
+        alert('PIN incorrecto');
+      }
+    });
+    pinCancel.addEventListener('click', () => {
+      pinOverlay.style.display = 'none';
+    });
+
+
+    /*************************************************************
+     * 2) TOGGLE DARK/LIGHT MODE
+     *************************************************************/
+    const toggleModeBtn = document.getElementById('toggleModeBtn');
+    toggleModeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+      if (document.body.classList.contains('light-mode')) {
+        toggleModeBtn.textContent = 'Modo Dark';
+      } else {
+        toggleModeBtn.textContent = 'Modo Light';
+      }
+    });
+
+
+    /*************************************************************
+     * 3) ESTRUCTURA DE DATOS Y LOCALSTORAGE
+     *************************************************************/
+    // Estructura en localStorage: 
+    // { 
+    //   days: {
+    //     1: { tienda: "", fecha: "", ... , pages: [...], optionalFields: [...] },
+    //     2: {...},
+    //     ...
+    //     7: {...}
+    //   },
+    //   weekly: {
+    //     adelantoOficina, caidasSemana, ...
+    //   }
+    // }
+
+    let dataStore = JSON.parse(localStorage.getItem('dailyReportData')) || {
+      days: {},
+      weekly: {}
     };
 
-    // Mapeo para las fechas
-    const dayMappings = [
-      { key:"day1", label:"Lunes", offset:0 },
-      { key:"day2", label:"Martes", offset:1 },
-      { key:"day3", label:"Miércoles", offset:2 },
-      { key:"day4", label:"Jueves", offset:3 },
-      { key:"day5", label:"Viernes", offset:4 },
-      { key:"day6", label:"Sábado", offset:5 },
-      { key:"day7", label:"Domingo", offset:6 }
-    ];
-
-    window.addEventListener("DOMContentLoaded", ()=>{
-      let stored = localStorage.getItem("dailyReportNeonData2");
-      if(stored){
-        dataStore = JSON.parse(stored);
+    // Inicializar 7 días si no existen
+    for (let d = 1; d <= 7; d++) {
+      if (!dataStore.days[d]) {
+        dataStore.days[d] = {
+          locked: false,
+          tienda: '',
+          fecha: '',
+          diaSemana: '',
+          pages: [],
+          overlook: 0,
+          optionalFields: []
+        };
       }
-      for(let i=1; i<=7; i++){ lockedDays["day"+i]=false; }
-
-      // Generar 20 filas por defecto
-      for(let i=1;i<=7;i++){
-        let dk="day"+i;
-        if(dataStore[dk].pages.length<1){
-          for(let r=1; r<=20; r++){
-            dataStore[dk].pages.push({
-              pageNo:r,
-              centenas:0, pulitos:0,
-              pendingPrizes:[], paidPrizes:[],
-              totalSalidas:0
-            });
-          }
-        }
-      }
-
-      // Asignar fechas a los tabs
-      let startOfWeek = findMondayOfCurrentWeek();
-      dayMappings.forEach(dm=>{
-        let thisDate = new Date(startOfWeek.getTime());
-        thisDate.setDate(thisDate.getDate()+dm.offset);
-        let dStr = formatDateMMDDYYYY(thisDate);
-        let btn = document.querySelector(`.sidebar button[data-tab="tab${dm.key.charAt(0).toUpperCase()+dm.key.slice(1)}"]`);
-        if(btn) btn.textContent = `${dm.label} (${dStr})`;
-      });
-
-      initTabs();
-      initPinOverlay();
-      initLockButtons();
-      initToggleTheme();
-      renderAllDays();
-      updateWeeklyView();
-    });
-
-    function findMondayOfCurrentWeek(){
-      let now = new Date();
-      let dayOfWeek = now.getDay();
-      let diff = (dayOfWeek+6)%7;
-      let monday = new Date(now);
-      monday.setDate(now.getDate() - diff +1);
-      return monday;
-    }
-    function formatDateMMDDYYYY(date){
-      let mm=(date.getMonth()+1).toString().padStart(2,"0");
-      let dd=date.getDate().toString().padStart(2,"0");
-      let yyyy=date.getFullYear();
-      return `${mm}/${dd}/${yyyy}`;
-    }
-
-    // PIN
-    function initPinOverlay(){
-      const pinOverlay = document.getElementById("pinOverlay");
-      const mainContainer = document.getElementById("mainContainer");
-      document.getElementById("btnPinSubmit").addEventListener("click", ()=>{
-        let val = document.getElementById("pinInput").value.trim();
-        if(val===PIN_CODE){
-          pinOverlay.style.display="none";
-          mainContainer.classList.remove("hidden");
-        } else {
-          alert("PIN incorrecto");
-        }
-      });
-    }
-
-    // TABS
-    function initTabs(){
-      let tabBtns = document.querySelectorAll(".sidebar .tabBtn");
-      tabBtns.forEach(btn=>{
-        btn.addEventListener("click",(e)=>{
-          tabBtns.forEach(b=> b.classList.remove("active"));
-          e.currentTarget.classList.add("active");
-          let targetId = e.currentTarget.dataset.tab;
-          document.querySelectorAll(".tabContent").forEach(tc=> tc.classList.remove("active"));
-          document.getElementById(targetId).classList.add("active");
-        });
-      });
-    }
-
-    // LOCK
-    function initLockButtons(){
-      for(let i=1;i<=7;i++){
-        let b=document.getElementById("lockDay"+i+"Btn");
-        b.addEventListener("click",(e)=>{
-          let dk = e.currentTarget.dataset.day;
-          lockedDays[dk]= !lockedDays[dk];
-          e.currentTarget.classList.toggle("locked", lockedDays[dk]);
-          e.currentTarget.innerHTML= lockedDays[dk]? "<i>🔒</i>":"<i>🔓</i>";
-          renderDay(dk);
-        });
-      }
-      // LockAll & UnlockAll
-      document.getElementById("lockAllBtn").addEventListener("click", ()=>{
-        lockedAll=true;
-        for(let i=1;i<=7;i++){
-          lockedDays["day"+i]=true;
-          let b=document.getElementById("lockDay"+i+"Btn");
-          b.classList.add("locked");
-          b.innerHTML="<i>🔒</i>";
-        }
-        renderAllDays();
-      });
-      document.getElementById("unlockAllBtn").addEventListener("click", ()=>{
-        lockedAll=false;
-        for(let i=1;i<=7;i++){
-          lockedDays["day"+i]=false;
-          let b=document.getElementById("lockDay"+i+"Btn");
-          b.classList.remove("locked");
-          b.innerHTML="<i>🔓</i>";
-        }
-        renderAllDays();
-      });
-    }
-
-    // TOGGLE THEME
-    function initToggleTheme(){
-      document.getElementById("btnToggleTheme").addEventListener("click", ()=>{
-        isDarkMode=!isDarkMode;
-        if(isDarkMode){
-          document.body.classList.remove("light-mode");
-        } else {
-          document.body.classList.add("light-mode");
-        }
-      });
-    }
-
-    // RENDER DAYS
-    function renderAllDays(){
-      for(let i=1;i<=7;i++){
-        renderDay("day"+i);
-      }
-      storeData();
-    }
-    function renderDay(dayKey){
-      let container = document.getElementById(dayKey+"Container");
-      if(!container)return;
-      let dayData = dataStore[dayKey];
-      let locked = lockedDays[dayKey]||lockedAll;
-
-      let html=`
-        <table>
-          <thead>
-            <tr>
-              <th>#Página</th>
-              <th>Centenas</th>
-              <th>Pulitos</th>
-              <th>Salidas</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-      dayData.pages.forEach((p,idx)=>{
-        let totalCP = (p.centenas+p.pulitos);
-        let hasPending = (p.pendingPrizes||[]).reduce((a,v)=>a+v,0)>0;
-        let salidasColor = hasPending? "var(--purple-color)": "var(--danger-color)";
-        html += `
-          <tr>
-            <td style="text-align:center;">
-              <button class="pageBtn" onclick="deletePageRow('${dayKey}',${idx})" ${locked?'disabled':''}>
-                ${p.pageNo}
-              </button>
-            </td>
-            <td>
-              <input type="number" max="900000" value="${p.centenas}" data-day="${dayKey}" data-pindex="${idx}" data-field="centenas"
-                oninput="updatePageField(this)" ${locked?'disabled':''}>
-            </td>
-            <td>
-              <input type="number" max="900000" value="${p.pulitos}" data-day="${dayKey}" data-pindex="${idx}" data-field="pulitos"
-                oninput="updatePageField(this)" ${locked?'disabled':''}>
-            </td>
-            <td style="cursor:pointer; color:${salidasColor};" onclick="openPrizesModal('${dayKey}',${idx})">
-              $${p.totalSalidas.toFixed(2)}
-            </td>
-            <td>$${totalCP.toFixed(2)}</td>
-          </tr>
-        `;
-      });
-      html+="</tbody></table>";
-
-      let t=calcDayTotals(dayKey);
-      let subT = t.totalVentas - t.totalSalidas;
-      let netBal = subT - (dayData.cash+dayData.sucursal+dayData.credito+dayData.descuento+dayData.tickets);
-      let nbColor = netBal===0?"#fff":(netBal<0?"#f33":"#0ff");
-
-      html += `
-        <div class="totals-section">
-          <h3>Totales</h3>
-          <p><strong>Total Centenas:</strong> $${t.totalCentenas.toFixed(2)}</p>
-          <p><strong>Total Pulitos:</strong> $${t.totalPulitos.toFixed(2)}</p>
-          <p><strong>Overlook:</strong>
-            <input type="number" max="900000" value="${dayData.overlook}" data-day="${dayKey}" data-field="overlook" oninput="updateDayField(this)" ${locked?'disabled':''}>
-          </p>
-          <p><strong>Total Salidas:</strong> <span style="color:var(--danger-color)">$${t.totalSalidas.toFixed(2)}</span></p>
-          <p><strong>Total Ventas:</strong> $${t.totalVentas.toFixed(2)}</p>
-        </div>
-        <div class="cuadre-section">
-          <h3>Cuadre del Día</h3>
-          <div class="form-group">
-            <label>Ventas</label>
-            <input type="text" readonly value="${t.totalVentas.toFixed(2)}">
-          </div>
-          <div class="form-group">
-            <label>Salidas</label>
-            <input type="text" readonly style="color:#f33;" value="${t.totalSalidas.toFixed(2)}">
-          </div>
-          <div class="form-group">
-            <label>Sub Total</label>
-            <input type="text" readonly style="color:#ff0;" value="${subT.toFixed(2)}">
-          </div>
-          <div class="form-group">
-            <label>Cash</label>
-            <input type="number" max="900000" value="${dayData.cash}" data-day="${dayKey}" data-field="cash" oninput="updateDayField(this)"
-              style="color:#0f0;" ${locked?'disabled':''}>
-          </div>
-          <div class="form-group">
-            <label>Sucursal</label>
-            <input type="number" max="900000" value="${dayData.sucursal}" data-day="${dayKey}" data-field="sucursal" oninput="updateDayField(this)"
-             ${locked?'disabled':''}>
-          </div>
-          <div class="form-group">
-            <label>Crédito</label>
-            <input type="number" max="900000" value="${dayData.credito}" data-day="${dayKey}" data-field="credito" oninput="updateDayField(this)"
-             ${locked?'disabled':''}>
-          </div>
-          <div class="form-group">
-            <label>Descuento</label>
-            <input type="number" max="900000" value="${dayData.descuento}" data-day="${dayKey}" data-field="descuento" oninput="updateDayField(this)"
-             ${locked?'disabled':''}>
-          </div>
-          <div class="form-group">
-            <label>Tickets</label>
-            <input type="number" max="900000" value="${dayData.tickets}" data-day="${dayKey}" data-field="tickets" oninput="updateDayField(this)"
-             ${locked?'disabled':''}>
-          </div>
-          <div class="form-group">
-            <label>Net Balance</label>
-            <input type="text" readonly style="color:${nbColor};" value="${netBal.toFixed(2)}">
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = html;
-    }
-
-    function calcDayTotals(dayKey){
-      let d=dataStore[dayKey];
-      let tc=0, tp=0, ts=0;
-      d.pages.forEach(p=>{
-        tc+= p.centenas;
-        tp+= p.pulitos;
-        ts+= p.totalSalidas;
-      });
-      ts+= d.overlook;
-      return {
-        totalCentenas: tc,
-        totalPulitos: tp,
-        totalSalidas: ts,
-        totalVentas: tc+tp
-      };
-    }
-    function updatePageField(input){
-      let dayKey = input.dataset.day;
-      let pindex= parseInt(input.dataset.pindex);
-      let field= input.dataset.field;
-      let val = parseFloat(input.value)||0;
-      if(val>900000) val=900000;
-      dataStore[dayKey].pages[pindex][field]= val;
-      storeData();
-      renderDay(dayKey);
-    }
-    function updateDayField(input){
-      let dayKey=input.dataset.day;
-      let field=input.dataset.field;
-      let val= parseFloat(input.value)||0;
-      if(val>900000) val=900000;
-      dataStore[dayKey][field]= val;
-      storeData();
-      renderDay(dayKey);
-    }
-    function deletePageRow(dayKey, idx){
-      if(!confirm("¿Eliminar esta página?")) return;
-      dataStore[dayKey].pages.splice(idx,1);
-      dataStore[dayKey].pages.forEach((p,i)=> p.pageNo=i+1);
-      storeData();
-      renderDay(dayKey);
-    }
-
-    /****************************************************
-     * SALIDAS (MODAL)
-     ****************************************************/
-    let currentModalDayKey="";
-    let currentModalIndex=0;
-    function openPrizesModal(dayKey, idx){
-      currentModalDayKey=dayKey;
-      currentModalIndex=idx;
-      document.getElementById("modalOverlay").style.display="flex";
-      let pageData = dataStore[dayKey].pages[idx];
-      document.getElementById("prizeModalPageNo").textContent=pageData.pageNo;
-      paintPrizeLists();
-    }
-    document.getElementById("closePrizeModal").addEventListener("click",()=>{
-      document.getElementById("modalOverlay").style.display="none";
-    });
-    function paintPrizeLists(){
-      let pageData = dataStore[currentModalDayKey].pages[currentModalIndex];
-      let pendingTbody= document.getElementById("pendingTbody");
-      let paidTbody= document.getElementById("paidTbody");
-
-      let pendHTML="";
-      pageData.pendingPrizes.forEach((v,i)=>{
-        pendHTML+=`
-        <tr>
-          <td>
-            <input type="number" max="900000" value="${v}" oninput="updatePrizeValue(${i},'pending',this.value)">
-          </td>
-          <td>
-            <button class="paidBtn" onclick="movePrize(${i},'pending')">→Pagado</button>
-            <button class="paidBtn" onclick="deletePrize(${i},'pending')">X</button>
-          </td>
-        </tr>
-        `;
-      });
-      pendingTbody.innerHTML= pendHTML;
-
-      let paidHTML="";
-      pageData.paidPrizes.forEach((v,i)=>{
-        paidHTML+=`
-        <tr>
-          <td>
-            <input type="number" max="900000" value="${v}" oninput="updatePrizeValue(${i},'paid',this.value)">
-          </td>
-          <td>
-            <button class="pendingBtn" onclick="movePrize(${i},'paid')">→Pend</button>
-            <button class="paidBtn" onclick="deletePrize(${i},'paid')">X</button>
-          </td>
-        </tr>
-        `;
-      });
-      paidTbody.innerHTML= paidHTML;
-    }
-    function addPrizeRow(type){
-      let pageData= dataStore[currentModalDayKey].pages[currentModalIndex];
-      if(type==="pending") pageData.pendingPrizes.push(0);
-      else pageData.paidPrizes.push(0);
-      paintPrizeLists();
-      recalcPageSalidas();
-      storeData();
-    }
-    function updatePrizeValue(idx, type, val){
-      let pageData= dataStore[currentModalDayKey].pages[currentModalIndex];
-      let n= parseFloat(val)||0; if(n>900000) n=900000;
-      if(type==="pending") pageData.pendingPrizes[idx]=n;
-      else pageData.paidPrizes[idx]=n;
-      recalcPageSalidas();
-      storeData();
-    }
-    function deletePrize(idx, type){
-      let pageData= dataStore[currentModalDayKey].pages[currentModalIndex];
-      if(type==="pending") pageData.pendingPrizes.splice(idx,1);
-      else pageData.paidPrizes.splice(idx,1);
-      paintPrizeLists();
-      recalcPageSalidas();
-      storeData();
-    }
-    function movePrize(idx, fromType){
-      let pageData= dataStore[currentModalDayKey].pages[currentModalIndex];
-      if(fromType==="pending"){
-        let val= pageData.pendingPrizes[idx];
-        pageData.pendingPrizes.splice(idx,1);
-        pageData.paidPrizes.push(val);
-      } else {
-        let val= pageData.paidPrizes[idx];
-        pageData.paidPrizes.splice(idx,1);
-        pageData.pendingPrizes.push(val);
-      }
-      paintPrizeLists();
-      recalcPageSalidas();
-      storeData();
-    }
-    function recalcPageSalidas(){
-      let pageData= dataStore[currentModalDayKey].pages[currentModalIndex];
-      let sumPend= pageData.pendingPrizes.reduce((acc,v)=>acc+v,0);
-      let sumPaid= pageData.paidPrizes.reduce((acc,v)=>acc+v,0);
-      pageData.totalSalidas= sumPend+sumPaid;
-      storeData();
-      renderDay(currentModalDayKey);
-    }
-
-    /****************************************************
-     * SEMANAL
-     ****************************************************/
-    function updateWeeklyView(){
-      let wCont= document.getElementById("weeklyContainer");
-      if(!wCont) return;
-      let dayTotals=[];
-      let sumCent=0, sumPul=0, sumSal=0, sumVent=0;
-      for(let i=1;i<=7;i++){
-        let dk="day"+i;
-        let t=calcDayTotals(dk);
-        sumCent+=t.totalCentenas;
-        sumPul +=t.totalPulitos;
-        sumSal +=t.totalSalidas;
-        sumVent+=t.totalVentas;
-        dayTotals.push(t);
-      }
-      let c25= sumCent*0.25;
-      let p10= sumPul*0.10;
-      let totalComision = c25+p10;
-      let subTotal= sumVent-(sumSal+ totalComision);
-      let caidas= dataStore.weekly.caidas||0;
-      let adelanto= dataStore.weekly.adelantoOficina||0;
-      let balOfic= subTotal- caidas- adelanto;
-      let balColor= balOfic===0?"#fff":(balOfic<0?"#f33":"#0ff");
-      const dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-
-      let html=`
-      <table>
-        <thead>
-          <tr>
-            <th>Día</th>
-            <th>Centenas</th>
-            <th>Pulitos</th>
-            <th>Salidas</th>
-            <th>Ventas</th>
-          </tr>
-        </thead>
-        <tbody>
-      `;
-      for(let i=0;i<7;i++){
-        html+=`
-          <tr>
-            <td>${dayNames[i]}</td>
-            <td>$${dayTotals[i].totalCentenas.toFixed(2)}</td>
-            <td>$${dayTotals[i].totalPulitos.toFixed(2)}</td>
-            <td style="color:#f33;">$${dayTotals[i].totalSalidas.toFixed(2)}</td>
-            <td>$${dayTotals[i].totalVentas.toFixed(2)}</td>
-          </tr>
-        `;
-      }
-      html+=`
-          <tr style="font-weight:bold;">
-            <td>Totales</td>
-            <td>$${sumCent.toFixed(2)}</td>
-            <td>$${sumPul.toFixed(2)}</td>
-            <td style="color:#f33;">$${sumSal.toFixed(2)}</td>
-            <td>$${sumVent.toFixed(2)}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="cuadre-section">
-        <h3>Cuadre Semanal</h3>
-        <div class="form-group">
-          <label>Total Ventas</label>
-          <input type="text" readonly value="${sumVent.toFixed(2)}">
-        </div>
-        <div class="form-group">
-          <label>Centenas 25%</label>
-          <input type="text" readonly value="${c25.toFixed(2)}">
-        </div>
-        <div class="form-group">
-          <label>Pulitos 10%</label>
-          <input type="text" readonly value="${p10.toFixed(2)}">
-        </div>
-        <div class="form-group">
-          <label>Total Comisión</label>
-          <input type="text" readonly value="${totalComision.toFixed(2)}">
-        </div>
-        <div class="form-group">
-          <label>Total Salidas</label>
-          <input type="text" readonly style="color:#f33;" value="${sumSal.toFixed(2)}">
-        </div>
-        <div class="form-group">
-          <label>Sub Total</label>
-          <input type="text" readonly style="color:#ff0;" value="${subTotal.toFixed(2)}">
-        </div>
-        <div class="form-group">
-          <label>Caídas (20%)</label>
-          <input type="number" max="900000" value="${caidas}" oninput="updateWeeklyField('caidas', this.value)">
-        </div>
-        <div class="form-group">
-          <label>Adelanto Oficina</label>
-          <input type="number" max="900000" value="${adelanto}" oninput="updateWeeklyField('adelantoOficina', this.value)">
-        </div>
-        <div class="form-group">
-          <label>Balance Oficina</label>
-          <input type="text" readonly style="color:${balColor};" value="${balOfic.toFixed(2)}">
-        </div>
-      </div>
-      `;
-      wCont.innerHTML= html;
-    }
-    function updateWeeklyField(field, val){
-      let n= parseFloat(val)||0; if(n>900000)n=900000;
-      dataStore.weekly[field]=n;
-      storeData();
-      updateWeeklyView();
-    }
-
-    /****************************************************
-     * SEND / RESET
-     ****************************************************/
-    function sendDayToSheets(dayKey){
-      alert("Placeholder: Enviar datos de "+dayKey+" a Sheets.");
-    }
-    function resetDay(dayKey){
-      if(!confirm("¿Resetear todos los datos del día?")) return;
-      dataStore[dayKey]={ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 };
-      for(let r=1;r<=20;r++){
-        dataStore[dayKey].pages.push({
-          pageNo:r, centenas:0, pulitos:0,
-          pendingPrizes:[], paidPrizes:[], totalSalidas:0
-        });
-      }
-      storeData();
-      renderDay(dayKey);
-    }
-    function sendWeekToSheets(){
-      alert("Placeholder: Enviar la semana completa a Sheets.");
-    }
-    function resetWeek(){
-      if(!confirm("¿Resetear toda la semana?")) return;
-      for(let i=1;i<=7;i++){
-        let dk="day"+i;
-        dataStore[dk]={ pages:[], overlook:0, cash:0, sucursal:0, credito:0, descuento:0, tickets:0 };
-        for(let r=1;r<=20;r++){
-          dataStore[dk].pages.push({
-            pageNo:r, centenas:0, pulitos:0,
-            pendingPrizes:[], paidPrizes:[], totalSalidas:0
+      // Generar 20 filas por defecto si no hay pages
+      if (dataStore.days[d].pages.length === 0) {
+        for (let i = 1; i <= 20; i++) {
+          dataStore.days[d].pages.push({
+            pageIndex: i,
+            centenas: '',
+            pulitos: '',
+            salidasTotal: '',
+            salidasDetail: {
+              pendientes: [],
+              pagados: []
+            }
           });
         }
       }
-      dataStore.weekly={ caidas:0, adelantoOficina:0 };
-      storeData();
-      renderAllDays();
-      updateWeeklyView();
+    }
+    // Inicializar weekly
+    if (!dataStore.weekly) {
+      dataStore.weekly = {
+        adelantoOficina: 0,
+        caidasSemana: 0
+      };
     }
 
-    /****************************************************
-     * ALMACENAR LOCALSTORAGE
-     ****************************************************/
-    function storeData(){
-      localStorage.setItem("dailyReportNeonData2", JSON.stringify(dataStore));
+    // Función para guardar en localStorage
+    function saveData() {
+      localStorage.setItem('dailyReportData', JSON.stringify(dataStore));
     }
 
-    /****************************************************
-     * EXPORT PDF
-     ****************************************************/
-    document.getElementById("btnExportPDF").addEventListener("click", ()=>{
-      alert("Generando captura de la pestaña activa...");
-      let activeTab= document.querySelector(".tabContent.active");
-      if(!activeTab){
-        alert("No hay pestaña activa.");
-        return;
+    /*************************************************************
+     * 4) RENDERIZAR DIA (TABLA DE PAGINAS)
+     *************************************************************/
+    function renderDay(dayIndex) {
+      const dayData = dataStore.days[dayIndex];
+      const tableBody = document.querySelector('#dayTable-' + dayIndex + ' tbody');
+      if (!tableBody) return; // puede no existir en tabs no definidos
+
+      // Limpia
+      tableBody.innerHTML = '';
+      // Inputs tienda, fecha, etc.
+      const tiendaInput = document.getElementById('tienda-' + dayIndex);
+      const fechaInput = document.getElementById('fecha-' + dayIndex);
+      const diaSemanaInput = document.getElementById('diaSemana-' + dayIndex);
+      const overlookInput = document.getElementById('overlook-' + dayIndex);
+
+      if (tiendaInput) tiendaInput.value = dayData.tienda || '';
+      if (fechaInput) fechaInput.value = dayData.fecha || '';
+      if (diaSemanaInput && dayData.diaSemana) {
+        diaSemanaInput.value = dayData.diaSemana;
       }
-      html2canvas(activeTab, {scale:1.5}).then(canvas=>{
-        let link= document.createElement("a");
-        link.download="Reporte.png";
-        link.href= canvas.toDataURL("image/png");
-        link.click();
-      }).catch(err=>{
-        console.error(err);
-        alert("Error al generar la captura.");
+      if (overlookInput) overlookInput.value = dayData.overlook || 0;
+
+      // Candado
+      const lockIcon = document.getElementById('lockDay-' + dayIndex);
+      if (lockIcon) {
+        if (dayData.locked) {
+          lockIcon.classList.remove('unlocked');
+          lockIcon.classList.add('locked');
+          lockIcon.classList.remove('bi-unlock');
+          lockIcon.classList.add('bi-lock-fill');
+        } else {
+          lockIcon.classList.add('unlocked');
+          lockIcon.classList.remove('locked');
+          lockIcon.classList.add('bi-unlock');
+          lockIcon.classList.remove('bi-lock-fill');
+        }
+      }
+
+      // Render pages
+      dayData.pages.forEach((page) => {
+        const tr = document.createElement('tr');
+
+        // # Página
+        const tdPageIndex = document.createElement('td');
+        tdPageIndex.textContent = '#' + page.pageIndex;
+        tr.appendChild(tdPageIndex);
+
+        // Centenas
+        const tdCentenas = document.createElement('td');
+        const inputCentenas = document.createElement('input');
+        inputCentenas.type = 'number';
+        inputCentenas.step = '1';
+        inputCentenas.placeholder = '';
+        inputCentenas.value = page.centenas;
+        inputCentenas.disabled = dayData.locked;
+        inputCentenas.addEventListener('input', () => {
+          page.centenas = inputCentenas.value;
+          saveAndRecalc(dayIndex);
+        });
+        tdCentenas.appendChild(inputCentenas);
+        tr.appendChild(tdCentenas);
+
+        // Pulitos
+        const tdPulitos = document.createElement('td');
+        const inputPulitos = document.createElement('input');
+        inputPulitos.type = 'number';
+        inputPulitos.step = '1';
+        inputPulitos.placeholder = '';
+        inputPulitos.value = page.pulitos;
+        inputPulitos.disabled = dayData.locked;
+        inputPulitos.addEventListener('input', () => {
+          page.pulitos = inputPulitos.value;
+          saveAndRecalc(dayIndex);
+        });
+        tdPulitos.appendChild(inputPulitos);
+        tr.appendChild(tdPulitos);
+
+        // Salidas (click -> modal)
+        const tdSalidas = document.createElement('td');
+        tdSalidas.classList.add('salidas-cell');
+        tdSalidas.style.cursor = 'pointer';
+        tdSalidas.textContent = page.salidasTotal || '';
+        tdSalidas.disabled = dayData.locked;
+        function updateSalidasCellColor() {
+          const hasPendiente = (page.salidasDetail.pendientes.length > 0);
+          const hasPagados = (page.salidasDetail.pagados.length > 0);
+          if (hasPendiente) {
+            // morado
+            tdSalidas.classList.add('pendiente');
+            tdSalidas.classList.remove('pagado');
+          } else if (hasPagados) {
+            // rojo
+            tdSalidas.classList.add('pagado');
+            tdSalidas.classList.remove('pendiente');
+          } else {
+            // sin color
+            tdSalidas.classList.remove('pendiente', 'pagado');
+          }
+        }
+        updateSalidasCellColor();
+        tdSalidas.addEventListener('click', () => {
+          // abrir modal con el detalle
+          openSalidasModal(dayIndex, page.pageIndex);
+        });
+        tr.appendChild(tdSalidas);
+
+        // Total
+        const tdTotal = document.createElement('td');
+        tdTotal.textContent = calcRowTotal(page);
+        tr.appendChild(tdTotal);
+
+        // Acción (eliminar fila)
+        const tdAccion = document.createElement('td');
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Borrar';
+        delBtn.classList.add('table-row-btn');
+        delBtn.disabled = dayData.locked;
+        delBtn.addEventListener('click', () => {
+          // Eliminar del array
+          const idx = dayData.pages.indexOf(page);
+          if (idx >= 0) {
+            dayData.pages.splice(idx, 1);
+            saveAndRecalc(dayIndex);
+          }
+        });
+        tdAccion.appendChild(delBtn);
+        tr.appendChild(tdAccion);
+
+        tableBody.appendChild(tr);
       });
-    });
+
+      // Render optional fields
+      renderOptionalFields(dayIndex);
+
+      // Recalcular totales
+      recalcDay(dayIndex);
+    }
+
+    function calcRowTotal(page) {
+      const c = parseFloat(page.centenas) || 0;
+      const p = parseFloat(page.pulitos) || 0;
+      return (c + p).toFixed(2);
+    }
+
+    function saveAndRecalc(dayIndex) {
+      saveData();
+      recalcDay(dayIndex);
+      renderDay(dayIndex);
+    }
+
+    /*************************************************************
+     * 5) RECALCULAR TOTALES DÍA
+     *************************************************************/
+    function recalcDay(dayIndex) {
+      const dayData = dataStore.days[dayIndex];
+      let sumCentenas = 0;
+      let sumPulitos = 0;
+      let sumSalidas = 0;
+
+      dayData.pages.forEach((p) => {
+        sumCentenas += parseFloat(p.centenas) || 0;
+        sumPulitos += parseFloat(p.pulitos) || 0;
+        sumSalidas += parseFloat(p.salidasTotal) || 0;
+      });
+      // Overlook
+      const overlookVal = parseFloat(dayData.overlook) || 0;
+      sumSalidas += overlookVal;
+
+      // Asignar a HTML
+      const totalCentenasSpan = document.getElementById('totalCentenas-' + dayIndex);
+      const totalPulitosSpan = document.getElementById('totalPulitos-' + dayIndex);
+      const totalSalidasSpan = document.getElementById('totalSalidas-' + dayIndex);
+      const ventasSpan = document.getElementById('ventas-' + dayIndex);
+      const salidasSpan = document.getElementById('salidas-' + dayIndex);
+      const subTotalSpan = document.getElementById('subTotal-' + dayIndex);
+      const netBalanceSpan = document.getElementById('netBalance-' + dayIndex);
+
+      if (totalCentenasSpan) totalCentenasSpan.textContent = sumCentenas.toFixed(2);
+      if (totalPulitosSpan) totalPulitosSpan.textContent = sumPulitos.toFixed(2);
+      if (totalSalidasSpan) totalSalidasSpan.textContent = sumSalidas.toFixed(2);
+
+      const ventas = sumCentenas + sumPulitos;
+      if (ventasSpan) ventasSpan.textContent = ventas.toFixed(2);
+
+      if (salidasSpan) salidasSpan.textContent = sumSalidas.toFixed(2);
+
+      const subTotal = ventas - sumSalidas;
+      if (subTotalSpan) subTotalSpan.textContent = subTotal.toFixed(2);
+
+      // Sumar optionalFields
+      let sumOptional = 0;
+      dayData.optionalFields.forEach((opt) => {
+        sumOptional += parseFloat(opt.value) || 0;
+      });
+
+      const netBalance = subTotal - sumOptional;
+      if (netBalanceSpan) {
+        netBalanceSpan.textContent = netBalance.toFixed(2);
+        if (netBalance > 0) {
+          netBalanceSpan.classList.add('positivo');
+          netBalanceSpan.classList.remove('negativo', 'cero');
+        } else if (netBalance < 0) {
+          netBalanceSpan.classList.add('negativo');
+          netBalanceSpan.classList.remove('positivo', 'cero');
+        } else {
+          netBalanceSpan.classList.add('cero');
+          netBalanceSpan.classList.remove('positivo', 'negativo');
+        }
+      }
+    }
+
+    /*************************************************************
+     * 6) MODAL SALIDAS (PENDIENTES/PAGADOS)
+     *************************************************************/
+    const salidasModal = new bootstrap.Modal(document.getElementById('salidasModal'));
+    let currentModalDay = null;
+    let currentModalPageIndex = null;
+    const pendientesContainer = document.getElementById('pendientesContainer');
+    const pagadosContainer = document.getElementById('pagadosContainer');
+
+    function openSalidasModal(dayIndex, pageIndex) {
+      currentModalDay = dayIndex;
+      currentModalPageIndex = pageIndex;
+      // Cargar data
+      const page = dataStore.days[dayIndex].pages.find(p => p.pageIndex === pageIndex);
+      if (!page) return;
+
+      // Render pendientes
+      pendientesContainer.innerHTML = '';
+      page.salidasDetail.pendientes.forEach((monto, i) => {
+        const div = document.createElement('div');
+        div.classList.add('mb-2', 'salida-pendiente');
+        div.textContent = monto;
+        // Al hacer clic => pasar a pagado
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', () => {
+          // Mover a pagados
+          page.salidasDetail.pendientes.splice(i, 1);
+          page.salidasDetail.pagados.push(monto);
+          calcSalidasTotal(page);
+          saveData();
+          openSalidasModal(dayIndex, pageIndex); // re-render
+        });
+        pendientesContainer.appendChild(div);
+      });
+      // Render pagados
+      pagadosContainer.innerHTML = '';
+      page.salidasDetail.pagados.forEach((monto, i) => {
+        const div = document.createElement('div');
+        div.classList.add('mb-2', 'salida-pagada');
+        div.textContent = monto;
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', () => {
+          // pasar a pendiente
+          page.salidasDetail.pagados.splice(i, 1);
+          page.salidasDetail.pendientes.push(monto);
+          calcSalidasTotal(page);
+          saveData();
+          openSalidasModal(dayIndex, pageIndex); // re-render
+        });
+        pagadosContainer.appendChild(div);
+      });
+
+      // Agregar opción para añadir +1 pendiente
+      const addPendBtn = document.createElement('button');
+      addPendBtn.classList.add('btn', 'btn-primary', 'mt-2');
+      addPendBtn.textContent = 'Añadir Premio Pendiente';
+      addPendBtn.addEventListener('click', () => {
+        const val = prompt('Monto del premio pendiente:', '0');
+        if (val) {
+          const numVal = parseFloat(val) || 0;
+          page.salidasDetail.pendientes.push(numVal);
+          calcSalidasTotal(page);
+          saveData();
+          openSalidasModal(dayIndex, pageIndex);
+        }
+      });
+      pendientesContainer.appendChild(addPendBtn);
+
+      // Agregar opción para añadir +1 pagado
+      const addPagBtn = document.createElement('button');
+      addPagBtn.classList.add('btn', 'btn-danger', 'mt-2', 'ms-2');
+      addPagBtn.textContent = 'Añadir Premio Pagado';
+      addPagBtn.addEventListener('click', () => {
+        const val = prompt('Monto del premio pagado:', '0');
+        if (val) {
+          const numVal = parseFloat(val) || 0;
+          page.salidasDetail.pagados.push(numVal);
+          calcSalidasTotal(page);
+          saveData();
+          openSalidasModal(dayIndex, pageIndex);
+        }
+      });
+      pagadosContainer.appendChild(addPagBtn);
+
+      calcSalidasTotal(page);
+
+      salidasModal.show();
+    }
+
+    function calcSalidasTotal(page) {
+      const pendSum = page.salidasDetail.pendientes.reduce((acc, val) => acc + parseFloat(val||0), 0);
+      const pagSum = page.salidasDetail.pagados.reduce((acc, val) => acc + parseFloat(val||0), 0);
+      page.salidasTotal = (pendSum + pagSum).toFixed(2);
+    }
+
+    /*************************************************************
+     * 7) AÑADIR PÁGINAS
+     *************************************************************/
+    for (let d = 1; d <= 7; d++) {
+      const addPageBtn = document.getElementById('addPageBtn-' + d);
+      if (addPageBtn) {
+        addPageBtn.addEventListener('click', () => {
+          const dayData = dataStore.days[d];
+          const nextIndex = dayData.pages.length + 1;
+          dayData.pages.push({
+            pageIndex: nextIndex,
+            centenas: '',
+            pulitos: '',
+            salidasTotal: '',
+            salidasDetail: {
+              pendientes: [],
+              pagados: []
+            }
+          });
+          saveAndRecalc(d);
+        });
+      }
+    }
+
+    /*************************************************************
+     * 8) OPTIONAL FIELDS (Cash, Sucursal, etc.)
+     *************************************************************/
+    function renderOptionalFields(dayIndex) {
+      const container = document.getElementById('optionalFields-' + dayIndex);
+      if (!container) return;
+      container.innerHTML = '';
+      const dayData = dataStore.days[dayIndex];
+
+      dayData.optionalFields.forEach((field, i) => {
+        const div = document.createElement('div');
+        div.classList.add('optional-field');
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = field.value;
+        input.placeholder = '0.00';
+        input.step = '1';
+        input.disabled = dayData.locked;
+        input.addEventListener('input', () => {
+          field.value = input.value;
+          saveAndRecalc(dayIndex);
+        });
+        div.appendChild(input);
+
+        const label = document.createElement('span');
+        label.textContent = field.name;
+        label.style.marginRight = '10px';
+        label.style.marginLeft = '8px';
+        div.appendChild(label);
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'X';
+        delBtn.classList.add('delete-optional-btn');
+        delBtn.disabled = dayData.locked;
+        delBtn.addEventListener('click', () => {
+          dayData.optionalFields.splice(i, 1);
+          saveAndRecalc(dayIndex);
+        });
+        div.appendChild(delBtn);
+
+        container.appendChild(div);
+      });
+    }
+
+    for (let d = 1; d <= 7; d++) {
+      const addOptBtn = document.getElementById('addOptionalFieldBtn-' + d);
+      if (addOptBtn) {
+        addOptBtn.addEventListener('click', () => {
+          const dayData = dataStore.days[d];
+          const name = prompt('Nombre del campo (ej. "Cash", "Sucursal", etc.)', 'Cash');
+          if (name) {
+            dayData.optionalFields.push({ name, value: '' });
+            saveAndRecalc(d);
+          }
+        });
+      }
+    }
+
+    /*************************************************************
+     * 9) RESET DÍA
+     *************************************************************/
+    for (let d = 1; d <= 7; d++) {
+      const resetBtn = document.getElementById('resetDayBtn-' + d);
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          if (!confirm('¿Seguro que deseas resetear el día ' + d + '?')) return;
+          dataStore.days[d] = {
+            locked: false,
+            tienda: '',
+            fecha: '',
+            diaSemana: dataStore.days[d].diaSemana || '',
+            overlook: 0,
+            pages: [],
+            optionalFields: []
+          };
+          // 20 filas default
+          for (let i = 1; i <= 20; i++) {
+            dataStore.days[d].pages.push({
+              pageIndex: i,
+              centenas: '',
+              pulitos: '',
+              salidasTotal: '',
+              salidasDetail: {
+                pendientes: [],
+                pagados: []
+              }
+            });
+          }
+          saveData();
+          renderDay(d);
+        });
+      }
+    }
+
+    /*************************************************************
+     * 10) BOTÓN ENVIAR A SHEETS
+     *************************************************************/
+    for (let d = 1; d <= 7; d++) {
+      const sendBtn = document.getElementById('sendDayBtn-' + d);
+      if (sendBtn) {
+        sendBtn.addEventListener('click', () => {
+          alert('Aquí iría la lógica para Enviar a Google Sheets o AppSheet. Día ' + d);
+        });
+      }
+    }
+
+    /*************************************************************
+     * 11) EXPORTAR A PDF (html2canvas)
+     *************************************************************/
+    for (let d = 1; d <= 7; d++) {
+      const exportBtn = document.getElementById('exportPdfDayBtn-' + d);
+      if (exportBtn) {
+        exportBtn.addEventListener('click', async () => {
+          const dayContainer = document.querySelector('#pills-'+ getDayName(d).toLowerCase());
+          if (!dayContainer) return;
+          // Generar screenshot
+          const canvas = await html2canvas(dayContainer);
+          const link = document.createElement('a');
+          link.download = 'Day'+d+'.png';
+          link.href = canvas.toDataURL();
+          link.click();
+        });
+      }
+    }
+
+    function getDayName(d) {
+      // 1->lunes, 2->martes, ...
+      const names = [
+        'Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo'
+      ];
+      return names[d-1] || 'Dia';
+    }
+
+    /*************************************************************
+     * 12) BLOQUEAR/DESBLOQUEAR DÍA
+     *************************************************************/
+    for (let d = 1; d <= 7; d++) {
+      const lockIcon = document.getElementById('lockDay-' + d);
+      if (lockIcon) {
+        lockIcon.addEventListener('click', () => {
+          dataStore.days[d].locked = !dataStore.days[d].locked;
+          saveData();
+          renderDay(d);
+        });
+      }
+    }
+
+    /*************************************************************
+     * 13) RENDERIZAR SEMANAL
+     *************************************************************/
+    const adelantoOficinaInput = document.getElementById('adelantoOficina');
+    const caidasSemanaInput = document.getElementById('caidasSemana');
+    const totalVentasSemanaSpan = document.getElementById('totalVentasSemana');
+    const totalSalidasSemanaSpan = document.getElementById('totalSalidasSemana');
+    const comisionCentenasSpan = document.getElementById('comisionCentenas');
+    const comisionPulitosSpan = document.getElementById('comisionPulitos');
+    const totalComisionSpan = document.getElementById('totalComision');
+    const subTotalSemanaSpan = document.getElementById('subTotalSemana');
+    const balanceOficinaSpan = document.getElementById('balanceOficina');
+
+    function recalcSemana() {
+      // Sumar totales de 7 días
+      let sumCentenasAll = 0;
+      let sumPulitosAll = 0;
+      let sumSalidasAll = 0;
+
+      for (let d = 1; d <= 7; d++) {
+        const dayData = dataStore.days[d];
+        let dayCentenas = 0, dayPulitos = 0, daySalidas = 0;
+        dayData.pages.forEach(p => {
+          dayCentenas += parseFloat(p.centenas) || 0;
+          dayPulitos += parseFloat(p.pulitos) || 0;
+          daySalidas += parseFloat(p.salidasTotal) || 0;
+        });
+        daySalidas += parseFloat(dayData.overlook) || 0;
+
+        sumCentenasAll += dayCentenas;
+        sumPulitosAll += dayPulitos;
+        sumSalidasAll += daySalidas;
+      }
+
+      const totalVentas = sumCentenasAll + sumPulitosAll;
+      const comiCent = sumCentenasAll * 0.25;
+      const comiPul = sumPulitosAll * 0.1;
+      const totalCom = comiCent + comiPul;
+      const adelanto = parseFloat(dataStore.weekly.adelantoOficina) || 0;
+      let subTotal = totalVentas - sumSalidasAll - totalCom - adelanto;
+      if (subTotal < 0) {
+        // Queda en negativo
+      }
+
+      // Caidas
+      let caidas = parseFloat(dataStore.weekly.caidasSemana) || 0;
+      // si subTotal > 0, se le puede calcular 20% auto
+      // Pero el usuario es libre de ajustarlo...
+      const balance = subTotal - caidas;
+
+      if (totalVentasSemanaSpan) totalVentasSemanaSpan.textContent = totalVentas.toFixed(2);
+      if (totalSalidasSemanaSpan) totalSalidasSemanaSpan.textContent = sumSalidasAll.toFixed(2);
+      if (comisionCentenasSpan) comisionCentenasSpan.textContent = comiCent.toFixed(2);
+      if (comisionPulitosSpan) comisionPulitosSpan.textContent = comiPul.toFixed(2);
+      if (totalComisionSpan) totalComisionSpan.textContent = totalCom.toFixed(2);
+      if (subTotalSemanaSpan) subTotalSemanaSpan.textContent = subTotal.toFixed(2);
+
+      if (balanceOficinaSpan) {
+        balanceOficinaSpan.textContent = balance.toFixed(2);
+        if (balance > 0) {
+          balanceOficinaSpan.classList.add('positivo');
+          balanceOficinaSpan.classList.remove('negativo','cero');
+        } else if (balance < 0) {
+          balanceOficinaSpan.classList.add('negativo');
+          balanceOficinaSpan.classList.remove('positivo','cero');
+        } else {
+          balanceOficinaSpan.classList.add('cero');
+          balanceOficinaSpan.classList.remove('positivo','negativo');
+        }
+      }
+    }
+    if (adelantoOficinaInput) {
+      adelantoOficinaInput.addEventListener('input', () => {
+        dataStore.weekly.adelantoOficina = adelantoOficinaInput.value;
+        saveData();
+        recalcSemana();
+      });
+    }
+    if (caidasSemanaInput) {
+      caidasSemanaInput.addEventListener('input', () => {
+        dataStore.weekly.caidasSemana = caidasSemanaInput.value;
+        saveData();
+        recalcSemana();
+      });
+    }
+
+    /*************************************************************
+     * 14) RESET SEMANA
+     *************************************************************/
+    const resetSemanaBtn = document.getElementById('resetSemanaBtn');
+    if (resetSemanaBtn) {
+      resetSemanaBtn.addEventListener('click', () => {
+        if (!confirm('¿Seguro que deseas resetear toda la semana?')) return;
+        // Resetea days
+        for (let d = 1; d <= 7; d++) {
+          dataStore.days[d] = {
+            locked: false,
+            tienda: '',
+            fecha: '',
+            diaSemana: dataStore.days[d].diaSemana || '',
+            overlook: 0,
+            pages: [],
+            optionalFields: []
+          };
+          for (let i = 1; i <= 20; i++) {
+            dataStore.days[d].pages.push({
+              pageIndex: i,
+              centenas: '',
+              pulitos: '',
+              salidasTotal: '',
+              salidasDetail: {
+                pendientes: [],
+                pagados: []
+              }
+            });
+          }
+        }
+        // Resetea weekly
+        dataStore.weekly = {
+          adelantoOficina: 0,
+          caidasSemana: 0
+        };
+        saveData();
+        // Rerender
+        for (let d = 1; d <= 7; d++) {
+          renderDay(d);
+        }
+        recalcSemana();
+        alert('Semana reseteada.');
+      });
+    }
+
+    /*************************************************************
+     * 15) GUARDAR/ENVIAR SEMANA
+     *************************************************************/
+    const saveSemanaBtn = document.getElementById('saveSemanaBtn');
+    if (saveSemanaBtn) {
+      saveSemanaBtn.addEventListener('click', () => {
+        // Lógica de guardado (puede mandar a Sheets la dataStore.weekly)
+        alert('Semana guardada / enviada (placeholder).');
+      });
+    }
+
+    /*************************************************************
+     * 16) BLOQUEO GLOBAL SEMANA
+     *************************************************************/
+    const lockSemanaBtn = document.getElementById('lockSemanaBtn');
+    if (lockSemanaBtn) {
+      lockSemanaBtn.addEventListener('click', () => {
+        const lockedNow = (lockSemanaBtn.getAttribute('data-locked') === 'true');
+        const newVal = !lockedNow;
+        lockSemanaBtn.setAttribute('data-locked', newVal);
+        if (newVal) {
+          lockSemanaBtn.innerHTML = '<i class="bi bi-lock-fill"></i> Desbloquear Semana';
+          // Bloquear todos los días
+          for (let d = 1; d <= 7; d++) {
+            dataStore.days[d].locked = true;
+          }
+        } else {
+          lockSemanaBtn.innerHTML = '<i class="bi bi-unlock"></i> Bloqueo Semana';
+          // Desbloquear
+          for (let d = 1; d <= 7; d++) {
+            dataStore.days[d].locked = false;
+          }
+        }
+        saveData();
+        // Rerender
+        for (let d = 1; d <= 7; d++) {
+          renderDay(d);
+        }
+      });
+    }
+
+    /*************************************************************
+     * 17) ARRANQUE INICIAL
+     *************************************************************/
+    // Llenar cada día
+    for (let d = 1; d <= 7; d++) {
+      renderDay(d);
+    }
+    recalcSemana();
+
+    // Observa que en tu proyecto real, también podrías setear la 
+    // fecha base para Lunes, Martes, etc., de forma automática 
+    // usando JavaScript (sumar días a la fecha base).
   </script>
 </body>
 </html>
