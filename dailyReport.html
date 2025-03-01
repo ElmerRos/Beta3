@@ -13,20 +13,24 @@
     }
 
     :root {
-      --main-bg: #111;
-      --main-text: #eee;
-      --accent-color: #0ff;  /* cian */
-      --danger-color: #f33;  /* rojo */
-      --lock-color: #fb0;    /* amarillo */
-      --purple-color: #a0f;  /* para Pendientes */
-      --purple-strong: #ff00ff; /* subTotal morado fuerte */
-      
-      /* Color en TODAS las tabs (diarias + semanal) */
-      --shared-tab-bg: #222;
+      --main-bg: #111;               /* fondo oscuro por defecto */
+      --main-text: #eee;             /* texto claro */
+      --accent-color: #0ff;          /* cian neón */
+      --danger-color: #f33;          /* rojo neón */
+      --lock-color: #fb0;            /* amarillo candado */
+      --purple-color: #a0f;          /* morado p. “pendientes” */
+      --purple-strong: #ff00ff;      /* subTotal morado fuerte */
+      --shared-tab-bg: #222;         /* fondo tabs diarias/semana */
 
-      --light-bg: #f9f9f9;
+      /* Paleta Light (beige pastel) */
+      --light-bg: #f3f0e3;           /* un beige clarito */
       --light-text: #000;
-      --light-accent: #00f; /* azul para resaltar en Light */
+      --light-accent: #0066cc;       /* un azul medio */
+      --light-border: #999;          
+      --light-caja: #fbf9f0;         /* caja un poco más clara */
+      --light-danger: #cc0033;       /* rojo algo más oscuro */
+      --light-lock: #ccb200;         /* amarillo pálido */
+      --light-purple: #b57aff;       /* un morado pastel */
     }
 
     body {
@@ -36,10 +40,113 @@
       font-size: 20px; 
       overflow: hidden;
     }
+
+    /* =========================
+       Modo Claro
+       ========================= */
     body.light-mode {
       background: var(--light-bg);
       color: var(--light-text);
     }
+    body.light-mode .sidebar {
+      background: var(--light-border);
+      border-right: 2px solid var(--light-accent);
+    }
+    body.light-mode .sidebar button {
+      color: var(--light-accent);
+      border-bottom: 1px solid #ccc;
+      text-shadow: none;
+    }
+    body.light-mode .sidebar button:hover {
+      background: #ddd;
+      color: #000;
+    }
+    body.light-mode .sidebar button.active {
+      background: var(--light-accent);
+      color: #fff;
+    }
+
+    body.light-mode .top-bar {
+      background: var(--light-border);
+      border-bottom: 2px solid var(--light-accent);
+    }
+    body.light-mode .btnNeon {
+      background: var(--light-caja);
+      color: var(--light-accent);
+      border: 2px solid var(--light-accent);
+      box-shadow: none;
+    }
+    body.light-mode .btnNeon:hover {
+      background: var(--light-accent);
+      color: #fff;
+    }
+    /* candados */
+    body.light-mode .btnLockDay {
+      background: var(--light-caja);
+      color: var(--light-lock);
+      border: 2px solid var(--light-lock);
+      box-shadow: none;
+    }
+    body.light-mode .btnLockDay.locked {
+      background: var(--light-lock);
+      color: #000;
+    }
+    /* scroll area, tab content */
+    body.light-mode .scroll-area {
+      background: var(--light-caja);
+    }
+    body.light-mode .tabContent {
+      background: var(--light-caja);
+      border-color: var(--light-accent);
+      box-shadow: none;
+    }
+    body.light-mode .tabContent table thead th {
+      background: #ddd;
+      color: var(--light-accent);
+      text-shadow: none;
+      border-bottom: 2px solid var(--light-accent);
+    }
+    body.light-mode .tabContent table td {
+      border-bottom: 1px solid #ccc;
+      color: #000;
+    }
+    body.light-mode .totals-section,
+    body.light-mode .cuadre-section {
+      background: var(--light-caja);
+      border-color: var(--light-accent);
+      box-shadow: none;
+    }
+    /* inputs en modo claro */
+    body.light-mode input[type="number"],
+    body.light-mode input[type="text"] {
+      background: #fff;
+      color: #000;
+      border: 1px solid #aaa;
+      box-shadow: none;
+    }
+    body.light-mode input[type="number"]:focus,
+    body.light-mode input[type="text"]:focus {
+      border-color: var(--light-accent);
+    }
+    /* Botón Page (rojo) => en light sea algo distinto: */
+    body.light-mode .pageBtn {
+      background: var(--light-danger);
+      box-shadow: none;
+    }
+    body.light-mode .pageBtn:hover {
+      background: #ff6677;
+    }
+    /* Salidas rojas => usar --light-danger?  Lo dejamos así por simplicidad. */
+
+    /* =========================
+       Contenedor principal
+       ========================= */
+    .container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+    .hidden { display: none !important; }
 
     /* Quitar spin buttons en inputs number */
     input[type=number]::-webkit-outer-spin-button,
@@ -49,14 +156,6 @@
     input[type=number] {
       -moz-appearance: textfield;
     }
-
-    /* Contenedor principal */
-    .container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-    }
-    .hidden { display: none !important; }
 
     /************ PIN OVERLAY ************/
     .pin-overlay {
@@ -173,10 +272,12 @@
       cursor: pointer;
       box-shadow: 0 0 5px var(--accent-color);
       font-size: 1rem;
+      transition: transform 0.2s;
     }
     .btnNeon:hover {
       background: var(--accent-color);
       color: #000;
+      transform: scale(1.05);
     }
     .btnLockDay {
       display: inline-flex;
@@ -190,10 +291,15 @@
       font-size: 1.5rem;
       cursor: pointer;
       box-shadow: 0 0 10px var(--lock-color);
+      transition: transform 0.2s;
+    }
+    .btnLockDay:hover {
+      transform: scale(1.1);
     }
     .btnLockDay.locked {
       background: var(--lock-color);
       color: #000;
+      transform: scale(1);
     }
 
     .scroll-area {
@@ -203,7 +309,7 @@
       background: #000;
     }
 
-    /************ TAB CONTENT (fondo #222) ************/
+    /************ TAB CONTENT ************/
     .tabContent {
       display: none;
       padding: 1rem;
@@ -217,27 +323,50 @@
       display: block;
     }
 
-    /************ TABLA DE PÁGINAS ************/
-    table {
+    /************ TABLA DE PÁGINAS (DIARIO) ************/
+    .report-table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 1rem;
       color: var(--main-text);
-      font-size: 1rem;
+      table-layout: fixed; /* Para alinear encabezados y columnas */
     }
-    thead th {
+    .report-table thead th,
+    .report-table tbody td {
+      font-size: 1.5rem; /* 50% más grande que 1rem => 1.5rem */
+      text-align: center;
+      border-bottom: 1px solid #444;
+      vertical-align: middle;
+      padding: 0.5rem;
+    }
+    .report-table thead th {
       background: rgba(0,0,0,0.4);
       color: var(--accent-color);
       border-bottom: 2px solid var(--accent-color);
       text-shadow: 0 0 3px var(--accent-color);
-      text-align: center;
-      padding: 0.3rem;
     }
-    td, th {
-      padding: 0.3rem;
-      border-bottom: 1px solid #444;
-      vertical-align: middle;
+    /* 5 columnas => 20% c/u */
+    .report-table thead th:nth-child(1),
+    .report-table tbody td:nth-child(1) {
+      width: 20%;
     }
+    .report-table thead th:nth-child(2),
+    .report-table tbody td:nth-child(2) {
+      width: 20%;
+    }
+    .report-table thead th:nth-child(3),
+    .report-table tbody td:nth-child(3) {
+      width: 20%;
+    }
+    .report-table thead th:nth-child(4),
+    .report-table tbody td:nth-child(4) {
+      width: 20%;
+    }
+    .report-table thead th:nth-child(5),
+    .report-table tbody td:nth-child(5) {
+      width: 20%;
+    }
+
     input[type="number"], input[type="text"] {
       background: #000;
       color: var(--accent-color);
@@ -262,15 +391,18 @@
       border-radius: 6px;
       padding: 0.3rem 0.6rem;
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 1.2rem;
       box-shadow: 0 0 5px var(--danger-color);
+      transition: transform 0.2s;
     }
     .pageBtn:hover {
       background: #f66;
+      transform: scale(1.05);
     }
 
     /************ TOTALS / CUADRE ************/
-    .totals-section, .cuadre-section {
+    .totals-section,
+    .cuadre-section {
       border: 2px solid var(--accent-color);
       border-radius: 8px;
       padding: 1rem;
@@ -278,14 +410,13 @@
       background: #000;
       box-shadow: 0 0 8px var(--accent-color);
     }
-    .totals-section h3, .cuadre-section h3 {
+    .totals-section h3,
+    .cuadre-section h3 {
       color: var(--accent-color);
       margin-bottom: 1rem;
       text-shadow: 0 0 3px var(--accent-color);
     }
-    .totals-section p, .cuadre-section p {
-      margin: 0.4rem 0;
-    }
+
     .form-group {
       display: flex;
       align-items: center;
@@ -296,6 +427,49 @@
       font-weight: bold;
       color: var(--accent-color);
       text-shadow: 0 0 2px var(--accent-color);
+      margin-right: 0.5rem;
+    }
+
+    /************ TABLA SEMANAL ************/
+    .weekly-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 1rem;
+    }
+    .weekly-table thead th,
+    .weekly-table tbody td {
+      font-size: 1.5rem;
+      text-align: center;
+      border-bottom: 1px solid #444;
+      padding: 0.5rem;
+    }
+    .weekly-table thead th {
+      background: rgba(0,0,0,0.4);
+      color: var(--accent-color);
+      border-bottom: 2px solid var(--accent-color);
+      text-shadow: 0 0 3px var(--accent-color);
+    }
+    /* 5 columnas => 20% cada una */
+    .weekly-table thead th:nth-child(1),
+    .weekly-table tbody td:nth-child(1) {
+      width: 20%;
+    }
+    .weekly-table thead th:nth-child(2),
+    .weekly-table tbody td:nth-child(2) {
+      width: 20%;
+    }
+    .weekly-table thead th:nth-child(3),
+    .weekly-table tbody td:nth-child(3) {
+      width: 20%;
+    }
+    .weekly-table thead th:nth-child(4),
+    .weekly-table tbody td:nth-child(4) {
+      width: 20%;
+    }
+    .weekly-table thead th:nth-child(5),
+    .weekly-table tbody td:nth-child(5) {
+      width: 20%;
     }
 
     /************ MODAL DE SALIDAS ************/
@@ -323,6 +497,7 @@
       margin-bottom: 1rem;
       text-shadow: 0 0 2px var(--accent-color);
       text-align: center;
+      font-size: 1.4rem;
     }
     .closeModal {
       position: absolute;
@@ -346,8 +521,14 @@
       text-align: center;
     }
     .modal table input {
-      width: 120px;
+      width: 80px;
       font-size: 1rem;
+      background: #000;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      border-radius: 4px;
+      text-align: right;
+      box-shadow: inset 0 0 5px var(--accent-color);
     }
     .addPrizeBtn {
       background: #000;
@@ -363,25 +544,25 @@
       background: var(--purple-color);
       color: #000;
     }
+    .paidBtn, .pendingBtn {
+      font-size: 0.9rem;
+      padding: 0.2rem 0.4rem;
+      cursor: pointer;
+      margin-right: 0.3rem;
+    }
     .paidBtn {
       background: var(--danger-color);
       color: #fff;
       border: none;
       border-radius: 4px;
-      padding: 0.2rem 0.4rem;
-      cursor: pointer;
       box-shadow: 0 0 3px var(--danger-color);
-      margin-right: 0.3rem;
     }
     .pendingBtn {
       background: var(--purple-color);
       color: #fff;
       border: none;
       border-radius: 4px;
-      padding: 0.2rem 0.4rem;
-      cursor: pointer;
       box-shadow: 0 0 3px var(--purple-color);
-      margin-right: 0.3rem;
     }
 
     /************ MANUAL ************/
@@ -392,7 +573,8 @@
       padding: 1rem;
       box-shadow: 0 0 8px var(--accent-color);
     }
-    .manual-content h3, .manual-content h4 {
+    .manual-content h3,
+    .manual-content h4 {
       color: var(--accent-color);
       text-shadow: 0 0 2px var(--accent-color);
       margin-bottom: 0.5rem;
@@ -449,6 +631,7 @@
 
       <!-- SCROLL AREA -->
       <div class="scroll-area">
+
         <!-- DIA 1 -->
         <div id="tabDay1" class="tabContent active">
           <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -742,7 +925,7 @@
     }
 
     /****************************************************
-     * LOCK
+     * LOCK (Días y Semana)
      ****************************************************/
     function initLockButtons(){
       for(let i=1;i<=7;i++){
@@ -755,7 +938,7 @@
           renderDay(dk);
         });
       }
-      // LockAll & UnlockAll
+      // LockAll & UnlockAll (pestaña Semanal)
       document.getElementById("lockAllBtn").addEventListener("click", ()=>{
         lockedAll=true;
         for(let i=1;i<=7;i++){
@@ -779,7 +962,7 @@
     }
 
     /****************************************************
-     * TOGGLE THEME
+     * TOGGLE THEME (Dark <-> Light)
      ****************************************************/
     function initToggleTheme(){
       document.getElementById("btnToggleTheme").addEventListener("click", ()=>{
@@ -808,8 +991,9 @@
       let dayData = dataStore[dayKey];
       let locked = lockedDays[dayKey]||lockedAll;
 
+      // Vamos a usar la clase .report-table (con table-layout: fixed)
       let html=`
-        <table>
+        <table class="report-table">
           <thead>
             <tr>
               <th>#Página</th>
@@ -822,28 +1006,46 @@
           <tbody>
       `;
       dayData.pages.forEach((p,idx)=>{
+        // Si p.centenas == 0 => campo vacío
+        let cVal = (p.centenas!==0 ? p.centenas : "");
+        let puVal= (p.pulitos!==0 ? p.pulitos : "");
         let totalCP = (p.centenas + p.pulitos);
-        // si hay >=1 premio pendiente => color morado, si no => color rojo
-        let hasPending = (p.pendingPrizes||[]).reduce((a,v)=>a+v,0)>0;
+        // si hay >=1 premio pendiente => color morado, si no => rojo
+        let sumPend = (p.pendingPrizes||[]).reduce((a,v)=>a+v,0);
+        let hasPending = (sumPend>0);
         let salidasColor = hasPending? "var(--purple-color)" : "var(--danger-color)";
+        let salidasVal = p.totalSalidas.toFixed(2);
+
         html += `
           <tr>
-            <td style="text-align:center;">
+            <td>
               <!-- Botón Eliminar fila (usa pageNo como etiqueta) -->
               <button class="pageBtn" onclick="deletePageRow('${dayKey}',${idx})" ${locked?'disabled':''}>
                 ${p.pageNo}
               </button>
             </td>
             <td>
-              <input type="number" max="900000" value="${p.centenas}" data-day="${dayKey}" data-pindex="${idx}" data-field="centenas"
-                oninput="updatePageField(this)" ${locked?'disabled':''}>
+              <input type="number" 
+                     data-day="${dayKey}" 
+                     data-pindex="${idx}" 
+                     data-field="centenas" 
+                     max="900000"
+                     value="${cVal}"
+                     onchange="updatePageField(this)" 
+                     ${locked?'disabled':''}>
             </td>
             <td>
-              <input type="number" max="900000" value="${p.pulitos}" data-day="${dayKey}" data-pindex="${idx}" data-field="pulitos"
-                oninput="updatePageField(this)" ${locked?'disabled':''}>
+              <input type="number"
+                     data-day="${dayKey}" 
+                     data-pindex="${idx}" 
+                     data-field="pulitos" 
+                     max="900000"
+                     value="${puVal}"
+                     onchange="updatePageField(this)" 
+                     ${locked?'disabled':''}>
             </td>
             <td style="cursor:pointer; color:${salidasColor};" onclick="openPrizesModal('${dayKey}',${idx})">
-              $${p.totalSalidas.toFixed(2)}
+              $${salidasVal}
             </td>
             <td>$${totalCP.toFixed(2)}</td>
           </tr>
@@ -854,31 +1056,51 @@
       // Calcular totales y armar secciones Totals / Cuadre
       let t=calcDayTotals(dayKey);
       let subT = t.totalVentas - t.totalSalidas;
-      // NetBalance = subT - (cash + sucursal + credito + descuento + tickets)
       let netBal = subT - (dayData.cash + dayData.sucursal + dayData.credito + dayData.descuento + dayData.tickets);
       
-      // Color para netBal
+      // Color netBal
       let nbColor = "#000"; 
       if(netBal>0) nbColor="#00f";   // azul
       else if(netBal<0) nbColor="#f33"; // rojo
 
-      // Sección Totals
+      // Overlook => si 0 => mostrar vacío
+      let ovVal = (dayData.overlook!==0 ? dayData.overlook : "");
+
       html += `
         <div class="totals-section">
           <h3>Totales</h3>
-          <p><strong>Total Centenas:</strong> $${t.totalCentenas.toFixed(2)}</p>
-          <p><strong>Total Pulitos:</strong> $${t.totalPulitos.toFixed(2)}</p>
-          <p><strong>Overlook:</strong>
-            <input type="number" max="900000" value="${dayData.overlook}" data-day="${dayKey}" data-field="overlook" oninput="updateDayField(this)" ${locked?'disabled':''}>
-          </p>
-          <p><strong>Total Salidas:</strong> <span style="color:var(--danger-color)">$${t.totalSalidas.toFixed(2)}</span></p>
-          <p><strong>Total Ventas:</strong> $${t.totalVentas.toFixed(2)}</p>
+
+          <!-- Lo haremos en formato form-group para alinear igual que Cuadre -->
+          <div class="form-group">
+            <label>Total Centenas</label>
+            <input type="text" readonly value="$${t.totalCentenas.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Total Pulitos</label>
+            <input type="text" readonly value="$${t.totalPulitos.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Overlook</label>
+            <input type="number" 
+                   max="900000" 
+                   data-day="${dayKey}" 
+                   data-field="overlook" 
+                   value="${ovVal}"
+                   onchange="updateDayField(this)" 
+                   ${locked?'disabled':''}>
+          </div>
+          <div class="form-group">
+            <label>Total Salidas</label>
+            <input type="text" readonly style="color:var(--danger-color);" value="$${t.totalSalidas.toFixed(2)}">
+          </div>
+          <div class="form-group">
+            <label>Total Ventas</label>
+            <input type="text" readonly value="$${t.totalVentas.toFixed(2)}">
+          </div>
         </div>
       `;
 
-      // Sección Cuadre
-      // SubTotal lo mostramos en morado
-      let subColor = "var(--purple-strong)";
+      let subColor = "var(--purple-strong)"; // Morado
       html += `
         <div class="cuadre-section">
           <h3>Cuadre del Día</h3>
@@ -896,28 +1118,54 @@
           </div>
           <div class="form-group">
             <label>Cash</label>
-            <input type="number" max="900000" value="${dayData.cash}" data-day="${dayKey}" data-field="cash" oninput="updateDayField(this)"
-              style="color:#0f0;" ${locked?'disabled':''}>
+            <input type="number" 
+                   max="900000" 
+                   data-day="${dayKey}" 
+                   data-field="cash" 
+                   value="${(dayData.cash!==0?dayData.cash:"")}"
+                   onchange="updateDayField(this)"
+                   style="color:#0f0;" 
+                   ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Sucursal</label>
-            <input type="number" max="900000" value="${dayData.sucursal}" data-day="${dayKey}" data-field="sucursal" oninput="updateDayField(this)"
-             ${locked?'disabled':''}>
+            <input type="number" 
+                   max="900000" 
+                   data-day="${dayKey}" 
+                   data-field="sucursal" 
+                   value="${(dayData.sucursal!==0?dayData.sucursal:"")}"
+                   onchange="updateDayField(this)"
+                   ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Crédito</label>
-            <input type="number" max="900000" value="${dayData.credito}" data-day="${dayKey}" data-field="credito" oninput="updateDayField(this)"
-             ${locked?'disabled':''}>
+            <input type="number" 
+                   max="900000" 
+                   data-day="${dayKey}" 
+                   data-field="credito" 
+                   value="${(dayData.credito!==0?dayData.credito:"")}"
+                   onchange="updateDayField(this)"
+                   ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Descuento</label>
-            <input type="number" max="900000" value="${dayData.descuento}" data-day="${dayKey}" data-field="descuento" oninput="updateDayField(this)"
-             ${locked?'disabled':''}>
+            <input type="number" 
+                   max="900000" 
+                   data-day="${dayKey}" 
+                   data-field="descuento" 
+                   value="${(dayData.descuento!==0?dayData.descuento:"")}"
+                   onchange="updateDayField(this)"
+                   ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Tickets</label>
-            <input type="number" max="900000" value="${dayData.tickets}" data-day="${dayKey}" data-field="tickets" oninput="updateDayField(this)"
-             ${locked?'disabled':''}>
+            <input type="number"
+                   max="900000" 
+                   data-day="${dayKey}" 
+                   data-field="tickets" 
+                   value="${(dayData.tickets!==0?dayData.tickets:"")}"
+                   onchange="updateDayField(this)"
+                   ${locked?'disabled':''}>
           </div>
           <div class="form-group">
             <label>Net Balance</label>
@@ -929,15 +1177,16 @@
       container.innerHTML = html;
     }
 
+    // Cálculo totales día
     function calcDayTotals(dayKey){
       let d=dataStore[dayKey];
       let tc=0, tp=0, ts=0;
       d.pages.forEach(p=>{
-        tc += p.centenas;
-        tp += p.pulitos;
-        ts += p.totalSalidas;
+        tc += (p.centenas||0);
+        tp += (p.pulitos||0);
+        ts += (p.totalSalidas||0);
       });
-      ts += d.overlook;  // Sumar Overlook
+      ts += (d.overlook||0);  
       return {
         totalCentenas: tc,
         totalPulitos: tp,
@@ -946,25 +1195,33 @@
       };
     }
 
+    // Actualizar al cambiar campo en la tabla
     function updatePageField(input){
       let dayKey = input.dataset.day;
       let pindex= parseInt(input.dataset.pindex);
       let field= input.dataset.field;
-      let val = parseFloat(input.value)||0;
+      let valStr= input.value.trim();
+      let val = valStr===""? 0 : parseFloat(valStr);
+      if(isNaN(val)) val=0;
       if(val>900000) val=900000;
       dataStore[dayKey].pages[pindex][field]= val;
       storeData();
       renderDay(dayKey);
     }
+
+    // Actualizar al cambiar Overlook, Cash, etc.
     function updateDayField(input){
       let dayKey=input.dataset.day;
       let field=input.dataset.field;
-      let val= parseFloat(input.value)||0;
+      let valStr= input.value.trim();
+      let val= valStr===""? 0 : parseFloat(valStr);
+      if(isNaN(val)) val=0;
       if(val>900000) val=900000;
       dataStore[dayKey][field]= val;
       storeData();
       renderDay(dayKey);
     }
+
     function deletePageRow(dayKey, idx){
       if(!confirm("¿Eliminar esta página?")) return;
       dataStore[dayKey].pages.splice(idx,1);
@@ -1015,7 +1272,10 @@
         pendHTML+=`
           <tr>
             <td>
-              <input type="number" max="900000" value="${v}" oninput="updatePrizeValue(${i},'pending',this.value)">
+              <input type="number" 
+                     max="900000" 
+                     value="${v!==0?v:""}" 
+                     onchange="updatePrizeValue(${i},'pending',this.value)">
             </td>
             <td>
               <button class="paidBtn" onclick="movePrize(${i},'pending')">→Pagado</button>
@@ -1031,7 +1291,10 @@
         paidHTML+=`
           <tr>
             <td>
-              <input type="number" max="900000" value="${v}" oninput="updatePrizeValue(${i},'paid',this.value)">
+              <input type="number" 
+                     max="900000" 
+                     value="${v!==0?v:""}"
+                     onchange="updatePrizeValue(${i},'paid',this.value)">
             </td>
             <td>
               <button class="pendingBtn" onclick="movePrize(${i},'paid')">→Pend</button>
@@ -1051,9 +1314,11 @@
       recalcPageSalidas();
       storeData();
     }
-    function updatePrizeValue(idx, type, val){
+    function updatePrizeValue(idx, type, valStr){
       let pageData= dataStore[currentModalDayKey].pages[currentModalIndex];
-      let n= parseFloat(val)||0; if(n>900000) n=900000;
+      let n= valStr.trim()===""? 0 : parseFloat(valStr);
+      if(isNaN(n)) n=0;
+      if(n>900000) n=900000;
       if(type==="pending") pageData.pendingPrizes[idx]=n;
       else pageData.paidPrizes[idx]=n;
       recalcPageSalidas();
@@ -1116,15 +1381,16 @@
       let adelanto= dataStore.weekly.adelantoOficina||0;
       let balOfic= subTotal - caidas - adelanto;
 
-      // Color para balance final
-      let boColor="#000"; // negro si 0
-      if(balOfic>0) boColor="#00f"; 
+      // Color balance final
+      let boColor="#000";
+      if(balOfic>0) boColor="#00f";
       else if(balOfic<0) boColor="#f33";
 
       const dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 
+      // Usamos .weekly-table con table-layout: fixed
       let html=`
-      <table>
+      <table class="weekly-table">
         <thead>
           <tr>
             <th>Día</th>
@@ -1186,11 +1452,11 @@
         </div>
         <div class="form-group">
           <label>Caídas (20%)</label>
-          <input type="number" max="900000" value="${caidas}" oninput="updateWeeklyField('caidas', this.value)">
+          <input type="number" max="900000" value="${(caidas!==0?caidas:"")}" onchange="updateWeeklyField('caidas', this.value)">
         </div>
         <div class="form-group">
           <label>Adelanto Oficina</label>
-          <input type="number" max="900000" value="${adelanto}" oninput="updateWeeklyField('adelantoOficina', this.value)">
+          <input type="number" max="900000" value="${(adelanto!==0?adelanto:"")}" onchange="updateWeeklyField('adelantoOficina', this.value)">
         </div>
         <div class="form-group">
           <label>Balance Oficina</label>
@@ -1200,8 +1466,10 @@
       `;
       wCont.innerHTML= html;
     }
-    function updateWeeklyField(field, val){
-      let n= parseFloat(val)||0; if(n>900000)n=900000;
+    function updateWeeklyField(field, valStr){
+      let n= valStr.trim()===""? 0 : parseFloat(valStr);
+      if(isNaN(n)) n=0;
+      if(n>900000)n=900000;
       dataStore.weekly[field]= n;
       storeData();
       updateWeeklyView();
