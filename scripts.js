@@ -1,7 +1,7 @@
  /* =========================================================
    SCRIPTS.JS COMPLETO
    (Mantiene toda la lógica previa intacta,
-    e incorpora el Wizard tal como en tu backup).
+    e incorpora las funciones OCR al final).
 ========================================================= */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -242,7 +242,7 @@ $(document).ready(function() {
       return "Single Action";
     }
 
-    // 3) Pale => (22-xx) o (22-x-55)
+    // 3) Pale => (22-xx)
     const paleRegex = /^(\d{2})(-|x)(\d{2})$/;
     if(paleRegex.test(betNumber)){
       if(includesVenezuela && isUSA) {
@@ -477,7 +477,7 @@ $(document).ready(function() {
             let co= dayjs(raw, "HH:mm");
             let cf= co.isAfter(dayjs("21:30","HH:mm")) ? dayjs("22:00","HH:mm"): co.subtract(10,"minute");
             if(now.isSame(cf)||now.isAfter(cf)){
-              alert(`Track "${t}" is closed for today.`);
+              alert(\`Track "\${t}" is closed for today.\`);
               return;
             }
           }
@@ -606,7 +606,7 @@ $(document).ready(function() {
 
     if(!valid){
       const uniqueErr=[...new Set(errors)].join(", ");
-      alert(`Some plays have errors or exceed limits (row(s): ${uniqueErr}). Please fix them.`);
+      alert(\`Some plays have errors or exceed limits (row(s): \${uniqueErr}). Please fix them.\`);
       return;
     }
 
@@ -690,7 +690,7 @@ $(document).ready(function() {
         // auto download
         const link= document.createElement("a");
         link.href= dataUrl;
-        link.download= `ticket_${uniqueTicket}.jpg`;
+        link.download= \`ticket_\${uniqueTicket}.jpg\`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -795,7 +795,7 @@ $(document).ready(function() {
       body: JSON.stringify({ data: betData })
     })
     .then(r=>{
-      if(!r.ok) throw new Error(`SheetDB error: ${r.status}`);
+      if(!r.ok) throw new Error(\`SheetDB error: \${r.status}\`);
       return r.json();
     })
     .then(d=>{
@@ -890,7 +890,7 @@ $(document).ready(function() {
         let cf= co.isAfter(dayjs("21:30","HH:mm"))? dayjs("22:00","HH:mm"): co.subtract(10,"minute");
         const hh= cf.format("HH");
         const mm= cf.format("mm");
-        $(this).text(`${hh}:${mm}`);
+        $(this).text(\`\${hh}:\${mm}\`);
       }
     });
   }
@@ -935,6 +935,7 @@ $(document).ready(function() {
       }
     });
   }
+
 
   /*
    ==========================================================
@@ -985,7 +986,7 @@ $(document).ready(function() {
     const bn = $("#wizardBetNumber").val().trim();
     const gm = determineGameMode(bn);
     if(gm==="-"){
-      alert(`Cannot determine game mode for "${bn}". Check tracks or length/format.`);
+      alert(\`Cannot determine game mode for "\${bn}". Check tracks or length/format.\`);
       return;
     }
     let stVal = $("#wizardStraight").val().trim();
@@ -1066,7 +1067,7 @@ $(document).ready(function() {
   function generateRandomNumberForMode(mode){
     // Ejemplo de generador random
     if(mode==="NY Horses"){
-      const length = Math.floor(Math.random()*4)+1; // 1-4 dígitos
+      const length = Math.floor(Math.random()*4)+1; 
       const maxVal = Math.pow(10,length)-1;
       return Math.floor(Math.random()*(maxVal+1));
     }
@@ -1282,9 +1283,9 @@ $(document).ready(function() {
   }
 
   /*
-   ==========================================================
+   =========================================================
    Intro.js Tutorial (3 idiomas) (Sin cambios)
-   ==========================================================
+   =========================================================
   */
   const tutorialStepsEN = [
     {
@@ -1411,9 +1412,9 @@ $(document).ready(function() {
   $("#helpCreole").click(()=>startTutorial('ht'));
 
   /*
-   ==========================================================
+   =========================================================
    MANUAL (mostrar/ocultar textos)
-   ==========================================================
+   =========================================================
   */
   $("#manualEnglishBtn").click(function(){
     $("#manualEnglishText").removeClass("d-none");
@@ -1430,5 +1431,151 @@ $(document).ready(function() {
     $("#manualSpanishText").addClass("d-none");
     $("#manualCreoleText").removeClass("d-none");
   });
+
+
+  /* 
+     =========================================================
+     AÑADIMOS AQUÍ EL CÓDIGO OCR (modal, drag/drop, fetch)
+     =========================================================
+  */
+
+  // Variables globales OCR:
+  let selectedFileGlobal = null;  // archivo de imagen
+  let jugadasGlobal = [];         // guardamos las jugadas parseadas
+
+  // (A) Función para abrir el Modal OCR (Bootstrap)
+  window.abrirModalOCR = function() {
+    // Limpiar estados anteriores
+    selectedFileGlobal = null;
+    jugadasGlobal = [];
+
+    $("#ocrFile").val("");
+    $("#ocrPreview").addClass("d-none").attr("src","");
+    $("#ocrJugadas").empty();
+    $("#ocrSpinner").addClass("d-none");
+
+    // Mostrar el modal (Bootstrap 5)
+    const modal = new bootstrap.Modal(document.getElementById("modalOcr"));
+    modal.show();
+  };
+
+  // (B) Drag & Drop
+  window.handleDragOver = function(e) {
+    e.preventDefault();
+    $("#ocrDropZone").addClass("dragover");
+  };
+
+  window.handleDragLeave = function(e) {
+    e.preventDefault();
+    $("#ocrDropZone").removeClass("dragover");
+  };
+
+  window.handleDrop = function(e) {
+    e.preventDefault();
+    $("#ocrDropZone").removeClass("dragover");
+    if(e.dataTransfer.files && e.dataTransfer.files[0]){
+      selectedFileGlobal = e.dataTransfer.files[0];
+      $("#ocrPreview").attr("src", URL.createObjectURL(selectedFileGlobal))
+                      .removeClass("d-none");
+    }
+  };
+
+  // (C) File input
+  window.handleFileChange = function(e) {
+    if(e.target.files && e.target.files[0]){
+      selectedFileGlobal = e.target.files[0];
+      $("#ocrPreview").attr("src", URL.createObjectURL(selectedFileGlobal))
+                      .removeClass("d-none");
+    }
+  };
+
+  // (D) Procesar OCR => llama /ocr
+  window.procesarOCR = async function() {
+    if(!selectedFileGlobal){
+      alert("No has seleccionado ninguna imagen.");
+      return;
+    }
+    $("#ocrSpinner").removeClass("d-none");
+    $("#ocrJugadas").empty();
+
+    try {
+      let formData = new FormData();
+      formData.append("ticket", selectedFileGlobal);
+
+      // Ajusta la URL si tu backend está en otro dominio:
+      let resp = await fetch("/ocr", {
+        method:"POST",
+        body: formData
+      });
+      let data = await resp.json();
+
+      if(!data.success){
+        alert("Error en OCR: "+data.error);
+        return;
+      }
+      jugadasGlobal = data.resultado.jugadas || [];
+      let camposDudosos = data.resultado.camposDudosos || [];
+
+      if(jugadasGlobal.length===0){
+        $("#ocrJugadas").html("<p>No se detectaron jugadas en la imagen.</p>");
+        return;
+      }
+
+      let html = "<h5>Jugadas Detectadas:</h5>";
+      jugadasGlobal.forEach((j, idx)=>{
+        html += `
+          <div style="border:1px solid #ccc; padding:0.5rem; margin-bottom:0.5rem;">
+            <p><strong>Fecha:</strong> ${j.fecha}</p>
+            <p><strong>Track:</strong> ${j.track}</p>
+            <p><strong>TipoJuego:</strong> ${j.tipoJuego}</p>
+            <p><strong>Modalidad:</strong> ${j.modalidad}</p>
+            <p><strong>Números:</strong> ${j.numeros}</p>
+            <p><strong>Monto:</strong> ${j.montoApostado}</p>
+            <button class="btn btn-sm btn-info" onclick="usarJugada(${idx})">
+              Usar esta Jugada
+            </button>
+          </div>
+        `;
+      });
+      if(camposDudosos.length>0){
+        html += `<p style="color:orange;">Campos dudosos: ${camposDudosos.join(", ")}</p>`;
+      }
+      $("#ocrJugadas").html(html);
+
+    } catch(err){
+      alert("Error subiendo OCR: "+err.message);
+    } finally {
+      $("#ocrSpinner").addClass("d-none");
+    }
+  };
+
+  // (E) Usar Jugada => rellena el form principal
+  window.usarJugada = function(idx){
+    if(!jugadasGlobal || !jugadasGlobal[idx]){
+      alert("No se encontró la jugada seleccionada.");
+      return;
+    }
+    const j = jugadasGlobal[idx];
+
+    // Supongamos que tu formulario principal
+    // quiere poner la "fecha" en #fecha, "track" en un input
+    // o quizás en la tabla. TÚ decides.
+    // De momento, DEMO: rellena #fecha con la jugada.
+    $("#fecha").val( j.fecha||"" );
+    // Si quieres meter "track" en tu tabla principal,
+    // podrías hacer addMainRow, etc. 
+    // Ejemplo rápido:
+    addMainRow();
+    const lastTr = $("#tablaJugadas tr:last");
+    lastTr.find(".betNumber").val( j.numeros||"" );
+    lastTr.find(".straight").val( j.montoApostado||"" );
+    recalcMainRow(lastTr);
+    highlightDuplicatesInMain();
+    storeFormState();
+
+    // Cerrar el modal
+    const modalInstance = bootstrap.Modal.getInstance(document.getElementById("modalOcr"));
+    modalInstance.hide();
+  };
 
 }); // fin document.ready
