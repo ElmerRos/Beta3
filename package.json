@@ -1,11 +1,12 @@
  {
-  "name": "mistral-ocr-module",
-  "version": "1.0.0",
-  "description": "Ejemplo de Módulo OCR con Mistral y Node.js, desplegado en Render.com",
+  "name": "mistral-ocr-robusto",
+  "version": "2.0.0",
+  "description": "Módulo OCR robusto con Mistral, Node, Drag & Drop, Regex advanced",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
+  "keywords": [],
   "author": "TuNombre",
   "license": "ISC",
   "dependencies": {
