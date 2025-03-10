@@ -1,78 +1,88 @@
- /*******************************************************
- * index.js - MÓDULO OCR ROBUSTO con Mistral 
- * Basado en:
- *  - Estructura de tickets descrita en el "Prompt Único"
- *  - Manejo de 6 juegos: Peak3, Win4, Venezuela, StoDomingo,
- *    Pulito, SingleAction.
- *  - Valores por defecto y validaciones.
- *******************************************************/
-
+ /***********************************************************
+ * index.js - App Robusta con:
+ *  1) Formulario principal (Generate Ticket, campos, etc.)
+ *  2) Modal interno con OCR (Drag & Drop, cámara, parse)
+ *  3) Autollenado del formulario desde el modal
+ *  4) Parsing Avanzado (2-4 dígitos, montos, tipos de juego)
+ *  5) Guarda en MongoDB Atlas (colección ticketsOCR)
+ *  6) No abre nueva pestaña, todo es una sola página
+ ***********************************************************/
 "use strict";
 
 const express = require("express");
 const multer = require("multer");
 const axios = require("axios");
 const { MongoClient } = require("mongodb");
+
 const app = express();
 
-// Almacenamiento en memoria para subir imágenes
+// Para manejar archivos en memoria
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Variables de entorno
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@cluster/db";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@host/db";
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || "TU_API_KEY_MISTRAL";
 
-// Conexión global a Mongo
 let dbClient;
 let db;
+
+// Conexión a MongoDB
 (async () => {
   try {
     dbClient = new MongoClient(MONGODB_URI, { useUnifiedTopology: true });
     await dbClient.connect();
     db = dbClient.db();
-    console.log("Conectado a MongoDB Atlas (colección 'ticketsOCR' se crea auto).");
+    console.log("Conectado a MongoDB Atlas. Colección 'ticketsOCR' se crea al insertar.");
   } catch (err) {
     console.error("Error conectando a MongoDB:", err);
   }
 })();
 
-/************************************************
- * 1) ENDPOINT PRINCIPAL: SIRVE HTML + REACT
- ************************************************/
+/************************************************************
+ * GET "/" - Sirve la ÚNICA página con:
+ *   - Formulario Principal
+ *   - Botón "Abrir Modal" (sin salir de la página)
+ *   - Modal con Módulo OCR
+ *   - Al confirmar en el modal, se autocompleta el formulario
+ ************************************************************/
 app.get("/", (req, res) => {
-  // Página con React embebido: drag & drop, cámara, parse de jugadas
-  // Usa un array "jugadas" para mostrar la info interpretada.
+  // Aquí tenemos React + un Modal Bootstrap (o uno casero).
+  // El modal contiene la lógica Drag/Drop, y al parsear, rellena el form principal.
+
   const html = `
   <!DOCTYPE html>
   <html lang="es">
     <head>
       <meta charset="UTF-8" />
-      <title>Módulo OCR - Versión Robusta</title>
+      <title>App Lotería + OCR Mistral</title>
       <!-- React, ReactDOM, Babel (CDN) -->
       <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
       <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
       <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+      <!-- (Opcional) Bootstrap CSS para estilizar el modal -->
+      <link rel="stylesheet" 
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" />
+
       <style>
-        body { font-family: sans-serif; margin: 1rem; }
-        #root { max-width: 600px; margin: auto; }
+        body { font-family: Arial, sans-serif; margin: 1rem; }
+        #root { max-width: 800px; margin: auto; }
+        .field-box { margin-bottom: 0.5rem; }
+        .preview { max-width: 100%; margin: 1rem 0; }
         .drop-zone {
           border: 2px dashed #ccc; 
-          border-radius: 10px;
-          padding: 1rem;
-          text-align: center;
-          cursor: pointer;
-          color: #777;
+          border-radius: 10px; 
+          padding: 1rem; 
+          text-align: center; 
+          cursor: pointer; 
+          color: #777; 
           margin: 1rem 0;
         }
         .drop-zone.dragover {
-          background-color: #e3f2fd; 
+          background-color: #e3f2fd;
           border-color: #2196f3;
           color: #333;
-        }
-        .preview {
-          max-width: 100%; 
-          margin: 1rem 0;
         }
         .spinner { margin: 1rem 0; }
         .spinner div {
@@ -84,215 +94,301 @@ app.get("/", (req, res) => {
         .spinner div:nth-child(3) { animation-delay: 0.4s; }
         @keyframes bounce { to { transform: translateY(-100%); } }
         .low-confidence { background-color: #fff3cd; }
-        .jugada-box {
-          border: 1px solid #ccc; padding: 0.5rem; margin: 0.5rem 0;
-          border-radius: 6px;
-        }
       </style>
     </head>
     <body>
-      <h1>Módulo OCR - Tickets Lotería</h1>
       <div id="root"></div>
 
+      <!-- Bootstrap JS (para modal) -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
       <script type="text/babel">
-      const { useState, useRef } = React;
+        const { useState, useRef, useEffect } = React;
 
-      function App() {
-        const [selectedFile, setSelectedFile] = useState(null);
-        const [previewURL, setPreviewURL] = useState("");
-        const [isLoading, setIsLoading] = useState(false);
-        const [jugadas, setJugadas] = useState([]);   // array de jugadas parseadas
-        const [camposDudosos, setCamposDudosos] = useState([]); // campos globales dudosos
+        function App() {
+          // Campos del Formulario Principal (ejemplo)
+          const [fecha, setFecha] = useState("");
+          const [track, setTrack] = useState("");
+          const [tipoJuego, setTipoJuego] = useState("");
+          const [modalidad, setModalidad] = useState("");
+          const [numeros, setNumeros] = useState("");
+          const [monto, setMonto] = useState("");
 
-        const dropZoneRef = useRef(null);
+          // Modal OCR: states
+          const [showModal, setShowModal] = useState(false);  // controla visibilidad
+          const [selectedFile, setSelectedFile] = useState(null);
+          const [previewURL, setPreviewURL] = useState("");
+          const dropZoneRef = useRef(null);
+          const [isLoading, setIsLoading] = useState(false);
+          const [jugadas, setJugadas] = useState([]);
+          const [camposDudosos, setCamposDudosos] = useState([]);
 
-        // Drag & Drop
-        function handleDragOver(e) {
-          e.preventDefault();
-          dropZoneRef.current.classList.add("dragover");
-        }
-        function handleDragLeave(e) {
-          e.preventDefault();
-          dropZoneRef.current.classList.remove("dragover");
-        }
-        function handleDrop(e) {
-          e.preventDefault();
-          dropZoneRef.current.classList.remove("dragover");
-          const file = e.dataTransfer.files[0];
-          if (file) {
-            setSelectedFile(file);
-            setPreviewURL(URL.createObjectURL(file));
+          // Función para abrir/cerrar modal
+          function abrirModal() {
+            setShowModal(true);
+            // Reset OCR states
+            setSelectedFile(null);
+            setPreviewURL("");
+            setIsLoading(false);
+            setJugadas([]);
+            setCamposDudosos([]);
           }
-        }
-
-        // Input normal
-        function handleFileChange(e) {
-          const file = e.target.files[0];
-          if (file) {
-            setSelectedFile(file);
-            setPreviewURL(URL.createObjectURL(file));
+          function cerrarModal() {
+            setShowModal(false);
           }
-        }
 
-        async function handleUpload() {
-          if (!selectedFile) {
-            alert("No se ha seleccionado ninguna imagen.");
-            return;
+          // Drag & Drop Handlers
+          function handleDragOver(e) {
+            e.preventDefault();
+            dropZoneRef.current.classList.add("dragover");
           }
-          setIsLoading(true);
-          setJugadas([]);
-          setCamposDudosos([]);
+          function handleDragLeave(e) {
+            e.preventDefault();
+            dropZoneRef.current.classList.remove("dragover");
+          }
+          function handleDrop(e) {
+            e.preventDefault();
+            dropZoneRef.current.classList.remove("dragover");
+            const file = e.dataTransfer.files[0];
+            if (file) {
+              setSelectedFile(file);
+              setPreviewURL(URL.createObjectURL(file));
+            }
+          }
 
-          const formData = new FormData();
-          formData.append("ticket", selectedFile);
+          // Input normal de archivo
+          function handleFileChange(e) {
+            const file = e.target.files[0];
+            if (file) {
+              setSelectedFile(file);
+              setPreviewURL(URL.createObjectURL(file));
+            }
+          }
 
-          try {
-            const resp = await fetch("/ocr", {
-              method: "POST",
-              body: formData
-            });
-            const data = await resp.json();
+          // Llamar al endpoint /ocr
+          async function procesarOCR() {
+            if (!selectedFile) {
+              alert("No has seleccionado ninguna imagen.");
+              return;
+            }
+            setIsLoading(true);
+            setJugadas([]);
+            setCamposDudosos([]);
 
-            if (data.success) {
-              // data.resultado.jugadas = array, data.resultado.camposDudosos = array
+            try {
+              const formData = new FormData();
+              formData.append("ticket", selectedFile);
+
+              // NOTA: si tu back corre en la misma app, "/ocr" sirve;
+              // si corre en render.com con otra URL, pon la URL completa:
+              //  "https://loteria-backend-j1r3.onrender.com/ocr"
+              let resp = await fetch("/ocr", {
+                method: "POST",
+                body: formData
+              });
+              let data = await resp.json();
+              if (!data.success) {
+                alert("Error en OCR: " + data.error);
+                return;
+              }
               setJugadas(data.resultado.jugadas || []);
               setCamposDudosos(data.resultado.camposDudosos || []);
-              // Si hay muchos campos dudosos, avisa
-              if (data.resultado.camposDudosos && data.resultado.camposDudosos.length > 0) {
-                alert("Algunos campos podrían ser dudosos. Revisa con cuidado.");
+              if (data.resultado.camposDudosos && data.resultado.camposDudosos.length>0) {
+                alert("Algunos campos podrían ser dudosos (confianza baja).");
               }
-            } else {
-              alert("Error al procesar la imagen: " + data.error);
+            } catch (err) {
+              alert("Error conectando con OCR: " + err.message);
+            } finally {
+              setIsLoading(false);
             }
-          } catch (err) {
-            alert("Error de red u OCR: " + err.message);
-          } finally {
-            setIsLoading(false);
           }
-        }
 
-        function renderJugadas() {
-          if (jugadas.length === 0) return null;
+          // Botón "Usar Jugada" => rellena el form principal con la jugada elegida
+          function usarJugada(j) {
+            setFecha(j.fecha || "");
+            setTrack(j.track || "");
+            setTipoJuego(j.tipoJuego || "");
+            setModalidad(j.modalidad || "");
+            setNumeros(j.numeros || "");
+            setMonto(j.montoApostado || "");
+            cerrarModal();
+          }
+
+          // Render principal
           return (
             <div>
-              <h3>Jugadas Reconocidas</h3>
-              {jugadas.map((jug, idx) => {
-                const isFechaDudosa = camposDudosos.includes("fecha") || (jug.confidencia && jug.confidencia < 0.8);
-                const isNumeroDudoso = jug.numeros === "ilegible" || (jug.confidencia && jug.confidencia < 0.8);
-                const isTrackDudoso = (jug.track || "").includes("desconocido") || camposDudosos.includes("track");
-                const isMontoDudoso = (jug.montoApostado || "") === "?" || camposDudosos.includes("montoApostado");
+              <h2>Formulario Principal de Lotería</h2>
+              <div className="field-box">
+                <label>Fecha:</label>
+                <input 
+                  type="text" 
+                  value={fecha} 
+                  onChange={e=>setFecha(e.target.value)} 
+                  style={{marginLeft:"0.5rem"}}
+                />
+              </div>
+              <div className="field-box">
+                <label>Track:</label>
+                <input 
+                  type="text" 
+                  value={track} 
+                  onChange={e=>setTrack(e.target.value)} 
+                  style={{marginLeft:"0.5rem"}}
+                />
+              </div>
+              <div className="field-box">
+                <label>TipoJuego:</label>
+                <input 
+                  type="text" 
+                  value={tipoJuego} 
+                  onChange={e=>setTipoJuego(e.target.value)} 
+                  style={{marginLeft:"0.5rem"}}
+                />
+              </div>
+              <div className="field-box">
+                <label>Modalidad:</label>
+                <input 
+                  type="text" 
+                  value={modalidad} 
+                  onChange={e=>setModalidad(e.target.value)} 
+                  style={{marginLeft:"0.5rem"}}
+                />
+              </div>
+              <div className="field-box">
+                <label>Números:</label>
+                <input 
+                  type="text" 
+                  value={numeros} 
+                  onChange={e=>setNumeros(e.target.value)} 
+                  style={{marginLeft:"0.5rem"}}
+                />
+              </div>
+              <div className="field-box">
+                <label>Monto:</label>
+                <input 
+                  type="text"
+                  value={monto}
+                  onChange={e=>setMonto(e.target.value)}
+                  style={{marginLeft:"0.5rem"}}
+                />
+              </div>
 
-                return (
-                  <div className="jugada-box" key={idx}>
-                    <div>
-                      <label>Fecha: </label>
+              <button 
+                id="generarTicket"
+                style={{marginRight:"1rem", marginTop:"0.5rem"}}
+              >
+                Generar Ticket
+              </button>
+
+              {/* Botón para abrir el modal OCR */}
+              <button 
+                style={{marginTop:"0.5rem"}}
+                onClick={abrirModal}
+              >
+                Capturar Boleto (OCR)
+              </button>
+
+              {/** MODAL (Bootstrap) **/}
+              <div 
+                className={"modal fade" + (showModal ? " show d-block" : "")} 
+                tabIndex="-1"
+                style={{backgroundColor: showModal ? "rgba(0,0,0,0.5)" : "transparent"}}
+                >
+                <div className="modal-dialog modal-lg">
+                  <div className="modal-content">
+                    <div className="modal-header">
+                      <h5 className="modal-title">OCR Mistral - Subir Imagen</h5>
+                      <button type="button" className="btn-close" onClick={cerrarModal}></button>
+                    </div>
+                    <div className="modal-body">
+                      {/* Drag & Drop */}
+                      <div 
+                        className="drop-zone"
+                        ref={dropZoneRef}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
+                        Arrastra aquí la imagen...
+                      </div>
+                      <p>O selecciona un archivo:</p>
                       <input 
-                        defaultValue={jug.fecha}
-                        className={isFechaDudosa ? "low-confidence" : ""}
+                        type="file"
+                        accept="image/*"
+                        capture="camera"
+                        onChange={handleFileChange}
                       />
+                      {previewURL && <img src={previewURL} alt="preview" className="preview" />}
+
+                      <div style={{marginTop:"1rem"}}>
+                        <button onClick={procesarOCR}>Procesar OCR</button>
+                      </div>
+                      {isLoading && (
+                        <div className="spinner">
+                          <div></div><div></div><div></div>
+                          <p>Analizando la imagen...</p>
+                        </div>
+                      )}
+
+                      {/* Jugadas detectadas */}
+                      {jugadas.length > 0 && (
+                        <div style={{marginTop:"1rem"}}>
+                          <h5>Jugadas Detectadas</h5>
+                          {jugadas.map((jug, idx) => (
+                            <div key={idx} style={{border:"1px solid #ccc", padding:"0.5rem", marginBottom:"0.5rem"}}>
+                              <p>Fecha: {jug.fecha}</p>
+                              <p>Track: {jug.track}</p>
+                              <p>TipoJuego: {jug.tipoJuego}</p>
+                              <p>Modalidad: {jug.modalidad}</p>
+                              <p>Números: {jug.numeros}</p>
+                              <p>Monto: {jug.montoApostado}</p>
+                              <button onClick={()=>usarJugada(j)}>Usar esta jugada</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <label>Track: </label>
-                      <input 
-                        defaultValue={jug.track}
-                        className={isTrackDudoso ? "low-confidence" : ""}
-                      />
+                    <div className="modal-footer">
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        onClick={cerrarModal}
+                      >
+                        Cerrar
+                      </button>
                     </div>
-                    <div>
-                      <label>TipoJuego: </label>
-                      <input defaultValue={jug.tipoJuego} />
-                    </div>
-                    <div>
-                      <label>Modalidad: </label>
-                      <input defaultValue={jug.modalidad} />
-                    </div>
-                    <div>
-                      <label>Números: </label>
-                      <input 
-                        defaultValue={jug.numeros}
-                        className={isNumeroDudoso ? "low-confidence" : ""}
-                      />
-                    </div>
-                    <div>
-                      <label>Monto: </label>
-                      <input 
-                        defaultValue={jug.montoApostado} 
-                        className={isMontoDudoso ? "low-confidence" : ""}
-                      />
-                    </div>
-                    {jug.notas && <p>Notas: {jug.notas}</p>}
                   </div>
-                );
-              })}
+                </div>
+              </div>
+              {/** FIN MODAL **/}
             </div>
           );
         }
 
-        return (
-          <div>
-            <p>
-              Sube una imagen con varios tickets o un solo ticket. 
-              El sistema OCR Mistral tratará de identificar cada jugada.
-            </p>
-
-            <div
-              className="drop-zone"
-              ref={dropZoneRef}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              Arrastra aquí la imagen del boleto...
-            </div>
-            
-            <p>O selecciona archivo:</p>
-            <input type="file" accept="image/*" capture="camera" onChange={handleFileChange} />
-
-            {previewURL && <img src={previewURL} alt="preview" className="preview" />}
-
-            <div>
-              <button onClick={handleUpload}>Procesar OCR</button>
-            </div>
-
-            {isLoading && (
-              <div className="spinner">
-                <div></div><div></div><div></div>
-                <p>Analizando la imagen con Mistral...</p>
-              </div>
-            )}
-
-            {renderJugadas()}
-          </div>
-        );
-      }
-
-      ReactDOM.render(<App />, document.getElementById("root"));
+        ReactDOM.render(<App />, document.getElementById("root"));
       </script>
     </body>
   </html>
   `;
+
   res.send(html);
 });
 
-/*******************************************************
- * 2) ENDPOINT /ocr
- *    - Recibe imagen
- *    - Llama Mistral
- *    - Parsea según tu "prompt único"
- *    - Guarda en "ticketsOCR"
- *    - Devuelve array jugadas
- *******************************************************/
+/***********************************************************
+ * POST /ocr - Recibe la imagen, llama Mistral, parsea,
+ *            guarda en 'ticketsOCR', devuelve JSON
+ ***********************************************************/
 app.post("/ocr", upload.single("ticket"), async (req, res) => {
   if (!req.file) {
     return res.json({ success: false, error: "No se recibió ninguna imagen." });
   }
 
   try {
-    // 1) Convertimos a base64
+    // Convertir imagen a base64
     const base64Image = req.file.buffer.toString("base64");
 
-    // 2) Armar cuerpo para Mistral
-    const bodyMistral = {
+    // Llamar a Mistral
+    const mistralReq = {
       model: "mistral-ocr-latest",
       document: {
         type: "image_base64",
@@ -300,192 +396,134 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     };
 
-    // 3) Llamar a la API
-    const mistralResp = await axios.post(
+    const ocrResp = await axios.post(
       "https://api.mistral.ai/v1/ocr",
-      bodyMistral,
+      mistralReq,
       {
         headers: {
-          Authorization: `Bearer ${MISTRAL_API_KEY}`,
+          "Authorization": \`Bearer \${MISTRAL_API_KEY}\`,
           "Content-Type": "application/json"
         }
       }
     );
 
-    const ocrRaw = mistralResp.data;
+    const ocrData = ocrResp.data;
 
-    // 4) Unir texto, calcular confianza global
+    // Unimos texto y calculamos confianza
     let textoCompleto = "";
     let totalWords = 0;
     let sumConfidence = 0;
-    if (ocrRaw.pages && Array.isArray(ocrRaw.pages)) {
-      ocrRaw.pages.forEach(p => {
-        if (p.text_md) textoCompleto += p.text_md + "\n";
-        if (p.words_confidence) {
-          p.words_confidence.forEach(w => {
+    if (ocrData.pages && Array.isArray(ocrData.pages)) {
+      ocrData.pages.forEach(page => {
+        if (page.text_md) textoCompleto += page.text_md + "\\n";
+        if (page.words_confidence && Array.isArray(page.words_confidence)) {
+          page.words_confidence.forEach(w => {
             totalWords++;
-            sumConfidence += w.confidence || 0;
+            sumConfidence += (w.confidence || 0);
           });
         }
       });
     }
-    let avgConfidence = (totalWords > 0) ? (sumConfidence / totalWords) : 1;
+    let avgConfidence = (totalWords>0) ? (sumConfidence / totalWords) : 1;
 
-    // 5) Parse según tu PROMPT ÚNICO:
-    //    "Objetivo, 2. Reglas de Extracción, etc."
-    //    Dividimos el texto en líneas, y por cada línea detectamos jugada.
-    //    (Este es un ejemplo heurístico avanzado, ajústalo a tu realidad.)
-
-    // a) Dividir en líneas
-    const lineas = textoCompleto.split("\n").map(l => l.trim()).filter(Boolean);
-
-    // b) Armar un array "jugadas"
+    // Parse heurístico: divide en líneas, detecta juego, modalidad, etc.
+    let lineas = textoCompleto.split("\\n").map(l=>l.trim()).filter(Boolean);
     let jugadas = [];
-    let camposDudososGlobal = []; // si la confianza global es baja, lo marcamos
+    let camposDudosos = [];
 
     if (avgConfidence < 0.75) {
-      // Marcamos "todos" los campos como dudosos
-      camposDudososGlobal = ["fecha","track","tipoJuego","modalidad","numeros","montoApostado"];
+      camposDudosos = ["fecha","track","tipoJuego","modalidad","numeros","montoApostado"];
     }
 
-    // c) Para cada línea, intentamos interpretarla
     lineas.forEach(line => {
-      // Buscamos palabras clave, dígitos, etc.
-      const jugada = {
-        fecha: null,
-        track: null,
-        tipoJuego: null,
-        modalidad: null,
-        numeros: null,
-        montoApostado: null,
-        notas: "",
-        confianza: avgConfidence // guardamos la conf global
+      const lower = line.toLowerCase();
+      let jug = {
+        fecha:null, track:null, tipoJuego:null, modalidad:null,
+        numeros:null, montoApostado:null, notas:"", confianza:avgConfidence
       };
 
-      // 1) Detectar tipoJuego por # dígitos o palabras
-      //    Ejemplo: "peak3", "w4", "venezuela", "sd", "pulito", "single"
-      const lowerLine = line.toLowerCase();
-      if (lowerLine.includes("peak3") || lowerLine.includes("p3") || /\b\d{3}\b/.test(line)) {
-        jugada.tipoJuego = "Peak 3";
-      } else if (lowerLine.includes("win4") || lowerLine.includes("w4") || /\b\d{4}\b/.test(line)) {
-        jugada.tipoJuego = "Win 4";
-      } else if (lowerLine.includes("vene")) {
-        jugada.tipoJuego = "Venezuela";
-      } else if (lowerLine.includes("santo") || lowerLine.includes("doming")) {
-        jugada.tipoJuego = "SantoDomingo";
-      } else if (lowerLine.includes("pulito")) {
-        jugada.tipoJuego = "Pulito";
-      } else if (lowerLine.includes("single")) {
-        jugada.tipoJuego = "SingleAction";
+      // 1) Detectar juego
+      if (lower.includes("peak3") || /\b\d{3}\b/.test(line)) {
+        jug.tipoJuego = "Peak 3";
+      } else if (lower.includes("win4") || /\b\d{4}\b/.test(line)) {
+        jug.tipoJuego = "Win 4";
+      } else if (lower.includes("venez")) {
+        jug.tipoJuego = "Venezuela";
+      } else if (lower.includes("doming")) {
+        jug.tipoJuego = "SantoDomingo";
+      } else if (lower.includes("pulito")) {
+        jug.tipoJuego = "Pulito";
+      } else if (lower.includes("single")) {
+        jug.tipoJuego = "SingleAction";
       } else {
-        jugada.tipoJuego = "desconocido";
-        jugada.notas += "[No se detectó juego claro] ";
+        jug.tipoJuego = "desconocido";
       }
 
-      // 2) Buscar modalidad (straight, box, combo, etc.)
-      if (lowerLine.includes("combo")) {
-        jugada.modalidad = "Combo";
-      } else if (lowerLine.includes("box")) {
-        jugada.modalidad = "Box";
-      } else if (lowerLine.includes("straight")) {
-        jugada.modalidad = "Straight";
-      } else if (lowerLine.includes("round") || lowerLine.includes("x")) {
-        jugada.modalidad = "RoundDown";
+      // 2) Modalidad
+      if (lower.includes("combo")) jug.modalidad = "Combo";
+      else if (lower.includes("box")) jug.modalidad = "Box";
+      else if (lower.includes("straight")) jug.modalidad = "Straight";
+      else if (lower.includes("round") || lower.includes("x")) jug.modalidad = "RoundDown";
+      else jug.modalidad = "desconocido";
+
+      // 3) Números (2-4 dígitos)
+      let rgxNums = /\b(\d{2,4}X|\d{2,4})\b/g;
+      let matches = line.match(rgxNums);
+      if (matches && matches.length>0) {
+        jug.numeros = matches.join(",");
       } else {
-        jugada.modalidad = "desconocido";
+        jug.numeros = "ilegible";
       }
 
-      // 3) Detectar números con regex
-      //    Podríamos buscar 2,3,4 dígitos (ej. 12, 123, 1234, 12X, etc.)
-      //    Si se detecta “X” -> interpretamos rounddown
-      let regexNros = /\b(\d{2,4}X|\d{2,4})\b/g; 
-      let matchNros = line.match(regexNros);
-      if (matchNros && matchNros.length > 0) {
-        // Tomamos la primera coincidencia, o podríamos almacenar varias
-        jugada.numeros = matchNros.join(",");
+      // 4) Monto
+      let rgxMonto = /\$?\d+(\\.\\d{1,2})?/;
+      let mm = line.match(rgxMonto);
+      if (mm) {
+        let mStr = mm[0].replace("$","");
+        jug.montoApostado = parseFloat(mStr);
       } else {
-        jugada.numeros = "ilegible";
+        jug.montoApostado = "?";
       }
 
-      // 4) Detectar montos con regex ($1, 0.50, 2.25, etc.)
-      let regexMonto = /\$?\d+(\.\d{1,2})?/;
-      let matchMonto = line.match(regexMonto);
-      if (matchMonto) {
-        let montoStr = matchMonto[0].replace("$","");
-        jugada.montoApostado = parseFloat(montoStr);
-      } else {
-        jugada.montoApostado = "?";
-      }
+      jugadas.push(jug);
+    });
 
-      // 5) Fecha: si no se ve en la línea, la dejamos nula (asignaremos hoy luego)
-      let regexFecha = /(\b\d{4}-\d{2}-\d{2}\b)|(\b\d{1,2}\/\d{1,2}\/\d{2,4}\b)/;
-      let matchFecha = line.match(regexFecha);
-      if (matchFecha) {
-        jugada.fecha = matchFecha[0]; // as is
-      }
-
-      // 6) Track: heurística (NY, Vzla, StoDgo, etc.)
-      //    - Si no hay nada, luego asumiremos NYMidday/Evening
-      if (lowerLine.includes("ny")) {
-        jugada.track = "NY";
-      } else if (lowerLine.includes("venez")) {
-        jugada.track = "Venezuela";
-      } else if (lowerLine.includes("sto") || lowerLine.includes("santo") || lowerLine.includes("doming")) {
-        jugada.track = "SantoDomingo";
-      } else {
-        jugada.track = "desconocido";
-      }
-
-      jugadas.push(jugada);
-    }); // fin forEach línea
-
-    // d) Ajustar valores por defecto (fecha = hoy, track = "NY Midday/Evening", etc.)
-    let hoy = new Date();
-    let isoHoy = hoy.toISOString().slice(0,10);
-    let hora = hoy.getHours() + hoy.getMinutes()/60;
-    jugadas.forEach(jug => {
-      // Fecha
-      if (!jug.fecha) {
-        jug.fecha = isoHoy;
-      }
-      // Track
-      if (jug.track === "desconocido") {
-        jug.track = (hora < 14.25) ? "NY Midday" : "NY Evening";
-      } else if (jug.track === "NY") {
-        // Midday o Evening
-        jug.track = (hora < 14.25) ? "NY Midday" : "NY Evening";
+    // Rellenar track, fecha por defecto
+    let now = new Date();
+    let isoHoy = now.toISOString().slice(0,10);
+    let hora = now.getHours() + now.getMinutes()/60;
+    jugadas.forEach(j => {
+      if (!j.fecha) j.fecha = isoHoy;
+      if (!j.track) {
+        j.track = (hora<14.25) ? "NY Midday" : "NY Evening";
       }
     });
 
-    // 6) Guardar en Mongo: 
-    //    Insertamos 1 doc con info general, el array de jugadas, etc.
+    // Guardar en DB
     const col = db.collection("ticketsOCR");
-    const toInsert = {
+    await col.insertOne({
       createdAt: new Date(),
       fullText: textoCompleto,
       avgConfidence,
       jugadas
-    };
-    await col.insertOne(toInsert);
+    });
 
-    // 7) Devolver jugadas al front
+    // Devolver
     return res.json({
       success: true,
       resultado: {
         jugadas,
-        camposDudosos: camposDudososGlobal
+        camposDudosos
       }
     });
 
   } catch (err) {
-    console.error("Error en /ocr", err.message);
+    console.error("Error en /ocr:", err.message);
     return res.json({ success: false, error: err.message });
   }
 });
 
-/*******************************************************
- * 3) ARRANCAR SERVIDOR
- *******************************************************/
+// Iniciar servidor
 app.listen(PORT, () => {
-  console.log("Servidor Módulo OCR en puerto", PORT);
+  console.log("Servidor corriendo en puerto", PORT);
 });
