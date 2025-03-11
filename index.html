@@ -36,9 +36,10 @@
   <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 
   <!-- Custom CSS (con estilos neon, etc.) -->
+  <!-- RECUERDA: el archivo styles.css debe existir en la misma carpeta o en la ruta adecuada -->
   <link href="styles.css" rel="stylesheet" />
 
-  <!-- Estilo para forzar tooltip blanco + texto negro en Intro.js -->
+  <!-- Estilo extra (si deseas) para forzar tooltip blanco + texto negro en Intro.js -->
   <style>
     .introjs-tooltip {
       background-color: #fff !important;
@@ -741,112 +742,115 @@
           <i class="bi bi-ticket-detailed-fill"></i> Generate Ticket
         </button>
       </div>
-<!-- SNIPPET OCR: Insertar JUSTO DEBAJO del botón "Generate Ticket" (aprox. línea 248) -->
 
-<!-- BOTÓN para abrir Modal OCR (no abre otra pestaña) -->
-<div class="d-grid gap-2 mt-3">
-  <button 
-    type="button"
-    class="btn btn-warning btn-lg"
-    id="btnOcrModal"
-    onclick="abrirModalOCR()"
-  >
-    <i class="bi bi-camera"></i> Capturar Boleto (OCR)
-  </button>
-</div>
-
-<!-- MODAL OCR (Bootstrap) -->
-<div 
-  class="modal fade" 
-  id="modalOcr" 
-  tabindex="-1" 
-  aria-labelledby="modalOcrLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalOcrLabel">OCR - Subir Imagen</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body">
-        <!-- Zona drag & drop -->
-        <div 
-          id="ocrDropZone"
-          class="drop-zone"
-          ondragover="handleDragOver(event)"
-          ondragleave="handleDragLeave(event)"
-          ondrop="handleDrop(event)"
-        >
-          Arrastra aquí la imagen...
-        </div>
-
-        <p>O selecciona un archivo:</p>
-        <input 
-          type="file"
-          id="ocrFile"
-          accept="image/*"
-          capture="camera"
-          onchange="handleFileChange(event)"
-        />
-
-        <!-- Vista previa -->
-        <img 
-          id="ocrPreview" 
-          class="preview d-none" 
-          alt="Preview OCR"
-        />
-
-        <div class="mt-3">
-          <button 
-            type="button" 
-            class="btn btn-primary"
-            onclick="procesarOCR()"
-            id="btnProcesarOCR"
-          >
-            Procesar OCR
-          </button>
-        </div>
-
-        <!-- Spinner/Cargando -->
-        <div id="ocrSpinner" class="spinner d-none">
-          <div></div><div></div><div></div>
-          <p>Analizando imagen...</p>
-        </div>
-
-        <!-- Jugadas detectadas -->
-        <div id="ocrJugadas" class="mt-3"></div>
-      </div>
-
-      <div class="modal-footer">
+      <!-- SNIPPET OCR: Insertar JUSTO DEBAJO del botón "Generate Ticket" -->
+      <div class="d-grid gap-2 mt-3">
         <button 
-          type="button" 
-          class="btn btn-secondary"
-          data-bs-dismiss="modal"
+          type="button"
+          class="btn btn-warning btn-lg"
+          id="btnOcrModal"
+          onclick="abrirModalOCR()"
         >
-          Cerrar
+          <i class="bi bi-camera"></i> Capturar Boleto (OCR)
         </button>
       </div>
 
-    </div>
-  </div>
-</div>
-<!-- FIN SNIPPET OCR -->
+      <!-- MODAL OCR (Bootstrap) -->
+      <div 
+        class="modal fade" 
+        id="modalOcr" 
+        tabindex="-1" 
+        aria-labelledby="modalOcrLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalOcrLabel">OCR - Subir Imagen</h5>
+              <button 
+                type="button" 
+                class="btn-close" 
+                data-bs-dismiss="modal" 
+                aria-label="Close">
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <!-- Zona drag & drop -->
+              <div 
+                id="ocrDropZone"
+                class="drop-zone"
+                ondragover="handleDragOver(event)"
+                ondragleave="handleDragLeave(event)"
+                ondrop="handleDrop(event)"
+              >
+                Arrastra aquí la imagen...
+              </div>
+
+              <p>O selecciona un archivo:</p>
+              <input 
+                type="file"
+                id="ocrFile"
+                accept="image/*"
+                capture="camera"
+                onchange="handleFileChange(event)"
+              />
+
+              <!-- Vista previa -->
+              <img 
+                id="ocrPreview" 
+                class="preview d-none" 
+                alt="Preview OCR"
+              />
+
+              <div class="mt-3">
+                <button 
+                  type="button" 
+                  class="btn btn-primary"
+                  onclick="procesarOCR()"
+                  id="btnProcesarOCR"
+                >
+                  Procesar OCR
+                </button>
+              </div>
+
+              <!-- Spinner/Cargando -->
+              <div id="ocrSpinner" class="spinner d-none">
+                <div></div><div></div><div></div>
+                <p>Analizando imagen...</p>
+              </div>
+
+              <!-- Jugadas detectadas -->
+              <div id="ocrJugadas" class="mt-3"></div>
+            </div>
+
+            <div class="modal-footer">
+              <button 
+                type="button" 
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cerrar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <!-- FIN SNIPPET OCR -->
      
     </form>
   </div>
 
-  <!-- PÉGALO AQUÍ -->
-    <button 
-      class="btn btn-secondary"
-      onclick="window.open('dailyReport.html','_blank')"
-    >
-      Abrir Reporte Diario
-    </button>
-    <!-- FIN DEL SNIPPET -->
- 
+  <!-- BOTÓN para abrir dailyReport.html (si lo deseas en otra pestaña) -->
+  <button 
+    class="btn btn-secondary"
+    onclick="window.open('dailyReport.html','_blank')"
+  >
+    Abrir Reporte Diario
+  </button>
+
   <!-- Ticket Preview Window -->
   <div
     class="modal fade"
@@ -1255,13 +1259,12 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
   ></script>
 
-  <!-- scripts.js con las correcciones -->
+  <!-- Tu scripts.js con todas las funciones globales (OCR incl.) -->
   <script src="scripts.js"></script>
 
   <!-- 
        =====================
        MANUAL / INSTRUCTIONS
-       (Accordion con 3 botones de idioma)
        =====================
   -->
   <div class="container mb-5">
@@ -1298,7 +1301,7 @@
               <h4>Lottery App Manual (English)</h4>
               <p><strong>Date Selection:</strong> The date input lets you pick one or multiple betting dates. Today is automatically assigned.</p>
               <p><strong>Tracks:</strong> Expand the “USA” or “Santo Domingo” sections. Mark the tracks you want. Some tracks will disable after cutoff time. If you pick “Venezuela,” combine it with a USA track to do Venezuelan plays. For “NY Horses,” you can enter 1–4 digits and it will appear as “NY Horses.”</p>
-              <p><strong>Plays Table:</strong> Each row has a Bet Number, which determines the game mode (Pulito, Pick 3, Win 4, Single Action, NY Horses, etc.). Straight/Box/Combo amounts can be added. The total for that row is displayed. The overall total is multiplied by your selected dates and tracks.</p>
+              <p><strong>Plays Table:</strong> Each row has a Bet Number, which determines the game mode (Pulito, Pick 3, Win 4, Single Action, etc.). Straight/Box/Combo amounts can be added. The total for that row is displayed. The overall total is multiplied by your selected dates and tracks.</p>
               <p><strong>Single Action:</strong> If you pick a normal USA track (not Venezuela, not NY Horses) and enter exactly 1 digit in Bet Number.</p>
               <p><strong>NY Horses:</strong> If track is “New York Horses,” 1–4 digits becomes that mode.</p>
               <p><strong>Buttons:</strong> Add Play, Wizard, Remove Last, Reset, Generate Ticket.</p>
