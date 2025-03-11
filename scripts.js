@@ -477,7 +477,7 @@ $(document).ready(function() {
             let co= dayjs(raw, "HH:mm");
             let cf= co.isAfter(dayjs("21:30","HH:mm")) ? dayjs("22:00","HH:mm"): co.subtract(10,"minute");
             if(now.isSame(cf)||now.isAfter(cf)){
-              alert(\`Track "\${t}" is closed for today.\`);
+              alert(`Track "${t}" is closed for today.`);
               return;
             }
           }
@@ -606,7 +606,7 @@ $(document).ready(function() {
 
     if(!valid){
       const uniqueErr=[...new Set(errors)].join(", ");
-      alert(\`Some plays have errors or exceed limits (row(s): \${uniqueErr}). Please fix them.\`);
+      alert(`Some plays have errors or exceed limits (row(s): ${uniqueErr}). Please fix them.`);
       return;
     }
 
@@ -690,7 +690,7 @@ $(document).ready(function() {
         // auto download
         const link= document.createElement("a");
         link.href= dataUrl;
-        link.download= \`ticket_\${uniqueTicket}.jpg\`;
+        link.download= `ticket_${uniqueTicket}.jpg`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -795,7 +795,7 @@ $(document).ready(function() {
       body: JSON.stringify({ data: betData })
     })
     .then(r=>{
-      if(!r.ok) throw new Error(\`SheetDB error: \${r.status}\`);
+      if(!r.ok) throw new Error(`SheetDB error: ${r.status}`);
       return r.json();
     })
     .then(d=>{
@@ -890,7 +890,7 @@ $(document).ready(function() {
         let cf= co.isAfter(dayjs("21:30","HH:mm"))? dayjs("22:00","HH:mm"): co.subtract(10,"minute");
         const hh= cf.format("HH");
         const mm= cf.format("mm");
-        $(this).text(\`\${hh}:\${mm}\`);
+        $(this).text(`${hh}:${mm}`);
       }
     });
   }
@@ -986,7 +986,7 @@ $(document).ready(function() {
     const bn = $("#wizardBetNumber").val().trim();
     const gm = determineGameMode(bn);
     if(gm==="-"){
-      alert(\`Cannot determine game mode for "\${bn}". Check tracks or length/format.\`);
+      alert(`Cannot determine game mode for "${bn}". Check tracks or length/format.`);
       return;
     }
     let stVal = $("#wizardStraight").val().trim();
@@ -1557,18 +1557,15 @@ $(document).ready(function() {
     }
     const j = jugadasGlobal[idx];
 
-    // Supongamos que tu formulario principal
-    // quiere poner la "fecha" en #fecha, "track" en un input
-    // o quizás en la tabla. TÚ decides.
-    // De momento, DEMO: rellena #fecha con la jugada.
-    $("#fecha").val( j.fecha||"" );
-    // Si quieres meter "track" en tu tabla principal,
-    // podrías hacer addMainRow, etc. 
-    // Ejemplo rápido:
+    // Rellenar #fecha (o lo que consideres) con la jugada
+    $("#fecha").val( j.fecha || "" );
+
+    // Insertar la jugada como si fuera una fila en la tabla principal
     addMainRow();
     const lastTr = $("#tablaJugadas tr:last");
-    lastTr.find(".betNumber").val( j.numeros||"" );
-    lastTr.find(".straight").val( j.montoApostado||"" );
+    lastTr.find(".betNumber").val( j.numeros || "" );
+    // Por simplicidad, usaremos su "montoApostado" en .straight
+    lastTr.find(".straight").val( j.montoApostado || "" );
     recalcMainRow(lastTr);
     highlightDuplicatesInMain();
     storeFormState();
