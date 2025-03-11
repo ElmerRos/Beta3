@@ -1,0 +1,570 @@
+ /* ===========================
+   1) BASE COLORS & FONTS
+   =========================== */
+:root {
+  --color-fondo: #0a0a0a; /* Dark background */
+  --color-neon-cian: #00ffff;
+  --color-neon-morado: #ff00ff;
+  --color-neon-verde: #39ff14;
+  --color-texto: #ffffff;
+  --color-placeholder: #cccccc;
+  --color-fondo-acordeon: #1e1e1e;
+  --color-fondo-acordeon-activo: #00ffff;
+  --color-texto-acordeon: #ffffff;
+  --color-error: #ff00ff;
+}
+
+/* Fondo general + tipografía */
+body {
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  margin: 0;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+/* Contenedor principal */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background: rgba(10, 10, 10, 0.95);
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+}
+
+/* Título principal */
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--color-neon-cian);
+  text-shadow: 0 0 10px var(--color-neon-cian);
+  font-size: 1.125rem; 
+}
+
+/* ===========================
+   2) FLATPICKR INPUT
+   =========================== */
+.glow-input {
+  box-shadow: 0 0 10px var(--color-neon-cian);
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+.glow-input:focus {
+  border-color: var(--color-neon-morado);
+  box-shadow: 0 0 15px var(--color-neon-morado);
+  outline: none;
+}
+
+/* ===========================
+   3) ACCORDION & TRACKS
+   =========================== */
+.accordion-button {
+  background-color: var(--color-fondo-acordeon);
+  color: var(--color-texto-acordeon);
+  border: 2px solid var(--color-neon-cian);
+  transition: background-color 0.3s, color 0.3s;
+  font-size: 1.125rem;
+}
+.accordion-button:not(.collapsed) {
+  background-color: var(--color-fondo-acordeon-activo);
+  color: #000;
+}
+.accordion-button:hover {
+  background-color: #2a2a2a;
+  color: var(--color-neon-cian);
+}
+.accordion-body {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border: 1px solid var(--color-neon-cian);
+}
+.accordion-header {
+  background-color: var(--color-fondo-acordeon);
+}
+.accordion-item {
+  background-color: var(--color-fondo-acordeon);
+  border: none;
+}
+.accordion-button::after {
+  filter: brightness(0) invert(1);
+}
+.cutoff-time {
+  font-size: 1.125rem;
+  color: #aaaaaa;
+}
+
+/* ===========================
+   4) TRACK BUTTONS (3D + Ripple)
+   =========================== */
+.track-button-container {
+  display: inline-block;
+  width: 150px;
+  height: 150px;
+  margin: 0.5rem;
+  vertical-align: top;
+  position: relative;
+}
+.track-button-container input[type="checkbox"] {
+  display: none;
+}
+.track-button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  background: linear-gradient(#555, #333);
+  color: #ffffff;
+  box-shadow: 0 5px #111;
+  border: 1px solid #444;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s;
+  overflow: hidden;
+  padding: 0.5rem;
+}
+.track-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px #111;
+  background: linear-gradient(#666, #444);
+}
+.track-button:active {
+  transform: translateY(2px);
+  box-shadow: 0 3px #111;
+}
+.track-button::before {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+  pointer-events: none;
+}
+.track-button:active::before {
+  width: 250px;
+  height: 250px;
+}
+.track-button .track-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.4rem;
+}
+.track-button .cutoff-time {
+  font-size: 1rem;
+  color: #cccccc;
+}
+.track-button-container input[type="checkbox"]:checked + .track-button {
+  background: linear-gradient(#ffd966, #d1a824);
+  color: #000;
+  box-shadow: 0 5px #666;
+  transform: none;
+}
+.track-button-container input[type="checkbox"]:disabled + .track-button {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   5) TABLES
+   =========================== */
+.table-dark {
+  box-shadow: 0 0 10px var(--color-neon-cian);
+}
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid var(--color-neon-cian);
+}
+.table-dark th {
+  background-color: #1e1e1e;
+  color: var(--color-neon-cian);
+  text-shadow: 0 0 5px var(--color-neon-cian);
+  font-size: 1.125rem;
+}
+.table-dark td {
+  font-size: 1.125rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.table-dark td .form-control {
+  background: #333333;
+  color: #fff;
+  border: 1px solid #555;
+  font-size: 1rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.table-dark td .form-control:focus {
+  border-color: var(--color-neon-cian);
+  outline: none;
+  box-shadow: 0 0 5px var(--color-neon-cian);
+}
+
+/* ===========================
+   6) BUTTONS
+   =========================== */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.125rem;
+}
+.btn-primary {
+  background-color: var(--color-neon-cian);
+  color: #000;
+  box-shadow: 0 0 10px var(--color-neon-cian);
+}
+.btn-primary:hover {
+  background-color: #00cccc;
+  box-shadow: 0 0 20px var(--color-neon-cian);
+  transform: scale(1.05);
+}
+.btn-danger {
+  background-color: #ff0044;
+  color: #fff;
+  box-shadow: 0 0 10px #ff0044;
+  min-width: 150px;
+}
+.btn-danger:hover {
+  background-color: #cc0033;
+  box-shadow: 0 0 20px #ff0044;
+  transform: scale(1.05);
+}
+.btn-warning {
+  color: #000;
+  background-color: #ffcb00;
+  box-shadow: 0 0 10px #ffcb00;
+}
+.btn-warning:hover {
+  background-color: #e0b300;
+  box-shadow: 0 0 20px #ffcb00;
+  transform: scale(1.05);
+}
+.btn-success {
+  background-color: var(--color-neon-verde);
+  color: #000;
+  box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+  animation: pulse 2s infinite;
+}
+.btn-success:hover {
+  transform: scale(1.02);
+}
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--color-neon-verde), 0 0 30px var(--color-neon-verde);
+  }
+  100% {
+    box-shadow: 0 0 10px var(--color-neon-verde), 0 0 20px var(--color-neon-verde);
+  }
+}
+.btn-info {
+  background-color: #00bfff;
+  color: #000;
+  box-shadow: 0 0 10px #00bfff;
+}
+.btn-info:hover {
+  background-color: #00a3d6;
+  box-shadow: 0 0 20px #00bfff;
+  transform: scale(1.05);
+}
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+.button-group .btn {
+  flex: 1;
+}
+.btnRemovePlay {
+  background-color: #ff0044 !important;
+  color: #fff !important;
+  min-width: 40px !important;
+  border: none !important;
+  box-shadow: 0 0 8px #ff0044;
+  transition: transform 0.2s;
+  font-size: 0.9rem !important;
+  text-align: center;
+  width: 100%;
+}
+.btnRemovePlay:hover {
+  background-color: #cc0033 !important;
+  transform: scale(1.05);
+}
+
+/* ===========================
+   7) MODAL
+   =========================== */
+.modal-content {
+  background-color: #0a0a0a;
+  color: #ffffff;
+  box-shadow: 0 0 20px var(--color-neon-cian);
+  max-height: 90vh; 
+  overflow: hidden; 
+  border: 2px solid var(--color-neon-cian);
+}
+.modal-header,
+.modal-footer {
+  border-bottom: 1px solid var(--color-neon-cian);
+  border-top: 1px solid var(--color-neon-cian);
+}
+.modal-title {
+  color: var(--color-neon-cian);
+}
+#qrcode {
+  margin: 0 auto;
+  width: 128px;
+  height: 128px;
+}
+.modal-body {
+  max-height: 70vh; 
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===========================
+   8) RESPONSIVE & PRINT
+   =========================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+  h2 {
+    font-size: 1.5em;
+  }
+  .btn {
+    padding: 8px 16px;
+    font-size: 1.125rem;
+  }
+  .table-responsive {
+    overflow-x: auto;
+  }
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #preTicket,
+  #preTicket * {
+    visibility: visible;
+  }
+  #preTicket {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #0a0a0a;
+    color: #ffffff;
+    font-size: 12pt;
+  }
+}
+
+/* ===========================
+   9) TICKET CONTAINER
+   =========================== */
+
+/* Forzamos ancho 1200px y una fuente ~2rem */
+#preTicket {
+  background-color: #0a0a0a;
+  color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  min-width: 1200px;
+  width: 1200px;
+  max-width: none;
+  margin: 0 auto;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+#preTicket h4 {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+  font-size: 2rem;
+}
+
+#preTicket table {
+  background-color: #1e1e1e;
+  min-width: 1200px;
+  table-layout: fixed;
+  font-size: 2rem; 
+}
+
+/* Ajustar la 1ra col (#) y Bet Number a algo más angosto */
+#preTicket th,
+#preTicket td {
+  border: 1px solid #00ffff;
+  color: #ffffff;
+  font-size: 2rem;
+  padding: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* La 1ra col (#) => 4%, Bet => 10%, Game Mode => 8%, 
+   Straight => 10%, Box => 8%, Combo =>10%, Total =>10%.
+   => Suma ~60%. Queda 40% para “aire” si se distribuye. */
+#preTicket th:nth-child(1) {
+  width: 4%;
+}
+#preTicket th:nth-child(2) {
+  width: 10%;
+}
+#preTicket th:nth-child(3) {
+  width: 8%;
+}
+#preTicket th:nth-child(4) {
+  width: 10%;
+}
+#preTicket th:nth-child(5) {
+  width: 8%;
+}
+#preTicket th:nth-child(6) {
+  width: 10%;
+}
+#preTicket th:nth-child(7) {
+  width: 10%;
+}
+
+.total-section {
+  font-size: 2rem;
+  margin: 1.5rem 0;
+}
+#ticketTotal {
+  font-size: 2rem !important;
+}
+#numeroTicket,
+#ticketTransaccion {
+  font-size: 2rem !important;
+}
+#ticketFecha {
+  color: #ffffff !important;
+}
+.cutoff-time[data-track='Venezuela'] {
+  color: var(--color-fondo);
+}
+
+/* duplicados => amarillo */
+.duplicado {
+  background-color: #ffff99 !important;
+  border: 2px solid #ffe600 !important;
+  color: #000 !important;
+}
+/* errores => morado */
+.error-field {
+  background-color: var(--color-neon-morado) !important;
+  border: 2px solid var(--color-neon-cian) !important;
+}
+
+/* Móvil < 600px => scroll horizontal y fuente algo menor */
+@media (max-width: 600px) {
+  #preTicket {
+    overflow-x: auto;
+  }
+  #preTicket table,
+  #preTicket th,
+  #preTicket td {
+    font-size: 1.8rem;
+  }
+  #qrcode {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+/* ===========================
+   10) WIZARD
+   =========================== */
+#wizardBetNumber,
+#wizardStraight,
+#wizardCombo {
+  width: 6ch;
+  text-align: center;
+}
+#wizardBox {
+  width: 7ch;
+  text-align: center;
+}
+.lockBtn {
+  font-size: 2.4rem;
+  padding: 0.9rem 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lockBtn:hover {
+  background-color: #333;
+  transform: scale(1.05);
+}
+#wizardTable {
+  min-width: 100%;
+  table-layout: auto;
+}
+#wizardTable thead th {
+  background-color: #1e1e1e;
+  color: var(--color-neon-cian);
+  text-shadow: 0 0 5px var(--color-neon-cian);
+  font-size: 1rem;
+}
+#wizardTable td {
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+/* ===========================
+   EXTRA: DROP-ZONE & SPINNER
+   =========================== */
+.drop-zone {
+  border: 2px dashed #00bfff; 
+  border-radius: 8px; 
+  padding: 20px; 
+  text-align: center; 
+  transition: background-color 0.3s;
+  cursor: pointer;
+  color: #777; /* texto por defecto */
+}
+.drop-zone.dragover {
+  background-color: rgba(0, 191, 255, 0.1);
+  border-color: #00bfff;
+  color: #ccc;
+}
+
+/* Spinner con 3 “pelotitas” que suben y bajan */
+.spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+.spinner > div {
+  width: 15px;
+  height: 15px;
+  background: var(--color-neon-cian);
+  margin: 5px;
+  border-radius: 50%;
+  animation: bounce 0.6s infinite alternate;
+}
+.spinner > div:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.spinner > div:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-10px); }
+}
