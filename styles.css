@@ -523,3 +523,48 @@ h2 {
   font-size: 1rem;
   white-space: nowrap;
 }
+
+/* ===========================
+   EXTRA: DROP-ZONE & SPINNER
+   =========================== */
+.drop-zone {
+  border: 2px dashed #00bfff; 
+  border-radius: 8px; 
+  padding: 20px; 
+  text-align: center; 
+  transition: background-color 0.3s;
+  cursor: pointer;
+  color: #777; /* texto por defecto */
+}
+.drop-zone.dragover {
+  background-color: rgba(0, 191, 255, 0.1);
+  border-color: #00bfff;
+  color: #ccc;
+}
+
+/* Spinner con 3 “pelotitas” que suben y bajan */
+.spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+.spinner > div {
+  width: 15px;
+  height: 15px;
+  background: var(--color-neon-cian);
+  margin: 5px;
+  border-radius: 50%;
+  animation: bounce 0.6s infinite alternate;
+}
+.spinner > div:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.spinner > div:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-10px); }
+}
