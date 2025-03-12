@@ -78,24 +78,22 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 2) Convertir a base64
     const base64Str = resizedBuffer.toString("base64");
 
-    // Determinar si el archivo es JPEG o PNG (heurística)
-    // Si tu front sube principalmente JPEG, podrías forzar data:image/jpeg;base64
-    // o, si tu front sube PNG, "image/png".
-    // Ejemplo "image/png" por defecto:
+    // Determinar MIME type según lo que subió el usuario (por defecto PNG)
     let mimeType = "image/png";
-    // OPCIONAL: basarte en req.file.mimetype => "image/png" o "image/jpeg"
     if (req.file.mimetype === "image/jpeg") {
       mimeType = "image/jpeg";
     }
 
-    // 3) Armar request a Mistral con data URL
-    // Ej: "type": "image_url", "document_url": "data:image/png;base64,<...>"
+    // 3) Armar request a Mistral con la estructura recomendada
+    //    "documents": [ { type: "image_url", document_url: "data:image/png;base64,..." } ]
     const mistralReq = {
       model: "mistral-ocr-latest",
-      document: {
-        type: "image_url",
-        document_url: `data:${mimeType};base64,${base64Str}`
-      }
+      documents: [
+        {
+          type: "image_url",
+          document_url: `data:${mimeType};base64,${base64Str}`
+        }
+      ]
     };
 
     // 4) Llamar a Mistral
@@ -112,26 +110,35 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     const ocrData = ocrResp.data;
 
-    // 4a) Unir texto + calcular confianza
+    // 4a) Acceder a la primera respuesta => documents[0].pages
+    let pages = [];
+    if (
+      ocrData.documents &&
+      Array.isArray(ocrData.documents) &&
+      ocrData.documents.length > 0 &&
+      Array.isArray(ocrData.documents[0].pages)
+    ) {
+      pages = ocrData.documents[0].pages;
+    }
+
+    // Unir texto + calcular confianza
     let textoCompleto = "";
     let totalWords = 0;
     let sumConfidence = 0;
 
-    if (ocrData.pages && Array.isArray(ocrData.pages)) {
-      ocrData.pages.forEach(page => {
-        if (page.text_md) {
-          textoCompleto += page.text_md + "\n";
-        }
-        if (page.words_confidence && Array.isArray(page.words_confidence)) {
-          page.words_confidence.forEach(w => {
-            totalWords++;
-            sumConfidence += (w.confidence || 0);
-          });
-        }
-      });
-    }
+    pages.forEach((page) => {
+      if (page.text_md) {
+        textoCompleto += page.text_md + "\n";
+      }
+      if (page.words_confidence && Array.isArray(page.words_confidence)) {
+        page.words_confidence.forEach((w) => {
+          totalWords++;
+          sumConfidence += w.confidence || 0;
+        });
+      }
+    });
 
-    let avgConfidence = (totalWords > 0) ? (sumConfidence / totalWords) : 1;
+    let avgConfidence = totalWords > 0 ? sumConfidence / totalWords : 1;
 
     // 4b) Parse heurístico
     let lineas = textoCompleto.split("\n").map(l => l.trim()).filter(Boolean);
@@ -155,7 +162,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         confianza: avgConfidence
       };
 
-      // Demo: detecta "pick3", "win4", etc.
+      // Detección muy simplificada de tipo de juego
       if (lower.includes("pick3")) {
         jug.tipoJuego = "Pick 3";
       } else if (lower.includes("win4")) {
@@ -172,20 +179,23 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         jug.tipoJuego = "desconocido";
       }
 
+      // Modalidad
       if (lower.includes("combo")) jug.modalidad = "Combo";
       else if (lower.includes("box")) jug.modalidad = "Box";
       else if (lower.includes("straight")) jug.modalidad = "Straight";
       else if (lower.includes("round") || lower.includes("x")) jug.modalidad = "RoundDown";
       else jug.modalidad = "desconocido";
 
+      // Números (ejemplo: 2 o 4 dígitos, con o sin 'X')
       let rgxNums = /\b(\d{2,4}X|\d{2,4})\b/g;
       let matches = line.match(rgxNums);
-      if (matches && matches.length>0) {
+      if (matches && matches.length > 0) {
         jug.numeros = matches.join(",");
       } else {
         jug.numeros = "ilegible";
       }
 
+      // Monto apostado (ejemplo "$5" o "7.50")
       let rgxMonto = /\$?\d+(\.\d{1,2})?/;
       let mm = line.match(rgxMonto);
       if (mm) {
@@ -207,7 +217,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         j.fecha = isoHoy;
       }
       if (!j.track) {
-        j.track = (hora<14.25) ? "NY Midday":"NY Evening";
+        j.track = (hora < 14.25) ? "NY Midday" : "NY Evening";
       }
     });
 
@@ -230,11 +240,12 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     });
 
   } catch (err) {
-    // Imprimir error detallado
-    console.error("Error en /ocr:", err.response?.data || err.message);
+    // Log detallado: ver en Render Logs el "mensaje" y el body JSON
+    console.error("Error en /ocr:", err.message);
+    console.error("Error response data:", JSON.stringify(err.response?.data, null, 2));
 
     // Mistral a veces manda un JSON con { error: "...", message: "..." }
-    return res.json({
+    return res.status(500).json({
       success: false,
       error: err.response?.data?.error || err.message
     });
