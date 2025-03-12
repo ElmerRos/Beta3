@@ -1,7 +1,7 @@
  /***********************************************************
  * index.js - App Robusta con:
  *  1) Servir "index.html" estático con tu formulario + modal OCR
- *  2) POST /ocr para procesar la imagen con Mistral
+ *  2) POST /ocr para procesar la imagen con Mistral (formato "document_base64")
  *  3) Guardar en MongoDB Atlas (colección ticketsOCR)
  *  4) Devolver JSON con jugadas parseadas
  ***********************************************************/
@@ -12,6 +12,9 @@ const express = require("express");
 const multer = require("multer");
 const axios = require("axios");
 const { MongoClient } = require("mongodb");
+
+// IMPORTA 'sharp' (si quieres redimensionar la imagen)
+const sharp = require("sharp");
 
 const app = express();
 
@@ -62,19 +65,35 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
   }
 
   try {
-    // Convertir imagen a base64
-    const base64Image = req.file.buffer.toString("base64");
+    /************************************************************
+     * (1) OPCIONAL: Redimensionar imagen con 'sharp' para no exceder
+     *     cierto tamaño (p.ej. 2000x2000 px). Ajusta a tu gusto.
+     ************************************************************/
+    // Si no quieres redimensionar, elimina este bloque y usa `req.file.buffer` directo
+    let resizedBuffer = await sharp(req.file.buffer)
+      .resize({
+        width: 2000,      // Máximo 2000px ancho
+        height: 2000,     // Máximo 2000px alto
+        fit: "inside"     // Mantiene proporción (no recorta)
+      })
+      // .toFormat("png") // Opcional: convertir siempre a PNG
+      .toBuffer();
 
-    // Llamar a la API de Mistral
+    // Convertir a base64
+    const base64Image = resizedBuffer.toString("base64");
+
+    /************************************************************
+     * (2) Llamar a la API de Mistral con el formato "document_base64"
+     ************************************************************/
     const mistralReq = {
       model: "mistral-ocr-latest",
       document: {
-        type: "image_base64",
-        image_base64: base64Image
+        // Opción B según la doc => "document_base64"
+        type: "document_base64",
+        document_base64: base64Image
       }
     };
 
-    // Nota: Ajusta la URL y/o la version del endpoint si Mistral cambia
     const ocrResp = await axios.post(
       "https://api.mistral.ai/v1/ocr",
       mistralReq,
@@ -116,10 +135,10 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     // Si la confianza media es muy baja (<0.75), marcamos todos los campos como "dudosos"
     if (avgConfidence < 0.75) {
-      camposDudosos = ["fecha", "track", "tipoJuego", "modalidad", "numeros", "montoApostado"];
+      camposDudosos = ["fecha","track","tipoJuego","modalidad","numeros","montoApostado"];
     }
 
-    // Para cada línea, generamos una jugada de ejemplo
+    // Para cada línea, generamos una jugada de ejemplo (DEMO)
     lineas.forEach(line => {
       const lower = line.toLowerCase();
       let jug = {
@@ -133,7 +152,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         confianza: avgConfidence
       };
 
-      // (1) Detectar juego (muy simple, a modo de DEMO)
+      // (1) Detectar juego
       if (lower.includes("pick3")) {
         jug.tipoJuego = "Pick 3";
       } else if (lower.includes("win4")) {
@@ -157,20 +176,20 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       else if (lower.includes("round") || lower.includes("x")) jug.modalidad = "RoundDown";
       else jug.modalidad = "desconocido";
 
-      // (3) Números (2-4 dígitos o con X)
+      // (3) Números (2-4 dígitos)
       let rgxNums = /\b(\d{2,4}X|\d{2,4})\b/g;
       let matches = line.match(rgxNums);
-      if (matches && matches.length > 0) {
+      if (matches && matches.length>0) {
         jug.numeros = matches.join(",");
       } else {
         jug.numeros = "ilegible";
       }
 
-      // (4) Monto ($XX o XX.xx)
+      // (4) Monto
       let rgxMonto = /\$?\d+(\.\d{1,2})?/;
       let mm = line.match(rgxMonto);
       if (mm) {
-        let mStr = mm[0].replace("$", "");
+        let mStr = mm[0].replace("$","");
         jug.montoApostado = parseFloat(mStr);
       } else {
         jug.montoApostado = "?";
@@ -181,25 +200,21 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     // Fallback para fecha y track si no se detecta nada
     let now = new Date();
-    let isoHoy = now.toISOString().slice(0, 10); // YYYY-MM-DD
-    let hora = now.getHours() + now.getMinutes() / 60;
+    let isoHoy = now.toISOString().slice(0,10); // YYYY-MM-DD
+    let hora = now.getHours() + now.getMinutes()/60;
 
     jugadas.forEach(j => {
       if (!j.fecha) {
-        // Por defecto, usamos la fecha actual
+        // Por defecto, fecha actual
         j.fecha = isoHoy;
       }
       if (!j.track) {
-        // Por defecto, elegimos "NY Midday" si la hora < 14.25, si no, "NY Evening"
-        if (hora < 14.25) {
-          j.track = "NY Midday";
-        } else {
-          j.track = "NY Evening";
-        }
+        // Por defecto => "NY Midday" si <14.25, sino "NY Evening"
+        j.track = (hora<14.25) ? "NY Midday":"NY Evening";
       }
     });
 
-    // Guardar en DB (colección ticketsOCR)
+    // Guardar en DB
     const col = db.collection("ticketsOCR");
     await col.insertOne({
       createdAt: new Date(),
@@ -218,8 +233,13 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Error en /ocr:", err.message);
-    return res.json({ success: false, error: err.message });
+    // Para ver más detalles del error Mistral, imprime err.response?.data
+    console.error("Error en /ocr:", err.response?.data || err.message);
+
+    return res.json({
+      success: false,
+      error: err.response?.data?.error || err.message
+    });
   }
 });
 
