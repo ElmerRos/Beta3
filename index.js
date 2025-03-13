@@ -51,16 +51,17 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
 
-    // Convertir la imagen a base64
-    const base64Str = resizedBuffer.toString("base64");
+    // Convertir la imagen a Base64 (quitando saltos de línea, por si acaso)
+    const base64Raw = resizedBuffer.toString("base64");
+    const base64Str = base64Raw.replace(/\r?\n/g, "");
 
-    // Determinar el tipo MIME de la imagen
+    // Determinar el MIME type
     let mimeType = "image/png";
     if (req.file.mimetype === "image/jpeg") {
       mimeType = "image/jpeg";
     }
 
-    // IMPORTANTE: aquí usamos "image_url" en lugar de "document_url"
+    // Construir el payload según la documentación de Mistral
     const mistralReq = {
       model: "mistral-ocr-latest",
       document: {
@@ -69,10 +70,14 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     };
 
-    // Llamar a la API de Mistral
+    // (Opcional) Para verificar en logs que no esté vacío
+    console.log("Base64 length =", base64Str.length);
+    console.log("Enviando a Mistral:", JSON.stringify(mistralReq));
+
+    // Realizar la solicitud a la API de Mistral
     const ocrResp = await axios.post("https://api.mistral.ai/v1/ocr", mistralReq, {
       headers: {
-        Authorization: `Bearer ${MISTRAL_API_KEY}`,
+        "Authorization": `Bearer ${MISTRAL_API_KEY}`,
         "Content-Type": "application/json"
       }
     });
@@ -86,23 +91,23 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     if (ocrData.pages && Array.isArray(ocrData.pages)) {
       ocrData.pages.forEach(page => {
-        // Algunas versiones devuelven page.markdown o page.text_md
+        // Algunas versiones usan page.text_md o page.markdown
         if (page.text_md) {
           textoCompleto += page.text_md + "\n";
         }
         if (page.words_confidence && Array.isArray(page.words_confidence)) {
-          page.words_confidence.forEach(w => {
+          page.words_confidence.forEach(wordObj => {
             totalWords++;
-            sumConfidence += (w.confidence || 0);
+            sumConfidence += (wordObj.confidence || 0);
           });
         }
       });
     }
 
-    let avgConfidence = (totalWords > 0) ? (sumConfidence / totalWords) : 1;
+    const avgConfidence = (totalWords > 0) ? (sumConfidence / totalWords) : 1;
 
-    // Parseo heurístico del texto extraído
-    let lineas = textoCompleto
+    // Parseo heurístico del texto OCR
+    const lineas = textoCompleto
       .split("\n")
       .map(l => l.trim())
       .filter(Boolean);
@@ -110,12 +115,12 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     let jugadas = [];
     let camposDudosos = [];
 
-    // Si la confianza promedio es baja, consideramos todos los campos como dudosos
+    // Si la confianza promedio es baja, marcamos campos como dudosos
     if (avgConfidence < 0.75) {
       camposDudosos = ["fecha", "track", "tipoJuego", "modalidad", "numeros", "montoApostado"];
     }
 
-    // Bucle para analizar cada línea y extraer info
+    // Ejemplo simple de parseo, ajusta según tu lógica real
     lineas.forEach(line => {
       const lower = line.toLowerCase();
       let jug = {
@@ -125,49 +130,23 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         modalidad: null,
         numeros: null,
         montoApostado: null,
-        notas: "",
         confianza: avgConfidence
       };
 
-      // Detección de tipo de juego
       if (lower.includes("pick3")) {
         jug.tipoJuego = "Pick 3";
       } else if (lower.includes("win4")) {
         jug.tipoJuego = "Win 4";
       } else if (lower.includes("venez")) {
         jug.tipoJuego = "Venezuela";
-      } else if (lower.includes("doming")) {
-        jug.tipoJuego = "SantoDomingo";
-      } else if (lower.includes("pulito")) {
-        jug.tipoJuego = "Pulito";
-      } else if (lower.includes("single")) {
-        jug.tipoJuego = "SingleAction";
       } else {
         jug.tipoJuego = "desconocido";
       }
 
-      // Detección de modalidad
-      if (lower.includes("combo")) {
-        jug.modalidad = "Combo";
-      } else if (lower.includes("box")) {
-        jug.modalidad = "Box";
-      } else if (lower.includes("straight")) {
-        jug.modalidad = "Straight";
-      } else if (lower.includes("round") || lower.includes("x")) {
-        jug.modalidad = "RoundDown";
-      } else {
-        jug.modalidad = "desconocido";
-      }
-
-      // (Ejemplo) Detección de monto y/o números (podrías mejorarlo con regex)
-      // if (lower.match(/\d{2,4}/)) { jug.numeros = ... }
-      // if (lower.match(/\$\d+(\.\d{1,2})?/)) { jug.montoApostado = ... }
-
-      // Añadir esta jugada al array (si deseas filtrar algo, hazlo antes)
       jugadas.push(j);
     });
 
-    // (Opcional) Guardar en MongoDB la respuesta, si quieres
+    // (Opcional) Guardar en MongoDB la respuesta OCR:
     // await db.collection("ticketsOCR").insertOne({
     //   fechaProcesado: new Date(),
     //   textoCompleto,
@@ -176,7 +155,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     //   avgConfidence
     // });
 
-    // Devolver respuesta al frontend
+    // Devolver la respuesta al frontend
     return res.json({
       success: true,
       resultado: {
@@ -193,7 +172,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
   }
 });
 
-// Iniciar servidor
+// Iniciar el servidor
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
+  console.log(`Servidor corriendo en puerto ${PORT}`);
 });
