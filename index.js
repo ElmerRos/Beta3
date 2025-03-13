@@ -9,13 +9,13 @@ const sharp = require("sharp");
 
 const app = express();
 
-// Multer: almacenamiento en memoria
+// Configuración de multer para almacenar archivos en memoria
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Variables de entorno
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@host/db";
-const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || "API_KEY_MISTRAL";
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || "TU_API_KEY_MISTRAL";
 
 // Conexión a MongoDB
 let dbClient;
@@ -31,112 +31,86 @@ let db;
   }
 })();
 
-// Servir estáticos
+// Servir archivos estáticos desde la carpeta "public"
 app.use(express.static("public"));
 
-// GET /
+// Ruta GET para la página principal
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/**
- * POST /ocr
- * - Se sube una imagen de ticket manuscrito
- * - Se reescala opcionalmente (sharp)
- * - Se convierte en base64
- * - Se manda a Mistral (type = "image_url", image_url = data:...)
- * - Se parsea el JSON
- * - Se guarda en MongoDB
- */
+// Ruta POST para procesar OCR
 app.post("/ocr", upload.single("ticket"), async (req, res) => {
   if (!req.file) {
-    return res.json({
-      success: false,
-      error: "No se recibió ninguna imagen."
-    });
+    return res.json({ success: false, error: "No se recibió ninguna imagen." });
   }
 
   try {
-    // Redimensionar la imagen a 2000x2000 (opcional)
+    // Redimensionar la imagen a un máximo de 2000x2000 píxeles
     let resizedBuffer = await sharp(req.file.buffer)
-      .resize({
-        width: 2000,
-        height: 2000,
-        fit: "inside"
-      })
-      // .toFormat("png") // opcional, si quieres forzar PNG
+      .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
 
-    // Convertir a base64
+    // Convertir la imagen a base64
     const base64Str = resizedBuffer.toString("base64");
 
-    // Determinar mimeType (png o jpeg)
+    // Determinar el tipo MIME de la imagen
     let mimeType = "image/png";
     if (req.file.mimetype === "image/jpeg") {
       mimeType = "image/jpeg";
     }
 
-    // Armar el body para Mistral OCR
-    // => doc oficial sugiere:
-    // {
-    //   "model": "mistral-ocr-latest",
-    //   "document": {
-    //     "type": "image_url",
-    //     "image_url": "data:image/png;base64,<BASE64>"
-    //   }
-    // }
-    const mistralBody = {
+    // Crear el cuerpo de la solicitud para la API de Mistral
+    const mistralReq = {
       model: "mistral-ocr-latest",
       document: {
         type: "image_url",
-        image_url: `data:${mimeType};base64,${base64Str}`
+        document_url: `data:${mimeType};base64,${base64Str}`
       }
     };
 
-    // Llamar a la API de Mistral
-    const ocrResp = await axios.post("https://api.mistral.ai/v1/ocr", mistralBody, {
+    // Realizar la solicitud a la API de Mistral
+    const ocrResp = await axios.post("https://api.mistral.ai/v1/ocr", mistralReq, {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${MISTRAL_API_KEY}`
+        Authorization: `Bearer ${MISTRAL_API_KEY}`,
+        "Content-Type": "application/json"
       }
     });
 
-    // ocrResp.data podría tener "pages" etc.
     const ocrData = ocrResp.data;
 
-    // Extrae texto / confianza
-    // Dependiendo de la doc, a veces viene en:
-    // ocrData.document.pages => array de { text_md, words_confidence, ... }
-    // Ajustar según la respuesta real
-    let pages = ocrData.document?.pages || [];
-    // Concatena el texto
-    let fullText = "";
+    // Procesar la respuesta de la API
+    let textoCompleto = "";
     let totalWords = 0;
     let sumConfidence = 0;
 
-    pages.forEach((page) => {
-      if (page.text_md) {
-        fullText += page.text_md + "\n";
-      }
-      if (Array.isArray(page.words_confidence)) {
-        page.words_confidence.forEach((w) => {
-          totalWords++;
-          sumConfidence += w.confidence || 0;
-        });
-      }
-    });
+    if (ocrData.pages && Array.isArray(ocrData.pages)) {
+      ocrData.pages.forEach(page => {
+        if (page.text_md) {
+          textoCompleto += page.text_md + "\n";
+        }
+        if (page.words_confidence && Array.isArray(page.words_confidence)) {
+          page.words_confidence.forEach(w => {
+            totalWords++;
+            sumConfidence += (w.confidence || 0);
+          });
+        }
+      });
+    }
 
-    let avgConfidence = totalWords > 0 ? sumConfidence / totalWords : 1;
+    let avgConfidence = (totalWords > 0) ? (sumConfidence / totalWords) : 1;
 
-    // Por ejemplo, parse heurístico
-    let lineas = fullText.split("\n").map(l => l.trim()).filter(Boolean);
+    // Parseo heurístico del texto
+    let lineas = textoCompleto.split("\n").map(l => l.trim()).filter(Boolean);
     let jugadas = [];
     let camposDudosos = [];
+
     if (avgConfidence < 0.75) {
-      camposDudosos = ["fecha","track","tipoJuego","modalidad","numeros","montoApostado"];
+      camposDudosos = ["fecha", "track", "tipoJuego", "modalidad", "numeros", "montoApostado"];
     }
 
     lineas.forEach(line => {
+      const lower = line.toLowerCase();
       let jug = {
         fecha: null,
         track: null,
@@ -147,37 +121,29 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         notas: "",
         confianza: avgConfidence
       };
-      // "detectar" datos (lógica de ejemplo):
-      // ...
-      jugadas.push(jug);
-    });
 
-    // Guardar en DB
-    await db.collection("ticketsOCR").insertOne({
-      createdAt: new Date(),
-      fullText,
-      avgConfidence,
-      jugadas
-    });
+      // Detección de tipo de juego
+      if (lower.includes("pick3")) {
+        jug.tipoJuego = "Pick 3";
+      } else if (lower.includes("win4")) {
+        jug.tipoJuego = "Win 4";
+      } else if (lower.includes("venez")) {
+        jug.tipoJuego = "Venezuela";
+      } else if (lower.includes("doming")) {
+        jug.tipoJuego = "SantoDomingo";
+      } else if (lower.includes("pulito")) {
+        jug.tipoJuego = "Pulito";
+      } else if (lower.includes("single")) {
+        jug.tipoJuego = "SingleAction";
+      } else {
+        jug.tipoJuego = "desconocido";
+      }
 
-    // Devolver JSON
-    return res.json({
-      success: true,
-      resultado: { jugadas, camposDudosos }
-    });
-  } catch (err) {
-    // Logs detallados
-    console.error("Error en /ocr:", err.message);
-    console.error("Error response data:", JSON.stringify(err.response?.data, null, 2));
+      // Detección de modalidad
+      if (lower.includes("combo")) jug.modalidad = "Combo";
+      else if (lower.includes("box")) jug.modalidad = "Box";
+      else if (lower.includes("straight")) jug.modalidad = "Straight";
+      else if (lower.includes("round") || lower.includes("x")) jug.modalidad = "RoundDown";
+      else jug.modalidad = "desconocido";
 
-    return res.status(500).json({
-      success: false,
-      error: err.response?.data?.error || err.message
-    });
-  }
-});
-
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log("Servidor corriendo en puerto", PORT);
-});
+      // Detección de
