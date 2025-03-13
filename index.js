@@ -47,7 +47,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
   try {
     // Redimensionar la imagen a un máximo de 2000x2000 píxeles
-    let resizedBuffer = await sharp(req.file.buffer)
+    const resizedBuffer = await sharp(req.file.buffer)
       .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
 
@@ -60,16 +60,16 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       mimeType = "image/jpeg";
     }
 
-    // Crear el cuerpo de la solicitud para la API de Mistral
+    // IMPORTANTE: aquí usamos "image_url" en lugar de "document_url"
     const mistralReq = {
       model: "mistral-ocr-latest",
       document: {
         type: "image_url",
-        document_url: `data:${mimeType};base64,${base64Str}`
+        image_url: `data:${mimeType};base64,${base64Str}`
       }
     };
 
-    // Realizar la solicitud a la API de Mistral
+    // Llamar a la API de Mistral
     const ocrResp = await axios.post("https://api.mistral.ai/v1/ocr", mistralReq, {
       headers: {
         Authorization: `Bearer ${MISTRAL_API_KEY}`,
@@ -79,13 +79,14 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     const ocrData = ocrResp.data;
 
-    // Procesar la respuesta de la API
+    // Extraer texto y calcular confianza promedio
     let textoCompleto = "";
     let totalWords = 0;
     let sumConfidence = 0;
 
     if (ocrData.pages && Array.isArray(ocrData.pages)) {
       ocrData.pages.forEach(page => {
+        // Algunas versiones devuelven page.markdown o page.text_md
         if (page.text_md) {
           textoCompleto += page.text_md + "\n";
         }
@@ -100,15 +101,21 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     let avgConfidence = (totalWords > 0) ? (sumConfidence / totalWords) : 1;
 
-    // Parseo heurístico del texto
-    let lineas = textoCompleto.split("\n").map(l => l.trim()).filter(Boolean);
+    // Parseo heurístico del texto extraído
+    let lineas = textoCompleto
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean);
+
     let jugadas = [];
     let camposDudosos = [];
 
+    // Si la confianza promedio es baja, consideramos todos los campos como dudosos
     if (avgConfidence < 0.75) {
       camposDudosos = ["fecha", "track", "tipoJuego", "modalidad", "numeros", "montoApostado"];
     }
 
+    // Bucle para analizar cada línea y extraer info
     lineas.forEach(line => {
       const lower = line.toLowerCase();
       let jug = {
@@ -140,10 +147,53 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
 
       // Detección de modalidad
-      if (lower.includes("combo")) jug.modalidad = "Combo";
-      else if (lower.includes("box")) jug.modalidad = "Box";
-      else if (lower.includes("straight")) jug.modalidad = "Straight";
-      else if (lower.includes("round") || lower.includes("x")) jug.modalidad = "RoundDown";
-      else jug.modalidad = "desconocido";
+      if (lower.includes("combo")) {
+        jug.modalidad = "Combo";
+      } else if (lower.includes("box")) {
+        jug.modalidad = "Box";
+      } else if (lower.includes("straight")) {
+        jug.modalidad = "Straight";
+      } else if (lower.includes("round") || lower.includes("x")) {
+        jug.modalidad = "RoundDown";
+      } else {
+        jug.modalidad = "desconocido";
+      }
 
-      // Detección de
+      // (Ejemplo) Detección de monto y/o números (podrías mejorarlo con regex)
+      // if (lower.match(/\d{2,4}/)) { jug.numeros = ... }
+      // if (lower.match(/\$\d+(\.\d{1,2})?/)) { jug.montoApostado = ... }
+
+      // Añadir esta jugada al array (si deseas filtrar algo, hazlo antes)
+      jugadas.push(j);
+    });
+
+    // (Opcional) Guardar en MongoDB la respuesta, si quieres
+    // await db.collection("ticketsOCR").insertOne({
+    //   fechaProcesado: new Date(),
+    //   textoCompleto,
+    //   jugadas,
+    //   camposDudosos,
+    //   avgConfidence
+    // });
+
+    // Devolver respuesta al frontend
+    return res.json({
+      success: true,
+      resultado: {
+        jugadas,
+        camposDudosos,
+        avgConfidence,
+        textoCompleto
+      }
+    });
+
+  } catch (err) {
+    console.error("Error procesando OCR:", err);
+    return res.json({ success: false, error: err.message });
+  }
+});
+
+// Iniciar servidor
+app.listen(PORT, () => {
+  console.log(`Servidor escuchando en el puerto ${PORT}`);
+});
