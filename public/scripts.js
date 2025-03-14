@@ -1,14 +1,17 @@
  /* =========================================================
    SCRIPTS.JS COMPLETO
    (Mantiene toda la lógica previa intacta,
-    e incorpora las funciones OCR al final).
+    e incorpora las funciones OCR con /ocr al backend).
 ========================================================= */
 
+// (1) URL opcional de SheetDB (si lo usas para guardar tickets):
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
 $(document).ready(function() {
 
-  // (1) Variables globales, dayjs, etc.
+  // -------------------------------------------------------
+  // VARIABLES GLOBALES, DAYJS, ETC.
+  // -------------------------------------------------------
   dayjs.extend(dayjs_plugin_customParseFormat);
   dayjs.extend(dayjs_plugin_arraySupport);
 
@@ -19,7 +22,7 @@ $(document).ready(function() {
   let selectedDaysCount = 0;
   const MAX_PLAYS = 25;
 
-  let playCount = 0;         
+  let playCount = 0;
   let wizardCount = 0;       
 
   // Candados para el Wizard
@@ -29,7 +32,9 @@ $(document).ready(function() {
     combo: false
   };
 
-  // (2) Cutoff times
+  // -------------------------------------------------------
+  // CUTOFF TIMES
+  // -------------------------------------------------------
   const cutoffTimes = {
     "USA": {
       "New York Mid Day": "14:20",
@@ -71,7 +76,9 @@ $(document).ready(function() {
     }
   };
 
-  // (3) Init Flatpickr
+  // -------------------------------------------------------
+  // INIT FLATPICKR
+  // -------------------------------------------------------
   const fp = flatpickr("#fecha", {
     mode: "multiple",
     dateFormat: "m-d-Y",
@@ -100,7 +107,9 @@ $(document).ready(function() {
     }
   });
 
-  // (4) Track Checkboxes
+  // -------------------------------------------------------
+  // TRACK CHECKBOXES
+  // -------------------------------------------------------
   $(".track-checkbox").change(function(){
     const arr = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
@@ -111,7 +120,9 @@ $(document).ready(function() {
     disableTracksByTime();
   });
 
-  // (5) MAIN TABLE => Add/Remove
+  // -------------------------------------------------------
+  // MAIN TABLE => ADD/REMOVE
+  // -------------------------------------------------------
   $("#agregarJugada").click(function(){
     const row = addMainRow();
     if(row) row.find(".betNumber").focus();
@@ -203,7 +214,9 @@ $(document).ready(function() {
     calculateMainTotal();
   }
 
-  // (6) Calculate Main Total
+  // -------------------------------------------------------
+  // CALCULATE MAIN TOTAL
+  // -------------------------------------------------------
   function calculateMainTotal(){
     let sum=0;
     $("#tablaJugadas tr").each(function(){
@@ -220,7 +233,9 @@ $(document).ready(function() {
     storeFormState();
   }
 
-  // (7) determineGameMode
+  // -------------------------------------------------------
+  // DETERMINE GAME MODE
+  // -------------------------------------------------------
   function determineGameMode(betNumber){
     if(!betNumber) return "-";
 
@@ -277,7 +292,9 @@ $(document).ready(function() {
     return "-";
   }
 
-  // (8) calculateRowTotal
+  // -------------------------------------------------------
+  // CALCULATE ROW TOTAL
+  // -------------------------------------------------------
   function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
     if(!bn || gm==="-") return "0.00";
     const st = parseFloat(stVal)||0;
@@ -335,7 +352,9 @@ $(document).ready(function() {
     return factorial(str.length)/denom;
   }
 
-  // (9) store/load FormState
+  // -------------------------------------------------------
+  // STORE/LOAD FORM STATE
+  // -------------------------------------------------------
   function storeFormState(){
     const st = {
       selectedTracksCount,
@@ -413,7 +432,9 @@ $(document).ready(function() {
     });
   }
 
-  // (10) resetForm
+  // -------------------------------------------------------
+  // RESET FORM
+  // -------------------------------------------------------
   $("#resetForm").click(function(){
     if(confirm("Are you sure you want to reset the form?")){
       resetForm();
@@ -429,7 +450,6 @@ $(document).ready(function() {
     $("#totalJugadas").text("0.00");
     localStorage.removeItem("formState");
 
-    // Forzar la fecha hoy
     if(fp) {
       fp.clear();
       fp.setDate([ new Date() ], true);
@@ -440,7 +460,9 @@ $(document).ready(function() {
     autoSelectNYTrack();
   }
 
-  // (11) Generate Ticket
+  // -------------------------------------------------------
+  // GENERATE TICKET
+  // -------------------------------------------------------
   $("#generarTicket").click(function(){
     doGenerateTicket();
   });
@@ -697,11 +719,12 @@ $(document).ready(function() {
 
         alert("Your ticket image was downloaded successfully (JPEG).");
 
+        // EJEMPLO: Guardar datos en SheetDB (o tu DB)
         saveBetDataToSheetDB(uniqueTicket, success=>{
           if(success){
-            console.log("Bet data sent to SheetDB.");
+            console.log("Bet data sent to DB/SheetDB.");
           } else {
-            console.error("Failed to send bet data to SheetDB.");
+            console.error("Failed to send bet data to DB/SheetDB.");
           }
         });
       })
@@ -753,6 +776,9 @@ $(document).ready(function() {
     $("#preTicket").css("overflow-x","auto");
   }
 
+  // -------------------------------------------------------
+  // EJEMPLO: GUARDAR DATOS EN SHEETDB (o DB)
+  // -------------------------------------------------------
   function saveBetDataToSheetDB(uniqueTicket, callback){
     const dateVal= $("#fecha").val()||"";
     const chosenTracks= $(".track-checkbox:checked")
@@ -919,7 +945,7 @@ $(document).ready(function() {
     $(".track-checkbox").trigger("change");
   }
 
-  // Duplicates highlight en MAIN
+  // DUPLICATES HIGHLIGHT EN MAIN
   function highlightDuplicatesInMain(){
     $("#tablaJugadas tr").find(".betNumber").removeClass("duplicado");
     let counts={};
@@ -938,14 +964,14 @@ $(document).ready(function() {
 
 
   /*
-   ==========================================================
-   WIZARD (copiado tal cual tu backup)
-   ==========================================================
+   =========================================================
+   WIZARD (MANTIENE LA LÓGICA ORIGINAL)
+   =========================================================
   */
 
   const wizardModal = new bootstrap.Modal(document.getElementById("wizardModal"));
 
-  // Al hacer clic en el botón Wizard, se abre y se resetea
+  // Al hacer clic en Wizard
   $("#wizardButton").click(function(){
     resetWizard();
     wizardModal.show();
@@ -970,7 +996,7 @@ $(document).ready(function() {
     $("#rdLastNumber").val("");
   }
 
-  // Botones “candado” en Wizard
+  // Botones candado
   $(".lockBtn").click(function(){
     const field = $(this).data("field");
     lockedFields[field] = !lockedFields[field];
@@ -993,11 +1019,9 @@ $(document).ready(function() {
     let bxVal = $("#wizardBox").val().trim();
     let coVal = $("#wizardCombo").val().trim();
 
-    // Calcular total
     const rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
     addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
 
-    // Si NO está lockeado, se borra el valor
     if(!lockedFields.straight) $("#wizardStraight").val("");
     if(!lockedFields.box) $("#wizardBox").val("");
     if(!lockedFields.combo) $("#wizardCombo").val("");
@@ -1065,9 +1089,9 @@ $(document).ready(function() {
   });
 
   function generateRandomNumberForMode(mode){
-    // Ejemplo de generador random
+    // Ejemplo
     if(mode==="NY Horses"){
-      const length = Math.floor(Math.random()*4)+1; 
+      const length = Math.floor(Math.random()*4)+1;
       const maxVal = Math.pow(10,length)-1;
       return Math.floor(Math.random()*(maxVal+1));
     }
@@ -1083,11 +1107,9 @@ $(document).ready(function() {
     if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela"){
       return Math.floor(Math.random()*100);
     }
-    // Default => 3 dígitos
     return Math.floor(Math.random()*1000);
   }
   function padNumberForMode(num, mode){
-    // Ajusta con ceros a la izquierda según la modalidad
     if(mode==="NY Horses"||mode==="Single Action"){
       return num.toString();
     }
@@ -1106,7 +1128,6 @@ $(document).ready(function() {
       while(s.length<3) s="0"+s;
       return s;
     }
-    // default => 3 dígitos
     let s=num.toString();
     while(s.length<3) s="0"+s;
     return s;
@@ -1140,7 +1161,7 @@ $(document).ready(function() {
     for(let i=start; i<=end; i++){
       let bn= i.toString().padStart(firstNum.length,"0");
       let gm= determineGameMode(bn);
-      if(gm==="-") continue; 
+      if(gm==="-") continue;
       const rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
       addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
     }
@@ -1197,7 +1218,6 @@ $(document).ready(function() {
     highlightDuplicatesInWizard();
   }
 
-  // Add All to Main
   $("#wizardAddAllToMain").click(function(){
     const wizardRows= $("#wizardTableBody tr");
     if(wizardRows.length===0){
@@ -1254,14 +1274,12 @@ $(document).ready(function() {
     storeFormState();
   });
 
-  // Generate Ticket directamente desde Wizard
   $("#wizardGenerateTicket").click(function(){
     $("#wizardAddAllToMain").trigger("click");
     wizardModal.hide();
     doGenerateTicket();
   });
 
-  // Edit Main
   $("#wizardEditMainForm").click(function(){
     wizardModal.hide();
   });
@@ -1284,7 +1302,7 @@ $(document).ready(function() {
 
   /*
    =========================================================
-   Intro.js Tutorial (3 idiomas) (Sin cambios)
+   INTRO.JS TUTORIAL (3 idiomas)
    =========================================================
   */
   const tutorialStepsEN = [
@@ -1434,27 +1452,28 @@ $(document).ready(function() {
 
 
   /* 
-     =========================================================
-     AÑADIMOS AQUÍ EL CÓDIGO OCR (modal, drag/drop, fetch)
-     =========================================================
+   =========================================================
+   AÑADIMOS AQUÍ EL CÓDIGO PARA PROCESAR TICKET (OCR)
+   =========================================================
   */
 
-  // Variables globales OCR:
+  // Variables globales para imagen
   let selectedFileGlobal = null;  // archivo de imagen
-  let jugadasGlobal = [];         // guardamos las jugadas parseadas
+  let ultimaRespuestaTicket = null; // guardamos la última respuesta {jugadas, etc.}
 
-  // (A) Función para abrir el Modal OCR (Bootstrap)
+  // (A) Función para abrir el Modal (Bootstrap)
   window.abrirModalOCR = function() {
     // Limpiar estados anteriores
     selectedFileGlobal = null;
-    jugadasGlobal = [];
+    ultimaRespuestaTicket = null;
 
     $("#ocrFile").val("");
     $("#ocrPreview").addClass("d-none").attr("src","");
     $("#ocrJugadas").empty();
     $("#ocrSpinner").addClass("d-none");
+    $("#ocrRawDebug").text("");
 
-    // Mostrar el modal (Bootstrap 5)
+    // Mostrar el modal
     const modal = new bootstrap.Modal(document.getElementById("modalOcr"));
     modal.show();
   };
@@ -1475,8 +1494,9 @@ $(document).ready(function() {
     $("#ocrDropZone").removeClass("dragover");
     if(e.dataTransfer.files && e.dataTransfer.files[0]){
       selectedFileGlobal = e.dataTransfer.files[0];
-      $("#ocrPreview").attr("src", URL.createObjectURL(selectedFileGlobal))
-                      .removeClass("d-none");
+      $("#ocrPreview")
+        .attr("src", URL.createObjectURL(selectedFileGlobal))
+        .removeClass("d-none");
     }
   };
 
@@ -1484,12 +1504,13 @@ $(document).ready(function() {
   window.handleFileChange = function(e) {
     if(e.target.files && e.target.files[0]){
       selectedFileGlobal = e.target.files[0];
-      $("#ocrPreview").attr("src", URL.createObjectURL(selectedFileGlobal))
-                      .removeClass("d-none");
+      $("#ocrPreview")
+        .attr("src", URL.createObjectURL(selectedFileGlobal))
+        .removeClass("d-none");
     }
   };
 
-  // (D) Procesar OCR => llama /ocr
+  // (D) Procesar => llama /ocr
   window.procesarOCR = async function() {
     if(!selectedFileGlobal){
       alert("No has seleccionado ninguna imagen.");
@@ -1497,12 +1518,12 @@ $(document).ready(function() {
     }
     $("#ocrSpinner").removeClass("d-none");
     $("#ocrJugadas").empty();
+    $("#ocrRawDebug").text("");
 
     try {
       let formData = new FormData();
       formData.append("ticket", selectedFileGlobal);
 
-      // Ajusta la URL si tu backend está en otro dominio:
       let resp = await fetch("/ocr", {
         method:"POST",
         body: formData
@@ -1510,19 +1531,24 @@ $(document).ready(function() {
       let data = await resp.json();
 
       if(!data.success){
-        alert("Error en OCR: "+data.error);
+        alert("Error al procesar el ticket: "+ data.error);
         return;
       }
-      jugadasGlobal = data.resultado.jugadas || [];
-      let camposDudosos = data.resultado.camposDudosos || [];
+      ultimaRespuestaTicket = data.resultado || {};
+      let jugadas = ultimaRespuestaTicket.jugadas || [];
+      let camposDudosos = ultimaRespuestaTicket.camposDudosos || [];
 
-      if(jugadasGlobal.length===0){
+      // Mostrar "raw" en <pre>
+      let rawData = ultimaRespuestaTicket.rawOcrData || {};
+      $("#ocrRawDebug").text(JSON.stringify(rawData, null, 2));
+
+      if(jugadas.length===0){
         $("#ocrJugadas").html("<p>No se detectaron jugadas en la imagen.</p>");
         return;
       }
 
-      let html = "<h5>Jugadas Detectadas:</h5>";
-      jugadasGlobal.forEach((j, idx)=>{
+      let html = "";
+      jugadas.forEach((j, idx)=>{
         html += `
           <div style="border:1px solid #ccc; padding:0.5rem; margin-bottom:0.5rem;">
             <p><strong>Fecha:</strong> ${j.fecha}</p>
@@ -1531,9 +1557,7 @@ $(document).ready(function() {
             <p><strong>Modalidad:</strong> ${j.modalidad}</p>
             <p><strong>Números:</strong> ${j.numeros}</p>
             <p><strong>Monto:</strong> ${j.montoApostado}</p>
-            <button class="btn btn-sm btn-info" onclick="usarJugada(${idx})">
-              Usar esta Jugada
-            </button>
+            <p><em>${j.notas||""}</em></p>
           </div>
         `;
       });
@@ -1543,31 +1567,30 @@ $(document).ready(function() {
       $("#ocrJugadas").html(html);
 
     } catch(err){
-      alert("Error subiendo OCR: "+err.message);
+      alert("Error subiendo Ticket: "+ err.message);
     } finally {
       $("#ocrSpinner").addClass("d-none");
     }
   };
 
-  // (E) Usar Jugada => rellena el form principal
-  window.usarJugada = function(idx){
-    if(!jugadasGlobal || !jugadasGlobal[idx]){
-      alert("No se encontró la jugada seleccionada.");
+  // (E) Usar Jugadas => rellena el form principal
+  $("#btnCargarJugadas").click(function(){
+    if(!ultimaRespuestaTicket || !ultimaRespuestaTicket.jugadas){
+      alert("No se encontró jugadas que cargar.");
       return;
     }
-    const j = jugadasGlobal[idx];
+    const jugadasGlobal = ultimaRespuestaTicket.jugadas;
 
-    // Rellenar #fecha (o lo que consideres) con la jugada
-    $("#fecha").val( j.fecha || "" );
-
-    // Insertar la jugada como si fuera una fila en la tabla principal
-    addMainRow();
-    const lastTr = $("#tablaJugadas tr:last");
-    lastTr.find(".betNumber").val( j.numeros || "" );
-    // Por simplicidad, usaremos su "montoApostado" en .straight
-    lastTr.find(".straight").val( j.montoApostado || "" );
-    recalcMainRow(lastTr);
-    highlightDuplicatesInMain();
+    jugadasGlobal.forEach((j, idx)=>{
+      // Insertar la jugada como si fuera una fila en la tabla principal
+      addMainRow();
+      const lastTr = $("#tablaJugadas tr:last");
+      lastTr.find(".betNumber").val( j.numeros || "" );
+      // Por simplicidad, usaremos su "montoApostado" en .straight
+      lastTr.find(".straight").val( j.montoApostado || "" );
+      recalcMainRow(lastTr);
+      highlightDuplicatesInMain();
+    });
     storeFormState();
 
     // Cerrar el modal
