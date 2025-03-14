@@ -1,86 +1,77 @@
  /* =========================================================
    SCRIPTS.JS COMPLETO
-   (Mantiene TODA tu lógica previa de ~1600 líneas,
-    e incorpora las funciones OCR al final, sin cambiar IDs).
+   (Mantiene toda la lógica previa intacta,
+    e incorpora las funciones OCR al final).
 ========================================================= */
-
-////////////////////////////////////////////////////////////
-// 1) INICIO: Variables globales, dayjs, etc.
-////////////////////////////////////////////////////////////
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
 
-// Extensiones de dayjs
-dayjs.extend(dayjs_plugin_customParseFormat);
-dayjs.extend(dayjs_plugin_arraySupport);
-
-let transactionDateTime = '';
-window.ticketImageDataUrl = null;
-
-let selectedTracksCount = 0;
-let selectedDaysCount = 0;
-const MAX_PLAYS = 25;
-
-let playCount = 0;         
-let wizardCount = 0;       
-
-// Candados para el Wizard
-const lockedFields = {
-  straight: false,
-  box: false,
-  combo: false
-};
-
-// (2) Cutoff times
-const cutoffTimes = {
-  "USA": {
-    "New York Mid Day": "14:20",
-    "New York Evening": "22:00",
-    "Georgia Mid Day": "12:20",
-    "Georgia Evening": "18:40",
-    "New Jersey Mid Day": "12:50",
-    "New Jersey Evening": "22:00",
-    "Florida Mid Day": "13:20",
-    "Florida Evening": "21:30",
-    "Connecticut Mid Day": "13:30",
-    "Connecticut Evening": "22:00",
-    "Georgia Night": "22:00",
-    "Pensilvania AM": "12:45",
-    "Pensilvania PM": "18:15",
-    "Venezuela": "00:00",
-    "Brooklyn Midday": "14:20",
-    "Brooklyn Evening": "22:00",
-    "Front Midday": "14:20",
-    "Front Evening": "22:00",
-    "New York Horses": "16:00"
-  },
-  "Santo Domingo": {
-    "Real": "11:45",
-    "Gana mas": "13:25",
-    "Loteka": "18:30",
-    "Nacional": "19:30",
-    "Quiniela Pale": "19:30",
-    "Primera Día": "10:50",
-    "Suerte Día": "11:20",
-    "Lotería Real": "11:50",
-    "Suerte Tarde": "16:50",
-    "Lotedom": "16:50",
-    "Primera Noche": "18:50",
-    "Panama": "16:00"
-  },
-  "Venezuela": {
-    "Venezuela": "00:00"
-  }
-};
-
-////////////////////////////////////////////////////////////
-// 2) READY: Lógica principal (Flatpickr, tracks, etc.)
-////////////////////////////////////////////////////////////
 $(document).ready(function() {
 
-  // -------------------------------------------------------
-  // INIT FLATPICKR
-  // -------------------------------------------------------
+  // (1) Variables globales, dayjs, etc.
+  dayjs.extend(dayjs_plugin_customParseFormat);
+  dayjs.extend(dayjs_plugin_arraySupport);
+
+  let transactionDateTime = '';
+  window.ticketImageDataUrl = null;
+
+  let selectedTracksCount = 0;
+  let selectedDaysCount = 0;
+  const MAX_PLAYS = 25;
+
+  let playCount = 0;         
+  let wizardCount = 0;       
+
+  // Candados para el Wizard
+  const lockedFields = {
+    straight: false,
+    box: false,
+    combo: false
+  };
+
+  // (2) Cutoff times
+  const cutoffTimes = {
+    "USA": {
+      "New York Mid Day": "14:20",
+      "New York Evening": "22:00",
+      "Georgia Mid Day": "12:20",
+      "Georgia Evening": "18:40",
+      "New Jersey Mid Day": "12:50",
+      "New Jersey Evening": "22:00",
+      "Florida Mid Day": "13:20",
+      "Florida Evening": "21:30",
+      "Connecticut Mid Day": "13:30",
+      "Connecticut Evening": "22:00",
+      "Georgia Night": "22:00",
+      "Pensilvania AM": "12:45",
+      "Pensilvania PM": "18:15",
+      "Venezuela": "00:00",
+      "Brooklyn Midday": "14:20",
+      "Brooklyn Evening": "22:00",
+      "Front Midday": "14:20",
+      "Front Evening": "22:00",
+      "New York Horses": "16:00"
+    },
+    "Santo Domingo": {
+      "Real": "11:45",
+      "Gana mas": "13:25",
+      "Loteka": "18:30",
+      "Nacional": "19:30",
+      "Quiniela Pale": "19:30",
+      "Primera Día": "10:50",
+      "Suerte Día": "11:20",
+      "Lotería Real": "11:50",
+      "Suerte Tarde": "16:50",
+      "Lotedom": "16:50",
+      "Primera Noche": "18:50",
+      "Panama": "16:00"
+    },
+    "Venezuela": {
+      "Venezuela": "00:00"
+    }
+  };
+
+  // (3) Init Flatpickr
   const fp = flatpickr("#fecha", {
     mode: "multiple",
     dateFormat: "m-d-Y",
@@ -109,9 +100,7 @@ $(document).ready(function() {
     }
   });
 
-  // -------------------------------------------------------
-  // Track Checkboxes
-  // -------------------------------------------------------
+  // (4) Track Checkboxes
   $(".track-checkbox").change(function(){
     const arr = $(".track-checkbox:checked")
       .map(function(){return $(this).val();})
@@ -122,9 +111,7 @@ $(document).ready(function() {
     disableTracksByTime();
   });
 
-  // -------------------------------------------------------
-  // MAIN TABLE => Add/Remove
-  // -------------------------------------------------------
+  // (5) MAIN TABLE => Add/Remove
   $("#agregarJugada").click(function(){
     const row = addMainRow();
     if(row) row.find(".betNumber").focus();
@@ -216,6 +203,24 @@ $(document).ready(function() {
     calculateMainTotal();
   }
 
+  // (6) Calculate Main Total
+  function calculateMainTotal(){
+    let sum=0;
+    $("#tablaJugadas tr").each(function(){
+      const totalCell= $(this).find(".total").text();
+      const val= parseFloat(totalCell)||0;
+      sum+= val;
+    });
+    if(selectedDaysCount===0){
+      sum=0;
+    } else {
+      sum = sum * selectedTracksCount * selectedDaysCount;
+    }
+    $("#totalJugadas").text( sum.toFixed(2) );
+    storeFormState();
+  }
+
+  // (7) determineGameMode
   function determineGameMode(betNumber){
     if(!betNumber) return "-";
 
@@ -272,6 +277,7 @@ $(document).ready(function() {
     return "-";
   }
 
+  // (8) calculateRowTotal
   function calculateRowTotal(bn, gm, stVal, bxVal, coVal){
     if(!bn || gm==="-") return "0.00";
     const st = parseFloat(stVal)||0;
@@ -329,9 +335,7 @@ $(document).ready(function() {
     return factorial(str.length)/denom;
   }
 
-  // -------------------------------------------------------
-  // STORE/LOAD FORM STATE
-  // -------------------------------------------------------
+  // (9) store/load FormState
   function storeFormState(){
     const st = {
       selectedTracksCount,
@@ -409,9 +413,7 @@ $(document).ready(function() {
     });
   }
 
-  // -------------------------------------------------------
-  // RESET FORM
-  // -------------------------------------------------------
+  // (10) resetForm
   $("#resetForm").click(function(){
     if(confirm("Are you sure you want to reset the form?")){
       resetForm();
@@ -438,9 +440,7 @@ $(document).ready(function() {
     autoSelectNYTrack();
   }
 
-  // -------------------------------------------------------
-  // GENERATE TICKET
-  // -------------------------------------------------------
+  // (11) Generate Ticket
   $("#generarTicket").click(function(){
     doGenerateTicket();
   });
@@ -699,9 +699,9 @@ $(document).ready(function() {
 
         saveBetDataToSheetDB(uniqueTicket, success=>{
           if(success){
-            console.log("Bet data sent to DB/SheetDB.");
+            console.log("Bet data sent to SheetDB.");
           } else {
-            console.error("Failed to send bet data to DB/SheetDB.");
+            console.error("Failed to send bet data to SheetDB.");
           }
         });
       })
@@ -919,7 +919,7 @@ $(document).ready(function() {
     $(".track-checkbox").trigger("change");
   }
 
-  // DUPLICATES highlight
+  // Duplicates highlight en MAIN
   function highlightDuplicatesInMain(){
     $("#tablaJugadas tr").find(".betNumber").removeClass("duplicado");
     let counts={};
@@ -937,11 +937,15 @@ $(document).ready(function() {
   }
 
 
-  ////////////////////////////////////////////////////////////
-  // 3) WIZARD (Ventana Quick Entry)
-  ////////////////////////////////////////////////////////////
+  /*
+   ==========================================================
+   WIZARD (copiado tal cual tu backup)
+   ==========================================================
+  */
+
   const wizardModal = new bootstrap.Modal(document.getElementById("wizardModal"));
 
+  // Al hacer clic en el botón Wizard, se abre y se resetea
   $("#wizardButton").click(function(){
     resetWizard();
     wizardModal.show();
@@ -966,6 +970,7 @@ $(document).ready(function() {
     $("#rdLastNumber").val("");
   }
 
+  // Botones “candado” en Wizard
   $(".lockBtn").click(function(){
     const field = $(this).data("field");
     lockedFields[field] = !lockedFields[field];
@@ -976,6 +981,7 @@ $(document).ready(function() {
     }
   });
 
+  // Add & Next
   $("#wizardAddNext").click(function(){
     const bn = $("#wizardBetNumber").val().trim();
     const gm = determineGameMode(bn);
@@ -987,9 +993,11 @@ $(document).ready(function() {
     let bxVal = $("#wizardBox").val().trim();
     let coVal = $("#wizardCombo").val().trim();
 
+    // Calcular total
     const rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
     addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
 
+    // Si NO está lockeado, se borra el valor
     if(!lockedFields.straight) $("#wizardStraight").val("");
     if(!lockedFields.box) $("#wizardBox").val("");
     if(!lockedFields.combo) $("#wizardCombo").val("");
@@ -1017,6 +1025,7 @@ $(document).ready(function() {
     $("#wizardTableBody").append(rowHTML);
   }
 
+  // Eliminar fila del Wizard
   $("#wizardTableBody").on("click",".removeWizardBtn",function(){
     $(this).closest("tr").remove();
     renumberWizard();
@@ -1033,6 +1042,7 @@ $(document).ready(function() {
     wizardCount=i;
   }
 
+  // Quick Pick
   $("#btnGenerateQuickPick").click(function(){
     const gm = $("#qpGameMode").val();
     const countVal= parseInt($("#qpCount").val())||1;
@@ -1057,7 +1067,7 @@ $(document).ready(function() {
   function generateRandomNumberForMode(mode){
     // Ejemplo de generador random
     if(mode==="NY Horses"){
-      const length = Math.floor(Math.random()*4)+1;
+      const length = Math.floor(Math.random()*4)+1; 
       const maxVal = Math.pow(10,length)-1;
       return Math.floor(Math.random()*(maxVal+1));
     }
@@ -1073,9 +1083,11 @@ $(document).ready(function() {
     if(mode==="Venezuela"||mode==="Pulito"||mode==="RD-Quiniela"){
       return Math.floor(Math.random()*100);
     }
+    // Default => 3 dígitos
     return Math.floor(Math.random()*1000);
   }
   function padNumberForMode(num, mode){
+    // Ajusta con ceros a la izquierda según la modalidad
     if(mode==="NY Horses"||mode==="Single Action"){
       return num.toString();
     }
@@ -1094,11 +1106,13 @@ $(document).ready(function() {
       while(s.length<3) s="0"+s;
       return s;
     }
+    // default => 3 dígitos
     let s=num.toString();
     while(s.length<3) s="0"+s;
     return s;
   }
 
+  // Round Down
   $("#btnGenerateRoundDown").click(function(){
     const firstNum= $("#rdFirstNumber").val().trim();
     const lastNum = $("#rdLastNumber").val().trim();
@@ -1126,13 +1140,14 @@ $(document).ready(function() {
     for(let i=start; i<=end; i++){
       let bn= i.toString().padStart(firstNum.length,"0");
       let gm= determineGameMode(bn);
-      if(gm==="-") continue;
+      if(gm==="-") continue; 
       const rowT= calculateRowTotal(bn, gm, stVal, bxVal, coVal);
       addWizardRow(bn, gm, stVal, bxVal, coVal, rowT);
     }
     highlightDuplicatesInWizard();
   });
 
+  // Permute
   $("#btnPermute").click(function(){
     permuteWizardBetNumbers();
   });
@@ -1182,6 +1197,7 @@ $(document).ready(function() {
     highlightDuplicatesInWizard();
   }
 
+  // Add All to Main
   $("#wizardAddAllToMain").click(function(){
     const wizardRows= $("#wizardTableBody tr");
     if(wizardRows.length===0){
@@ -1238,12 +1254,14 @@ $(document).ready(function() {
     storeFormState();
   });
 
+  // Generate Ticket directamente desde Wizard
   $("#wizardGenerateTicket").click(function(){
     $("#wizardAddAllToMain").trigger("click");
     wizardModal.hide();
     doGenerateTicket();
   });
 
+  // Edit Main
   $("#wizardEditMainForm").click(function(){
     wizardModal.hide();
   });
@@ -1270,17 +1288,124 @@ $(document).ready(function() {
    =========================================================
   */
   const tutorialStepsEN = [
-    ...
+    {
+      intro: "Welcome! This tutorial will guide you through the main features."
+    },
+    {
+      element: "#fecha",
+      title: "Bet Dates",
+      intro: "Select one or more dates for your lottery bets."
+    },
+    {
+      element: ".accordion",
+      title: "Tracks",
+      intro: "Expand a section and pick the tracks you want to bet on."
+    },
+    {
+      element: "#agregarJugada",
+      title: "Add Play",
+      intro: "Click here to add a new play (row) to the table."
+    },
+    {
+      element: "#wizardButton",
+      title: "Wizard",
+      intro: "This button opens a modal for quick entry of multiple plays."
+    },
+    {
+      element: "#resetForm",
+      title: "Reset Form",
+      intro: "Clears everything and resets the form to default."
+    },
+    {
+      element: "#generarTicket",
+      title: "Generate Ticket",
+      intro: "Once everything is correct, generate your ticket here."
+    }
   ];
+
   const tutorialStepsES = [
-    ...
+    {
+      intro: "¡Bienvenido! Este tutorial te mostrará cómo usar la aplicación."
+    },
+    {
+      element: "#fecha",
+      title: "Fechas",
+      intro: "Selecciona una o varias fechas para tus jugadas de lotería."
+    },
+    {
+      element: ".accordion",
+      title: "Tracks",
+      intro: "Despliega y marca los sorteos que te interesen."
+    },
+    {
+      element: "#agregarJugada",
+      title: "Agregar Jugada",
+      intro: "Presiona aquí para añadir una nueva línea de jugada."
+    },
+    {
+      element: "#wizardButton",
+      title: "Asistente (Wizard)",
+      intro: "Abre una ventana para entrar jugadas de forma rápida."
+    },
+    {
+      element: "#resetForm",
+      title: "Resetear",
+      intro: "Borra todo y restaura la forma a sus valores iniciales."
+    },
+    {
+      element: "#generarTicket",
+      title: "Generar Ticket",
+      intro: "Cuando todo esté listo, genera el ticket en esta sección."
+    }
   ];
+
   const tutorialStepsHT = [
-    ...
+    {
+      intro: "Byenvini! Tutorial sa ap moutre w kijan pou itilize aplikasyon an."
+    },
+    {
+      element: "#fecha",
+      title: "Dat",
+      intro: "Chwazi youn oswa plizyè dat pou jwe."
+    },
+    {
+      element: ".accordion",
+      title: "Tracks",
+      intro: "Desann epi chwazi kisa w vle jwe."
+    },
+    {
+      element: "#agregarJugada",
+      title: "Ajoute Jwe",
+      intro: "Peze la pou ajoute yon nouvo ranje jwe."
+    },
+    {
+      element: "#wizardButton",
+      title: "Asistan (Wizard)",
+      intro: "Ou ka antre parye rapidman isi."
+    },
+    {
+      element: "#resetForm",
+      title: "Reyinisyalize",
+      intro: "Efase tout bagay epi retounen aplikasyonnan jan li te ye anvan."
+    },
+    {
+      element: "#generarTicket",
+      title: "Fè Ticket",
+      intro: "Lè ou fini tout jwe yo, kreye ticket la."
+    }
   ];
 
   function startTutorial(lang){
-    ...
+    let stepsToUse = tutorialStepsEN;
+    if(lang==="es") stepsToUse = tutorialStepsES;
+    if(lang==="ht") stepsToUse = tutorialStepsHT;
+
+    introJs().setOptions({
+      steps: stepsToUse,
+      showProgress: true,
+      showButtons: true,
+      exitOnOverlayClick: false
+    }).start();
   }
   $("#helpEnglish").click(()=>startTutorial('en'));
   $("#helpSpanish").click(()=>startTutorial('es'));
@@ -1307,31 +1432,29 @@ $(document).ready(function() {
     $("#manualCreoleText").removeClass("d-none");
   });
 
-  /* =========================================================
-     === OCR ADDED ===
-     Añadimos funciones para:
-      - arrastrar y soltar imagen (Drag & drop)
-      - leer input file
-      - procesar (POST /ocr)
-      - cargar jugadas detectadas
-  ========================================================= */
 
-  // Variables globales OCR
-  let selectedFileGlobal = null;  
-  let ultimaRespuestaTicket = null;  
+  /* 
+     =========================================================
+     AÑADIMOS AQUÍ EL CÓDIGO OCR (modal, drag/drop, fetch)
+     =========================================================
+  */
 
-  // (A) abrirModalOCR => para onclick="abrirModalOCR()"
+  // Variables globales OCR:
+  let selectedFileGlobal = null;  // archivo de imagen
+  let jugadasGlobal = [];         // guardamos las jugadas parseadas
+
+  // (A) Función para abrir el Modal OCR (Bootstrap)
   window.abrirModalOCR = function() {
-    // Limpiar states
+    // Limpiar estados anteriores
     selectedFileGlobal = null;
-    ultimaRespuestaTicket = null;
+    jugadasGlobal = [];
 
     $("#ocrFile").val("");
     $("#ocrPreview").addClass("d-none").attr("src","");
     $("#ocrJugadas").empty();
     $("#ocrSpinner").addClass("d-none");
 
-    // Mostrar modal
+    // Mostrar el modal (Bootstrap 5)
     const modal = new bootstrap.Modal(document.getElementById("modalOcr"));
     modal.show();
   };
@@ -1341,10 +1464,12 @@ $(document).ready(function() {
     e.preventDefault();
     $("#ocrDropZone").addClass("dragover");
   };
+
   window.handleDragLeave = function(e) {
     e.preventDefault();
     $("#ocrDropZone").removeClass("dragover");
   };
+
   window.handleDrop = function(e) {
     e.preventDefault();
     $("#ocrDropZone").removeClass("dragover");
@@ -1364,7 +1489,7 @@ $(document).ready(function() {
     }
   };
 
-  // (D) procesarOCR => se llama con onclick="procesarOCR()"
+  // (D) Procesar OCR => llama /ocr
   window.procesarOCR = async function() {
     if(!selectedFileGlobal){
       alert("No has seleccionado ninguna imagen.");
@@ -1377,26 +1502,27 @@ $(document).ready(function() {
       let formData = new FormData();
       formData.append("ticket", selectedFileGlobal);
 
+      // Ajusta la URL si tu backend está en otro dominio:
       let resp = await fetch("/ocr", {
         method:"POST",
         body: formData
       });
       let data = await resp.json();
+
       if(!data.success){
-        alert("Error al procesar el ticket: "+ data.error);
+        alert("Error en OCR: "+data.error);
         return;
       }
-      ultimaRespuestaTicket = data.resultado || {};
-      let jugadas = ultimaRespuestaTicket.jugadas || [];
-      let camposDudosos = ultimaRespuestaTicket.camposDudosos || [];
+      jugadasGlobal = data.resultado.jugadas || [];
+      let camposDudosos = data.resultado.camposDudosos || [];
 
-      if(jugadas.length===0){
+      if(jugadasGlobal.length===0){
         $("#ocrJugadas").html("<p>No se detectaron jugadas en la imagen.</p>");
         return;
       }
 
-      let html = "";
-      jugadas.forEach((j, idx)=>{
+      let html = "<h5>Jugadas Detectadas:</h5>";
+      jugadasGlobal.forEach((j, idx)=>{
         html += `
           <div style="border:1px solid #ccc; padding:0.5rem; margin-bottom:0.5rem;">
             <p><strong>Fecha:</strong> ${j.fecha}</p>
@@ -1405,7 +1531,9 @@ $(document).ready(function() {
             <p><strong>Modalidad:</strong> ${j.modalidad}</p>
             <p><strong>Números:</strong> ${j.numeros}</p>
             <p><strong>Monto:</strong> ${j.montoApostado}</p>
-            <p><em>${j.notas||""}</em></p>
+            <button class="btn btn-sm btn-info" onclick="usarJugada(${idx})">
+              Usar esta Jugada
+            </button>
           </div>
         `;
       });
@@ -1415,34 +1543,57 @@ $(document).ready(function() {
       $("#ocrJugadas").html(html);
 
     } catch(err){
-      alert("Error subiendo Ticket: "+ err.message);
-      console.error(err);
+      alert("Error subiendo OCR: "+err.message);
     } finally {
       $("#ocrSpinner").addClass("d-none");
     }
   };
 
-  // (E) Botón "Cargar Jugadas"
-  $("#btnCargarJugadas").click(function(){
-    if(!ultimaRespuestaTicket || !ultimaRespuestaTicket.jugadas){
-      alert("No se encontraron jugadas que cargar.");
+  // (E) Usar Jugada => rellena el form principal
+  window.usarJugada = function(idx){
+    if(!jugadasGlobal || !jugadasGlobal[idx]){
+      alert("No se encontró la jugada seleccionada.");
       return;
     }
-    const jugadasGlobal = ultimaRespuestaTicket.jugadas;
-    jugadasGlobal.forEach((j)=>{
+    const j = jugadasGlobal[idx];
+
+    // Rellenar #fecha (o lo que consideres) con la jugada
+    $("#fecha").val( j.fecha || "" );
+
+    // Insertar la jugada como si fuera una fila en la tabla principal
+    addMainRow();
+    const lastTr = $("#tablaJugadas tr:last");
+    lastTr.find(".betNumber").val( j.numeros || "" );
+    // Por simplicidad, usaremos su "montoApostado" en .straight
+    lastTr.find(".straight").val( j.montoApostado || "" );
+    recalcMainRow(lastTr);
+    highlightDuplicatesInMain();
+    storeFormState();
+
+    // Cerrar el modal
+    const modalInstance = bootstrap.Modal.getInstance(document.getElementById("modalOcr"));
+    modalInstance.hide();
+  };
+
+  // (F) Botón para cargar TODAS las jugadas OCR a la tabla principal (opcional)
+  $("#btnCargarJugadas").click(function(){
+    if(!jugadasGlobal || jugadasGlobal.length===0){
+      alert("No hay jugadas OCR para cargar.");
+      return;
+    }
+    jugadasGlobal.forEach(j=>{
       addMainRow();
       const lastTr = $("#tablaJugadas tr:last");
       lastTr.find(".betNumber").val( j.numeros || "" );
-      // Simple, st => montoApostado
       lastTr.find(".straight").val( j.montoApostado || "" );
+      // Asignar track? Habría que definir cómo.
       recalcMainRow(lastTr);
-      highlightDuplicatesInMain();
     });
+    highlightDuplicatesInMain();
     storeFormState();
 
-    // Cerrar modal
     const modalInstance = bootstrap.Modal.getInstance(document.getElementById("modalOcr"));
     modalInstance.hide();
   });
 
-}); // fin document.ready
+});
