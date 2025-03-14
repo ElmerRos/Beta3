@@ -36,10 +36,9 @@
   <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 
   <!-- Custom CSS (con estilos neon, etc.) -->
-  <!-- RECUERDA: el archivo styles.css debe existir en la misma carpeta o en la ruta adecuada -->
   <link href="styles.css" rel="stylesheet" />
 
-  <!-- Estilo extra (si deseas) para forzar tooltip blanco + texto negro en Intro.js -->
+  <!-- Estilo extra para tooltips de Intro.js -->
   <style>
     .introjs-tooltip {
       background-color: #fff !important;
@@ -743,7 +742,7 @@
         </button>
       </div>
 
-      <!-- SNIPPET OCR: Insertar JUSTO DEBAJO del botón "Generate Ticket" -->
+      <!-- BOTÓN para abrir el modal "Procesar Ticket" -->
       <div class="d-grid gap-2 mt-3">
         <button 
           type="button"
@@ -755,7 +754,7 @@
         </button>
       </div>
 
-      <!-- MODAL OCR (Bootstrap) -->
+      <!-- Modal para Captura de Ticket (antiguo "modalOcr") -->
       <div 
         class="modal fade" 
         id="modalOcr" 
@@ -767,7 +766,7 @@
           <div class="modal-content">
 
             <div class="modal-header">
-              <h5 class="modal-title" id="modalOcrLabel">OCR - Subir Imagen</h5>
+              <h5 class="modal-title" id="modalOcrLabel">Procesar Ticket - Subir Imagen</h5>
               <button 
                 type="button" 
                 class="btn-close" 
@@ -777,6 +776,18 @@
             </div>
 
             <div class="modal-body">
+              <!-- Botón de procesar con buena visibilidad -->
+              <div class="d-flex justify-content-end mb-3">
+                <button 
+                  type="button" 
+                  class="btn btn-primary"
+                  id="btnProcesarTicket"
+                  onclick="procesarOCR()"
+                >
+                  Procesar Ticket
+                </button>
+              </div>
+
               <!-- Zona drag & drop -->
               <div 
                 id="ocrDropZone"
@@ -801,19 +812,8 @@
               <img 
                 id="ocrPreview" 
                 class="preview d-none" 
-                alt="Preview OCR"
+                alt="Preview Ticket"
               />
-
-              <div class="mt-3">
-                <button 
-                  type="button" 
-                  class="btn btn-primary"
-                  onclick="procesarOCR()"
-                  id="btnProcesarOCR"
-                >
-                  Procesar OCR
-                </button>
-              </div>
 
               <!-- Spinner/Cargando -->
               <div id="ocrSpinner" class="spinner d-none">
@@ -821,11 +821,28 @@
                 <p>Analizando imagen...</p>
               </div>
 
+              <!-- Resultados preliminares (raw) -->
+              <h6 class="mt-4">Resultados Preliminares (raw)</h6>
+              <pre 
+                id="ocrRawDebug" 
+                class="bg-dark text-white p-2"
+                style="max-height:200px; overflow-y:auto; font-size:0.9rem;"
+              ></pre>
+
               <!-- Jugadas detectadas -->
+              <h6 class="mt-3">Jugadas Detectadas:</h6>
               <div id="ocrJugadas" class="mt-3"></div>
+
             </div>
 
             <div class="modal-footer">
+              <button 
+                type="button" 
+                class="btn btn-warning"
+                id="btnCargarJugadas"
+              >
+                Cargar Jugadas
+              </button>
               <button 
                 type="button" 
                 class="btn btn-secondary"
@@ -838,7 +855,7 @@
           </div>
         </div>
       </div>
-      <!-- FIN SNIPPET OCR -->
+      <!-- FIN Snippet Modal Ticket -->
      
     </form>
   </div>
@@ -1259,8 +1276,7 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
   ></script>
 
-  <!-- Tu scripts.js con todas las funciones globales (OCR incl.) -->
-  <script src="scripts.js"></script>
+  <!-- scripts.js => se insertará luego (no lo incluyas todavía) -->
 
   <!-- 
        =====================
