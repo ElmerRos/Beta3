@@ -50,6 +50,41 @@
     .introjs-overlay {
       z-index: 99999999 !important;
     }
+
+    /* =========================================
+       SPINNER MODERNO (circular) + BARRA PROGRESO
+       ========================================= */
+    .modern-spinner {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      border: 8px solid rgba(0,0,0,0.1);
+      border-top: 8px solid #007bff; /* color primario */
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+
+    /* Barra de progreso “falsa” */
+    .progress-ocr-container {
+      background-color: #e9ecef;
+      border-radius: 4px;
+      height: 8px;
+      width: 100%;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .progress-ocr-bar {
+      height: 8px;
+      background-color: #28a745; /* color verde */
+      width: 0%;
+      transition: width 0.3s ease;
+    }
   </style>
 </head>
 <body>
@@ -815,10 +850,17 @@
                 </button>
               </div>
 
-              <!-- Spinner/Cargando -->
-              <div id="ocrSpinner" class="spinner d-none">
-                <div></div><div></div><div></div>
-                <p>Analizando imagen...</p>
+              <!-- Spinner/Cargando + Barra Progreso (REEMPLAZA el viejo spinner) -->
+              <div class="mt-3 d-none" id="ocrLoadingSection">
+                <!-- Spinner circular moderno -->
+                <div class="modern-spinner" id="ocrSpinner"></div>
+                <!-- Barra de progreso -->
+                <div class="progress-ocr-container">
+                  <div id="ocrProgressBar" class="progress-ocr-bar"></div>
+                </div>
+                <p id="ocrProgressText" style="margin-top:5px;">
+                  Subiendo/Procesando...
+                </p>
               </div>
 
               <!-- Jugadas detectadas -->
@@ -834,6 +876,41 @@
                   Cargar Jugadas al Form
                 </button>
               </div>
+
+              <!-- SECCIÓN DEBUG OCR (NUEVA) -->
+              <div class="border p-2 mt-3">
+                <button 
+                  type="button"
+                  class="btn btn-sm btn-secondary"
+                  onclick="toggleOcrDebug()"
+                >
+                  Mostrar/Ocultar Debug
+                </button>
+                <div id="ocrDebugPanel" class="d-none mt-2">
+                  <h6>Raw OCR Response</h6>
+                  <pre 
+                    id="ocrRawResponse"
+                    style="max-height:200px; overflow:auto; background:#f8f9fa; color:#000;"
+                  ></pre>
+
+                  <h6>Texto Completo OCR</h6>
+                  <textarea
+                    id="ocrTextoCompleto"
+                    rows="5"
+                    style="width:100%;"
+                  ></textarea>
+
+                  <p>
+                    Confianza Promedio: 
+                    <span id="ocrConfPct">-</span>%
+                    <br/>
+                    Total Palabras: 
+                    <span id="ocrTotalWords">-</span>
+                  </p>
+                </div>
+              </div>
+              <!-- FIN SECCIÓN DEBUG OCR -->
+
             </div>
 
             <div class="modal-footer">
