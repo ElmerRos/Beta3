@@ -38,7 +38,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// =============================================================
 // Ruta POST /ocr
+// =============================================================
 app.post("/ocr", upload.single("ticket"), async (req, res) => {
   if (!req.file) {
     return res.json({ success: false, error: "No se recibió ninguna imagen." });
@@ -46,9 +48,13 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
   try {
     // 1) Redimensionar con sharp
+    console.log("---- /ocr ----");
+    console.log("Imagen recibida:", req.file.originalname, "size:", req.file.size);
+
     const resizedBuffer = await sharp(req.file.buffer)
       .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
+    console.log("Imagen redimensionada. Buffer length:", resizedBuffer.length);
 
     // 2) Convertir a Base64
     const base64Str = resizedBuffer.toString("base64");
@@ -56,6 +62,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     if (req.file.mimetype === "image/png") {
       mimeType = "image/png";
     }
+    console.log(`MimeType detectado: ${mimeType}, base64 length: ${base64Str.length}`);
 
     // 3) Construir payload para Mistral (SIN instructions, para evitar 422)
     const mistralPayload = {
@@ -64,18 +71,23 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         type: "image_url",
         image_url: `data:${mimeType};base64,${base64Str}`
       }
-      // No instructions
     };
 
     // 4) Llamar a Mistral OCR
-    const ocrResp = await axios.post("https://api.mistral.ai/v1/ocr", mistralPayload, {
-      headers: {
-        Authorization: `Bearer ${MISTRAL_API_KEY}`,
-        "Content-Type": "application/json"
+    console.log("Enviando payload a Mistral...");
+    const ocrResp = await axios.post(
+      "https://api.mistral.ai/v1/ocr",
+      mistralPayload,
+      {
+        headers: {
+          Authorization: `Bearer ${MISTRAL_API_KEY}`,
+          "Content-Type": "application/json"
+        }
       }
-    });
+    );
 
     const ocrData = ocrResp.data; // Respuesta cruda de Mistral
+    console.log("Respuesta Mistral recibida OK.");
 
     // 5) Extraer texto y calcular confianza
     let textoCompleto = "";
@@ -85,11 +97,9 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     if (Array.isArray(ocrData.pages)) {
       for (const page of ocrData.pages) {
-        // text_md
         if (page.text_md) {
           textoCompleto += page.text_md + "\n";
         }
-        // words_confidence
         if (Array.isArray(page.words_confidence)) {
           for (const w of page.words_confidence) {
             allWords.push(w);
@@ -101,6 +111,10 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     }
     const avgConfidence = totalWords > 0 ? (sumConfidence / totalWords) : 1;
     const avgConfidencePct = Math.round(avgConfidence * 100);
+
+    console.log("Texto Completo (preview):", textoCompleto.slice(0, 100).replace(/\n/g,"\\n"), "...");
+    console.log("Promedio Confianza:", avgConfidence, "(~", avgConfidencePct + "% )");
+    console.log("Total words:", totalWords);
 
     // 6) Parseo local => Generar 'jugadas'
     let lineas = textoCompleto
@@ -115,7 +129,6 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       camposDudosos.push("Confianza OCR < 70% => verificación manual");
     }
 
-    // Ejemplo de heurística sencilla
     function parseLineToJugada(line) {
       const lower = line.toLowerCase();
 
@@ -196,33 +209,33 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     }
 
     // 7) Guardar en Mongo (opcional)
-    await db.collection("ticketsOCR").insertOne({
+    const docToInsert = {
       createdAt: new Date(),
       fileName: req.file.originalname,
       sizeBytes: req.file.size,
       avgConfidencePct,
-      textoCompleto,   // <--- variable con "o"
+      textoCompleto,
       allWords,
       jugadas,
       camposDudosos,
       ocrRawResponse: ocrData
-    });
+    };
+    await db.collection("ticketsOCR").insertOne(docToInsert);
+
+    console.log("Jugadas detectadas:", jugadas.length);
+    console.log("Campos dudosos:", camposDudosos);
 
     // 8) Devolver respuesta con la ESTRUCTURA que tu scripts.js espera
-    //    => data.resultado.jugadas / data.resultado.camposDudosos
     return res.json({
       success: true,
       resultado: {
         jugadas,
         camposDudosos
-        // NO references to "textCompleto" => lo evitamos
       },
       debug: {
         avgConfidencePct,
         totalWords,
-        // Si quieres ver el texto:
         textoCompleto,
-        // Respuesta cruda de Mistral:
         rawOcr: ocrData
       }
     });
