@@ -1,7 +1,8 @@
  /* =========================================================
    SCRIPTS.JS COMPLETO
    (Mantiene toda la lógica previa intacta,
-    e incorpora las funciones OCR al final).
+    e incorpora el spinner moderno, barra de progreso
+    y la sección de debug en el modal OCR).
 ========================================================= */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -936,7 +937,6 @@ $(document).ready(function() {
     });
   }
 
-
   /*
    ==========================================================
    WIZARD (copiado tal cual tu backup)
@@ -1452,9 +1452,13 @@ $(document).ready(function() {
     $("#ocrFile").val("");
     $("#ocrPreview").addClass("d-none").attr("src","");
     $("#ocrJugadas").empty();
-    $("#ocrSpinner").addClass("d-none");
 
-    // Mostrar el modal (Bootstrap 5)
+    // Ocultar la sección loading y resetear barra
+    hideOcrLoading();
+
+    // También ocultar debug al abrir
+    $("#ocrDebugPanel").addClass("d-none");
+
     const modal = new bootstrap.Modal(document.getElementById("modalOcr"));
     modal.show();
   };
@@ -1489,25 +1493,73 @@ $(document).ready(function() {
     }
   };
 
+  /*
+   =========================================================
+   NUEVO: Manejo Spinner + Barra de Progreso
+   =========================================================
+  */
+  let ocrProgressInterval = null;
+  function showOcrLoading() {
+    // Mostrar la sección #ocrLoadingSection
+    $("#ocrLoadingSection").removeClass("d-none");
+
+    // Reiniciar barra de progreso
+    $("#ocrProgressBar").css("width","0%");
+    $("#ocrProgressText").text("Subiendo/Procesando...");
+
+    // Simular progreso del 0% al 80%
+    let progressValue = 0;
+    ocrProgressInterval = setInterval(()=>{
+      progressValue += 5;
+      if(progressValue>80) progressValue=80; 
+      $("#ocrProgressBar").css("width", progressValue+"%");
+    }, 500); 
+  }
+
+  function hideOcrLoading() {
+    // Detener el interval
+    if(ocrProgressInterval) {
+      clearInterval(ocrProgressInterval);
+      ocrProgressInterval=null;
+    }
+    // Ocultar la sección
+    $("#ocrLoadingSection").addClass("d-none");
+    // Reset
+    $("#ocrProgressBar").css("width","0%");
+  }
+
+  function finishOcrLoading() {
+    // Completar al 100% y luego hide
+    $("#ocrProgressBar").css("width","100%");
+    $("#ocrProgressText").text("Completado");
+    setTimeout(()=>{
+      hideOcrLoading();
+    },800);
+  }
+
   // (D) Procesar OCR => llama /ocr
   window.procesarOCR = async function() {
     if(!selectedFileGlobal){
       alert("No has seleccionado ninguna imagen.");
       return;
     }
-    $("#ocrSpinner").removeClass("d-none");
+    // Limpiar lo anterior
     $("#ocrJugadas").empty();
+    // Mostrar loading con spinner + progreso
+    showOcrLoading();
 
     try {
       let formData = new FormData();
       formData.append("ticket", selectedFileGlobal);
 
-      // Ajusta la URL si tu backend está en otro dominio:
       let resp = await fetch("/ocr", {
         method:"POST",
         body: formData
       });
       let data = await resp.json();
+
+      // Al recibir respuesta => set progress=100
+      finishOcrLoading();
 
       if(!data.success){
         alert("Error en OCR: "+data.error);
@@ -1515,6 +1567,18 @@ $(document).ready(function() {
       }
       jugadasGlobal = data.resultado.jugadas || [];
       let camposDudosos = data.resultado.camposDudosos || [];
+
+      // Llenar debug
+      if(data.debug) {
+        let raw = data.debug.rawOcr || {};
+        $("#ocrRawResponse").text(JSON.stringify(raw,null,2));
+        let txt = data.debug.textoCompleto || "(sin textoCompleto)";
+        $("#ocrTextoCompleto").val(txt);
+        let pct = data.debug.avgConfidencePct || 0;
+        $("#ocrConfPct").text(pct);
+        let totW = data.debug.totalWords || 0;
+        $("#ocrTotalWords").text(totW);
+      }
 
       if(jugadasGlobal.length===0){
         $("#ocrJugadas").html("<p>No se detectaron jugadas en la imagen.</p>");
@@ -1544,8 +1608,8 @@ $(document).ready(function() {
 
     } catch(err){
       alert("Error subiendo OCR: "+err.message);
-    } finally {
-      $("#ocrSpinner").addClass("d-none");
+      // fallar => hide
+      hideOcrLoading();
     }
   };
 
@@ -1557,7 +1621,7 @@ $(document).ready(function() {
     }
     const j = jugadasGlobal[idx];
 
-    // Rellenar #fecha (o lo que consideres) con la jugada
+    // Rellenar #fecha
     $("#fecha").val( j.fecha || "" );
 
     // Insertar la jugada como si fuera una fila en la tabla principal
@@ -1575,7 +1639,7 @@ $(document).ready(function() {
     modalInstance.hide();
   };
 
-  // (F) Botón para cargar TODAS las jugadas OCR a la tabla principal (opcional)
+  // (F) Botón para cargar TODAS las jugadas OCR a la tabla principal
   $("#btnCargarJugadas").click(function(){
     if(!jugadasGlobal || jugadasGlobal.length===0){
       alert("No hay jugadas OCR para cargar.");
@@ -1586,7 +1650,6 @@ $(document).ready(function() {
       const lastTr = $("#tablaJugadas tr:last");
       lastTr.find(".betNumber").val( j.numeros || "" );
       lastTr.find(".straight").val( j.montoApostado || "" );
-      // Asignar track? Habría que definir cómo.
       recalcMainRow(lastTr);
     });
     highlightDuplicatesInMain();
@@ -1596,4 +1659,13 @@ $(document).ready(function() {
     modalInstance.hide();
   });
 
-});
+  /*
+   =========================================================
+   NUEVA Función: toggleOcrDebug() => mostrar/ocultar #ocrDebugPanel
+   =========================================================
+  */
+  window.toggleOcrDebug = function() {
+    $("#ocrDebugPanel").toggleClass("d-none");
+  };
+
+});  
