@@ -38,23 +38,21 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// =============================================================
-// Ruta POST /ocr
-// =============================================================
 app.post("/ocr", upload.single("ticket"), async (req, res) => {
   if (!req.file) {
     return res.json({ success: false, error: "No se recibió ninguna imagen." });
   }
 
   try {
-    // 1) Redimensionar con sharp
     console.log("---- /ocr ----");
-    console.log("Imagen recibida:", req.file.originalname, "size:", req.file.size);
+    if (!MISTRAL_API_KEY) {
+      return res.json({ success: false, error: "Falta MISTRAL_API_KEY en el servidor." });
+    }
 
+    // 1) Redimensionar
     const resizedBuffer = await sharp(req.file.buffer)
       .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
-    console.log("Imagen redimensionada. Buffer length:", resizedBuffer.length);
 
     // 2) Convertir a Base64
     const base64Str = resizedBuffer.toString("base64");
@@ -62,9 +60,8 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     if (req.file.mimetype === "image/png") {
       mimeType = "image/png";
     }
-    console.log(`MimeType detectado: ${mimeType}, base64 length: ${base64Str.length}`);
 
-    // 3) Construir payload para Mistral (SIN instructions, para evitar 422)
+    // 3) Payload Mistral
     const mistralPayload = {
       model: "mistral-ocr-latest",
       document: {
@@ -73,8 +70,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     };
 
-    // 4) Llamar a Mistral OCR
-    console.log("Enviando payload a Mistral...");
+    // 4) Llamar a Mistral
     const ocrResp = await axios.post(
       "https://api.mistral.ai/v1/ocr",
       mistralPayload,
@@ -86,10 +82,9 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     );
 
-    const ocrData = ocrResp.data; // Respuesta cruda de Mistral
-    console.log("Respuesta Mistral recibida OK.");
+    const ocrData = ocrResp.data;
 
-    // 5) Extraer texto y calcular confianza
+    // 5) Extraer texto
     let textoCompleto = "";
     let allWords = [];
     let totalWords = 0;
@@ -97,9 +92,14 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     if (Array.isArray(ocrData.pages)) {
       for (const page of ocrData.pages) {
-        if (page.text_md) {
+        // NUEVO: checamos page.text_md o page.markdown
+        if (page.text_md && typeof page.text_md === "string") {
           textoCompleto += page.text_md + "\n";
+        } else if (page.markdown && typeof page.markdown === "string") {
+          textoCompleto += page.markdown + "\n";  // <-- parse "markdown" si no hay text_md
         }
+
+        // words_confidence
         if (Array.isArray(page.words_confidence)) {
           for (const w of page.words_confidence) {
             allWords.push(w);
@@ -109,14 +109,24 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         }
       }
     }
-    const avgConfidence = totalWords > 0 ? (sumConfidence / totalWords) : 1;
-    const avgConfidencePct = Math.round(avgConfidence * 100);
 
-    console.log("Texto Completo (preview):", textoCompleto.slice(0, 100).replace(/\n/g,"\\n"), "...");
-    console.log("Promedio Confianza:", avgConfidence, "(~", avgConfidencePct + "% )");
-    console.log("Total words:", totalWords);
+    let avgConfidence = 1.0;
+    let avgConfidencePct = 100;
 
-    // 6) Parseo local => Generar 'jugadas'
+    if (totalWords > 0) {
+      avgConfidence = sumConfidence / totalWords;
+      avgConfidencePct = Math.round(avgConfidence * 100);
+    } else {
+      // Si no hubo words_confidence, podemos asumir 100% (como en tu caso actual)
+      // o poner 0. Manejaremos 100% para que no se marque dudoso.
+      avgConfidence = 1.0;
+      avgConfidencePct = 100;
+    }
+
+    console.log("textoCompleto =>", textoCompleto.slice(0,80) + "...");
+    console.log("avgConfidencePct =>", avgConfidencePct, ", totalWords =>", totalWords);
+
+    // 6) Parseo local
     let lineas = textoCompleto
       .split("\n")
       .map(l => l.trim())
@@ -142,10 +152,10 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
       // TipoJuego
       let tipoJuego = "";
-      if (lower.includes("pick3") || lower.includes("peak3")) tipoJuego = "Peak 3";
-      else if (lower.includes("win4")) tipoJuego = "Win 4";
+      if (lower.includes("pick3") || lower.includes("peak3") || lower.includes("pick 3")) tipoJuego = "Peak 3";
+      else if (lower.includes("win4") || lower.includes("win 4")) tipoJuego = "Win 4";
       else if (lower.includes("venez")) tipoJuego = "Venezuela";
-      else if (lower.includes("santo") || lower.includes("doming") || lower.includes("loteka")) tipoJuego = "SantoDomingo";
+      else if (lower.includes("santo") || lower.includes("doming") || lower.includes("loteka") || lower.includes("nacional")) tipoJuego = "SantoDomingo";
       else if (lower.includes("pulito")) tipoJuego = "Pulito";
       else if (lower.includes("single")) tipoJuego = "SingleAction";
 
@@ -156,7 +166,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       if (lower.includes("combo")) modalidad = "Combo";
       if (lower.includes("rounddown") || lower.includes(" x")) modalidad = "RoundDown";
 
-      // Detectar dígitos
+      // Detección dígitos 1-4 + X
       const numsRegex = /\b(\d{1,4}x?)\b/gi;
       let nums = [];
       let matchN;
@@ -167,29 +177,30 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       // Deducir tipoJuego si no se ve
       if (!tipoJuego && nums.length > 0) {
         const raw = nums[0].replace(/x/i, "");
-        if (raw.length === 1) tipoJuego = "SingleAction";
-        if (raw.length === 2) tipoJuego = "Pulito";
-        if (raw.length === 3) tipoJuego = "Peak 3";
-        if (raw.length === 4) tipoJuego = "Win 4";
+        const len = raw.length;
+        if (len === 1) tipoJuego = "SingleAction";
+        if (len === 2) tipoJuego = "Pulito";
+        if (len === 3) tipoJuego = "Peak 3";
+        if (len === 4) tipoJuego = "Win 4";
       }
 
       // Fecha => hoy
       let fecha = dayjs().format("YYYY-MM-DD");
 
-      // Track => Midday / Evening según hora
+      // Track => mid/ev
       let nowHHmm = dayjs().hour() * 100 + dayjs().minute();
       let track = (nowHHmm < 1415) ? "NY Midday" : "NY Evening";
       if (lower.includes("midday")) track = "NY Midday";
       if (lower.includes("evening") || lower.includes("eve")) track = "NY Evening";
 
-      // Monto => primer match o $1
+      // Monto => primer valor o $1
       let monto = montos.length > 0 ? montos[0] : 1.00;
       if (monto > 200) {
         camposDudosos.push(`Monto elevado: ${monto}, línea: "${line}"`);
       }
 
       if (nums.length === 0) {
-        return null; // no jugada
+        return null;
       }
 
       return {
@@ -208,8 +219,8 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       if (jugada) jugadas.push(jugada);
     }
 
-    // 7) Guardar en Mongo (opcional)
-    const docToInsert = {
+    // 7) Guardar en Mongo
+    await db.collection("ticketsOCR").insertOne({
       createdAt: new Date(),
       fileName: req.file.originalname,
       sizeBytes: req.file.size,
@@ -219,13 +230,9 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       jugadas,
       camposDudosos,
       ocrRawResponse: ocrData
-    };
-    await db.collection("ticketsOCR").insertOne(docToInsert);
+    });
 
-    console.log("Jugadas detectadas:", jugadas.length);
-    console.log("Campos dudosos:", camposDudosos);
-
-    // 8) Devolver respuesta con la ESTRUCTURA que tu scripts.js espera
+    // 8) Responder
     return res.json({
       success: true,
       resultado: {
