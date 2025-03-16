@@ -15,13 +15,14 @@ const upload = multer({ storage: multer.memoryStorage() });
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@host/db";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+// CONFIRMA ESTE ID => Debe coincidir EXACTO con tu Assistant “asst_iPQIGQRDCf1YeQ4P3p9ued6W”
 const ASSISTANT_ID = "asst_iPQIGQRDCf1YeQ4P3p9ued6W"; 
-  // <-- Este es tu Assistant ID
 
 let dbClient;
 let db;
 
-// Conecta a Mongo (opcional, por si usas ticketsOCR)
+// Conecta a Mongo (opcional)
 (async () => {
   try {
     dbClient = new MongoClient(MONGODB_URI, { useUnifiedTopology: true });
@@ -64,8 +65,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 2) Convertir a Base64
     const base64Str = `data:${req.file.mimetype};base64,` + resizedBuffer.toString("base64");
 
-    // 3) Crear un "Thread" efímero
-    //    POST /v1/threads
+    // 3) Crear un "Thread" efímero => POST /v1/threads
     const threadResp = await axios.post(
       "https://api.openai.com/v1/threads",
       {},
@@ -80,16 +80,16 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     const threadId = threadResp.data.id; 
     console.log("Creado thread ID:", threadId);
 
-    // 4) Enviar la imagen al assistant
-    //    POST /v1/assistants/{assistant_id}/threads/{thread_id}/messages
+    // 4) Enviar la imagen al assistant => POST /v1/assistants/{assistant_id}/threads/{thread_id}/messages
     const messagesEndpoint = `https://api.openai.com/v1/assistants/${ASSISTANT_ID}/threads/${threadId}/messages`;
 
-    // El "content" es un array con "type":"text" + "type":"image"
+    // Importante: incluir role: "user"
     const userMessage = {
+      role: "user",
       content: [
         {
           "type": "text",
-          "text": "Por favor, lee este ticket de lotería y devuélveme un JSON."
+          "text": "Por favor, lee este ticket de lotería y devuélveme un JSON estructurado."
         },
         {
           "type": "image",
@@ -113,33 +113,26 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 5) Procesar la respuesta
     console.log("assistantResp data:", assistantResp.data);
 
-    // Normalmente, la respuesta es un objeto con "content".
-    // "content" puede ser un string con JSON, 
-    //    o si tenías "response_format"=json_object en la Assistant, vendrá JSON puro.
+    // Respuesta => "content" con JSON (o string).
     let rawContent = assistantResp.data.content || "";
-    // Podría ya ser un objeto. O a veces string. Depende "response_format".
-    // Supongamos que es string JSON:
     let jugadas = [];
     let camposDudosos = [];
 
     try {
       if (typeof rawContent === "string") {
         // parsea
-        const obj = JSON.parse(rawContent);
-        // Tu assistant sabrá si su output es un array "jugadas" 
-        //   o 1 jugada, etc.
-        // Ajusta la lógica:
-        if (Array.isArray(obj)) {
-          jugadas = obj; 
-        } else if (Array.isArray(obj.jugadas)) {
-          jugadas = obj.jugadas;
-          camposDudosos = obj.camposDudosos || [];
+        const parsed = JSON.parse(rawContent);
+        if (Array.isArray(parsed)) {
+          jugadas = parsed;
+        } else if (Array.isArray(parsed.jugadas)) {
+          jugadas = parsed.jugadas;
+          camposDudosos = parsed.camposDudosos || [];
         } else {
-          // fallback
-          jugadas = [obj];
+          // fallback => single
+          jugadas = [parsed];
         }
       } else if (typeof rawContent === "object") {
-        // ya es un objeto
+        // si ya vino en objeto
         if (Array.isArray(rawContent.jugadas)) {
           jugadas = rawContent.jugadas;
           camposDudosos = rawContent.camposDudosos || [];
@@ -151,9 +144,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       console.warn("No se pudo parsear como JSON. Output crudo:", rawContent);
     }
 
-    // 6) (Opcional) Guardar en Mongo. 
-    //    (Ejemplo, si quieres logs.)
-    //    db.collection("ticketsOCR").insertOne({ ... })
+    // 6) (Opcional) Guardar en Mongo (registro)
     await db.collection("ticketsOCR").insertOne({
       createdAt: new Date(),
       rawAssistantOutput: rawContent,
