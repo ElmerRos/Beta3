@@ -14,6 +14,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@cluster/dbName";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+
 // Assistant ID y (opcional) Organization ID
 const ASSISTANT_ID = "asst_iPQIGQRDCf1YeQ4P3p9ued6W";
 const OPENAI_ORG_ID = "org-16WwdoiZ4EncYTJ278q6TQoF"; // si tu org es esta
@@ -39,14 +40,10 @@ app.get("/", (req, res) => {
 
 /**
  * RUTA /ocr
- * Sube la imagen, la redimensiona, y llama a:
- *   1) POST /v1/threads/runs => crea un "thread + run" con assistant_id
- *   2) Esperamos en bucle a que el run pase a "completed" (o un estado final)
- *   3) GET /v1/threads/{thread_id}/messages => vemos el mensaje final del assistant
  */
 app.post("/ocr", upload.single("ticket"), async (req, res) => {
   if (!req.file) {
-    return res.json({ success: false, error: "No se recibió ninguna imagen" });
+    return res.json({ success: false, error: "No se recibió ninguna imagen." });
   }
   if (!OPENAI_API_KEY) {
     return res.json({ success: false, error: "Falta la OPENAI_API_KEY" });
@@ -64,9 +61,8 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 2) base64
     const base64Str = `data:${req.file.mimetype};base64,${resized.toString("base64")}`;
 
-    // 3) Crear "thread + run" en un solo paso
-    //    POST /v1/threads/runs
-    // Body => { assistant_id, thread: { messages: [...] }, etc. }
+    // 3) Crear "thread + run" => POST /v1/threads/runs
+    // Body => { assistant_id, thread: { messages: [...] } }
     const runResp = await axios.post(
       "https://api.openai.com/v1/threads/runs",
       {
@@ -77,30 +73,22 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
               role: "user",
               content: [
                 {
+                  // "type":"text" => "text" es un string
                   type: "text",
-                  text: {
-                    value: "Por favor, analiza este ticket manuscrito y devuélveme un JSON",
-                    annotations: []
-                  }
+                  text: "Por favor, analiza este ticket manuscrito y devuélveme un JSON."
                 },
                 {
+                  // "type":"image" => "image" es un string (base64)
                   type: "image",
-                  image: {
-                    value: base64Str,
-                    annotations: []
-                  }
+                  image: base64Str
                 }
               ]
             }
           ]
         },
-        // Forzamos JSON object
         response_format: { type: "json_object" },
-        // Si tienes access, pon tools: []
-        // "tools": [],
         temperature: 1.0,
         top_p: 1.0
-        // etc.
       },
       {
         headers: {
@@ -112,19 +100,19 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     );
 
-    const runData = runResp.data; // => { id, object: 'thread.run', thread_id, status, ... }
+    const runData = runResp.data; // => { id, thread_id, status, ... }
     console.log("Creado run =>", JSON.stringify(runData, null, 2));
 
     const runId = runData.id;
     const threadId = runData.thread_id;
     let status = runData.status;
-    // 4) Esperamos a que "status" sea "completed" (u otro final)
     const finalStates = new Set(["completed","failed","incomplete","cancelled","cancelling","expired"]);
-    
+
+    // Bucle => esperar a que el run pase a "completed" o estado final
     while (!finalStates.has(status)) {
       console.log(`Run status = ${status}. Esperando 1s...`);
       await new Promise(r => setTimeout(r, 1000));
-      // Checar run
+      // GET /v1/threads/{thread_id}/runs/{run_id}
       const check = await axios.get(
         `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
         {
@@ -138,16 +126,14 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       status = check.data.status;
     }
 
-    // Revisamos si status final es "completed" => entonces consultamos los mensajes
     if (status !== "completed") {
-      // => run fallido, incomplete, etc.
       return res.json({
         success: false,
-        error: `Run finalizó en estado: ${status}.`
+        error: `El run finalizó con estado: ${status}`
       });
     }
 
-    // 5) GET /v1/threads/{thread_id}/messages => para leer la respuesta final del assistant
+    // 5) GET /v1/threads/{thread_id}/messages => para leer la respuesta
     const msgsResp = await axios.get(
       `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
       {
@@ -158,22 +144,20 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         }
       }
     );
-
-    const allMessages = msgsResp.data.data; // array
+    const allMessages = msgsResp.data.data;
     console.log("Mensajes (desc):", JSON.stringify(allMessages, null, 2));
 
-    // Buscamos el primer message con role="assistant"
-    const assistantMsg = allMessages.find(m => m.role === "assistant");
+    // Buscamos role="assistant"
+    const assistantMsg = allMessages.find(m => m.role==="assistant");
     if (!assistantMsg) {
-      return res.json({ success: false, error: "No se encontró la respuesta del assistant en los mensajes." });
+      return res.json({ success:false, error:"No se encontró mensaje del assistant" });
     }
 
-    // assistantMsg.content => string u array
     let rawContent = assistantMsg.content || "";
     let jugadas = [];
     let camposDudosos = [];
 
-    // Intentar parsear
+    // parse JSON
     if (typeof rawContent === "string") {
       try {
         const parsed = JSON.parse(rawContent);
@@ -186,7 +170,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
           jugadas = [parsed];
         }
       } catch(e) {
-        console.warn("No se pudo parsear JSON. rawContent=", rawContent);
+        console.warn("No parse JSON. rawContent=", rawContent);
       }
     } else if (typeof rawContent === "object") {
       if (Array.isArray(rawContent.jugadas)) {
@@ -207,13 +191,10 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       });
     }
 
-    // 7) Responder al front
+    // 7) Responder
     return res.json({
       success: true,
-      resultado: {
-        jugadas,
-        camposDudosos
-      },
+      resultado: { jugadas, camposDudosos },
       debug: {
         runId,
         threadId,
@@ -236,5 +217,5 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
 // Iniciar server
 app.listen(PORT, () => {
-  console.log("Servidor en puerto", PORT);
+  console.log("Servidor corriendo en puerto", PORT);
 });
