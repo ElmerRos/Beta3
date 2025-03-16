@@ -1,8 +1,8 @@
  /* =========================================================
    SCRIPTS.JS COMPLETO
    (Mantiene toda la lógica previa intacta,
-    e incorpora el spinner moderno, barra de progreso
-    y la sección de debug en el modal OCR).
+    e incorpora spinner moderno, barra de progreso
+    y muestra solo betNumber + monto en el panel de jugadas).
 ========================================================= */
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/bl57zyh73b0ev';
@@ -1435,28 +1435,24 @@ $(document).ready(function() {
 
   /* 
      =========================================================
-     AÑADIMOS AQUÍ EL CÓDIGO OCR (modal, drag/drop, fetch)
+     OCR: spinner + barra + debug
      =========================================================
   */
 
-  // Variables globales OCR:
+  // Variables globales OCR
   let selectedFileGlobal = null;  // archivo de imagen
   let jugadasGlobal = [];         // guardamos las jugadas parseadas
+  let ocrProgressInterval = null;
 
-  // (A) Función para abrir el Modal OCR (Bootstrap)
+  // (A) Abrir modal
   window.abrirModalOCR = function() {
-    // Limpiar estados anteriores
+    // reset
     selectedFileGlobal = null;
     jugadasGlobal = [];
-
     $("#ocrFile").val("");
     $("#ocrPreview").addClass("d-none").attr("src","");
     $("#ocrJugadas").empty();
-
-    // Ocultar la sección loading y resetear barra
     hideOcrLoading();
-
-    // También ocultar debug al abrir
     $("#ocrDebugPanel").addClass("d-none");
 
     const modal = new bootstrap.Modal(document.getElementById("modalOcr"));
@@ -1468,12 +1464,10 @@ $(document).ready(function() {
     e.preventDefault();
     $("#ocrDropZone").addClass("dragover");
   };
-
   window.handleDragLeave = function(e) {
     e.preventDefault();
     $("#ocrDropZone").removeClass("dragover");
   };
-
   window.handleDrop = function(e) {
     e.preventDefault();
     $("#ocrDropZone").removeClass("dragover");
@@ -1493,43 +1487,28 @@ $(document).ready(function() {
     }
   };
 
-  /*
-   =========================================================
-   NUEVO: Manejo Spinner + Barra de Progreso
-   =========================================================
-  */
-  let ocrProgressInterval = null;
+  // Spinner + barra
   function showOcrLoading() {
-    // Mostrar la sección #ocrLoadingSection
     $("#ocrLoadingSection").removeClass("d-none");
-
-    // Reiniciar barra de progreso
     $("#ocrProgressBar").css("width","0%");
     $("#ocrProgressText").text("Subiendo/Procesando...");
 
-    // Simular progreso del 0% al 80%
     let progressValue = 0;
     ocrProgressInterval = setInterval(()=>{
       progressValue += 5;
       if(progressValue>80) progressValue=80; 
       $("#ocrProgressBar").css("width", progressValue+"%");
-    }, 500); 
+    }, 500);
   }
-
   function hideOcrLoading() {
-    // Detener el interval
     if(ocrProgressInterval) {
       clearInterval(ocrProgressInterval);
       ocrProgressInterval=null;
     }
-    // Ocultar la sección
     $("#ocrLoadingSection").addClass("d-none");
-    // Reset
     $("#ocrProgressBar").css("width","0%");
   }
-
   function finishOcrLoading() {
-    // Completar al 100% y luego hide
     $("#ocrProgressBar").css("width","100%");
     $("#ocrProgressText").text("Completado");
     setTimeout(()=>{
@@ -1543,9 +1522,7 @@ $(document).ready(function() {
       alert("No has seleccionado ninguna imagen.");
       return;
     }
-    // Limpiar lo anterior
     $("#ocrJugadas").empty();
-    // Mostrar loading con spinner + progreso
     showOcrLoading();
 
     try {
@@ -1558,17 +1535,17 @@ $(document).ready(function() {
       });
       let data = await resp.json();
 
-      // Al recibir respuesta => set progress=100
       finishOcrLoading();
 
       if(!data.success){
         alert("Error en OCR: "+data.error);
         return;
       }
+
       jugadasGlobal = data.resultado.jugadas || [];
       let camposDudosos = data.resultado.camposDudosos || [];
 
-      // Llenar debug
+      // Debug
       if(data.debug) {
         let raw = data.debug.rawOcr || {};
         $("#ocrRawResponse").text(JSON.stringify(raw,null,2));
@@ -1585,15 +1562,12 @@ $(document).ready(function() {
         return;
       }
 
+      // Mostrar SOLO betNumber y monto
       let html = "<h5>Jugadas Detectadas:</h5>";
       jugadasGlobal.forEach((j, idx)=>{
         html += `
           <div style="border:1px solid #ccc; padding:0.5rem; margin-bottom:0.5rem;">
-            <p><strong>Fecha:</strong> ${j.fecha}</p>
-            <p><strong>Track:</strong> ${j.track}</p>
-            <p><strong>TipoJuego:</strong> ${j.tipoJuego}</p>
-            <p><strong>Modalidad:</strong> ${j.modalidad}</p>
-            <p><strong>Números:</strong> ${j.numeros}</p>
+            <p><strong>Bet Number:</strong> ${j.numeros}</p>
             <p><strong>Monto:</strong> ${j.montoApostado}</p>
             <button class="btn btn-sm btn-info" onclick="usarJugada(${idx})">
               Usar esta Jugada
@@ -1608,7 +1582,6 @@ $(document).ready(function() {
 
     } catch(err){
       alert("Error subiendo OCR: "+err.message);
-      // fallar => hide
       hideOcrLoading();
     }
   };
@@ -1621,25 +1594,27 @@ $(document).ready(function() {
     }
     const j = jugadasGlobal[idx];
 
-    // Rellenar #fecha
-    $("#fecha").val( j.fecha || "" );
+    // Ponemos la fecha en #fecha (si la hay)
+    if(j.fecha){
+      $("#fecha").val( j.fecha );
+    }
 
-    // Insertar la jugada como si fuera una fila en la tabla principal
+    // Insertar jugada a la tabla
     addMainRow();
     const lastTr = $("#tablaJugadas tr:last");
     lastTr.find(".betNumber").val( j.numeros || "" );
-    // Por simplicidad, usaremos su "montoApostado" en .straight
+    // Por simplicidad, su monto => straight
     lastTr.find(".straight").val( j.montoApostado || "" );
     recalcMainRow(lastTr);
     highlightDuplicatesInMain();
     storeFormState();
 
-    // Cerrar el modal
+    // Cerrar modal
     const modalInstance = bootstrap.Modal.getInstance(document.getElementById("modalOcr"));
     modalInstance.hide();
   };
 
-  // (F) Botón para cargar TODAS las jugadas OCR a la tabla principal
+  // (F) Cargar TODAS las jugadas al form
   $("#btnCargarJugadas").click(function(){
     if(!jugadasGlobal || jugadasGlobal.length===0){
       alert("No hay jugadas OCR para cargar.");
@@ -1659,13 +1634,9 @@ $(document).ready(function() {
     modalInstance.hide();
   });
 
-  /*
-   =========================================================
-   NUEVA Función: toggleOcrDebug() => mostrar/ocultar #ocrDebugPanel
-   =========================================================
-  */
+  // (G) Debug toggle
   window.toggleOcrDebug = function() {
     $("#ocrDebugPanel").toggleClass("d-none");
   };
 
-});  
+}); 
