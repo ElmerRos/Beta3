@@ -18,6 +18,8 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 // CONFIRMA que sea tu Assistant real:
 const ASSISTANT_ID = "asst_iPQIGQRDCf1YeQ4P3p9ued6W"; 
+// y la Organization ID que viste en tu dashboard
+const OPENAI_ORG_ID = "org-16WwdoiZ4EncYTJ278q6TQoF";
 
 let dbClient;
 let db;
@@ -65,9 +67,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 2) Convertir la imagen a Base64
     const base64Str = `data:${req.file.mimetype};base64,` + resizedBuffer.toString("base64");
 
-    // 3) *** Crear Thread dentro del Assistant ***
-    //    POST /v1/assistants/{assistant_id}/threads
-    //    => la API nos devuelve un thread ID asociado a asst_iPQIGQRDCf1YeQ4P3p9ued6W
+    // 3) Crear Thread dentro del Assistant
     const createThreadUrl = `https://api.openai.com/v1/assistants/${ASSISTANT_ID}/threads`;
     const threadResp = await axios.post(
       createThreadUrl,
@@ -76,7 +76,8 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${OPENAI_API_KEY}`,
-          "OpenAI-Beta": "assistants=v2"
+          "OpenAI-Beta": "assistants=v2",
+          "OpenAI-Organization": OPENAI_ORG_ID
         }
       }
     );
@@ -86,7 +87,6 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 4) POST /v1/assistants/{assistant_id}/threads/{thread_id}/messages
     const messagesEndpoint = `https://api.openai.com/v1/assistants/${ASSISTANT_ID}/threads/${threadId}/messages`;
 
-    // 'role: user', y formateo de "text"/"image"
     const userMessage = {
       role: "user",
       content: [
@@ -114,7 +114,8 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${OPENAI_API_KEY}`,
-          "OpenAI-Beta": "assistants=v2"
+          "OpenAI-Beta": "assistants=v2",
+          "OpenAI-Organization": OPENAI_ORG_ID
         }
       }
     );
@@ -122,7 +123,6 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 5) Procesar respuesta
     console.log("assistantResp data:", assistantResp.data);
 
-    // La respuesta vendrá en .content
     let rawContent = assistantResp.data.content || "";
     let jugadas = [];
     let camposDudosos = [];
@@ -174,7 +174,11 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
   } catch (err) {
     console.error("Error en /ocr con Assistants API:", err.message);
-    return res.json({ success: false, error: err.message });
+    // Loguear la data devuelta
+    if (err.response && err.response.data) {
+      console.error("err.response.data:", JSON.stringify(err.response.data, null, 2));
+    }
+    return res.json({ success: false, error: err.response?.data?.error?.message || err.message });
   }
 });
 
