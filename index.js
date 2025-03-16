@@ -61,8 +61,8 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
 
     // 2) Subir a /v1/files con multipart/form-data
     const formData = new FormData();
-    formData.append("purpose", "tool");  
-    // "purpose" debe ser un string permitido. "tool" suele funcionar para Assistants.
+    // ***** Ajustar purpose => "assistants" (o "vision")
+    formData.append("purpose", "assistants");
     formData.append("file", resizedBuf, {
       filename: req.file.originalname || "ticket.jpeg",
       contentType: req.file.mimetype
@@ -84,7 +84,6 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     const fileId = fileUploadResp.data.id; // "file-abc123"
 
     // 3) Crear Thread+Run => /v1/threads/runs
-    //    Mensaje con type= "image_file", image_file: { file_id, filename }
     const runResp = await axios.post(
       "https://api.openai.com/v1/threads/runs",
       {
@@ -121,7 +120,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     );
 
-    const runData = runResp.data; // => { id, thread_id, status, ... }
+    const runData = runResp.data;
     console.log("Creado run =>", JSON.stringify(runData, null, 2));
 
     const runId = runData.id;
@@ -129,7 +128,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     let status = runData.status;
     const finalStates = new Set(["completed","failed","incomplete","cancelled","cancelling","expired"]);
 
-    // 4) Esperar hasta que el run finalice
+    // 4) Esperar a que finalice
     while (!finalStates.has(status)) {
       console.log(`Run status = ${status}. Esperando 1s...`);
       await new Promise(r => setTimeout(r, 1000));
@@ -153,7 +152,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       });
     }
 
-    // 5) GET /v1/threads/{thread_id}/messages => para leer la respuesta final
+    // 5) GET /v1/threads/{threadId}/messages => obtener respuesta
     const msgsResp = await axios.get(
       `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
       {
@@ -167,7 +166,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     const allMessages = msgsResp.data.data;
     console.log("Mensajes(desc) =>", JSON.stringify(allMessages, null, 2));
 
-    // Buscamos role=assistant
+    // Buscamos role="assistant"
     const assistantMsg = allMessages.find(m => m.role === "assistant");
     if (!assistantMsg) {
       return res.json({ success: false, error: "No se encontró mensaje del assistant" });
@@ -177,7 +176,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     let jugadas = [];
     let camposDudosos = [];
 
-    // parse JSON (si es string)
+    // parse JSON
     if (typeof rawContent === "string") {
       try {
         const parsed = JSON.parse(rawContent);
