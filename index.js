@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@host/db";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// CONFIRMA ESTE ID => Debe coincidir EXACTO con tu Assistant “asst_iPQIGQRDCf1YeQ4P3p9ued6W”
+// CONFIRMA que sea tu Assistant real:
 const ASSISTANT_ID = "asst_iPQIGQRDCf1YeQ4P3p9ued6W"; 
 
 let dbClient;
@@ -34,7 +34,7 @@ let db;
   }
 })();
 
-// Servir archivos estáticos
+// Servir carpeta public
 app.use(express.static("public"));
 
 // Ruta principal
@@ -43,7 +43,7 @@ app.get("/", (req, res) => {
 });
 
 // -------------------------------------------
-// RUTA /ocr => llamar a Assistant GPT (Beta)
+// RUTA /ocr => llama a Assistants API Beta
 // -------------------------------------------
 app.post("/ocr", upload.single("ticket"), async (req, res) => {
   if (!req.file) {
@@ -62,13 +62,14 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
 
-    // 2) Convertir a Base64
+    // 2) Convertir la imagen a Base64
     const base64Str = `data:${req.file.mimetype};base64,` + resizedBuffer.toString("base64");
 
-    // 3) Crear un "Thread" efímero => POST /v1/threads
+    // 3) Crear Thread efímero
+    //    POST /v1/threads
     const threadResp = await axios.post(
       "https://api.openai.com/v1/threads",
-      {},
+      {}, // body vacío
       {
         headers: {
           "Content-Type": "application/json",
@@ -80,20 +81,27 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     const threadId = threadResp.data.id; 
     console.log("Creado thread ID:", threadId);
 
-    // 4) Enviar la imagen al assistant => POST /v1/assistants/{assistant_id}/threads/{thread_id}/messages
+    // 4) POST /v1/assistants/{assistant_id}/threads/{thread_id}/messages
     const messagesEndpoint = `https://api.openai.com/v1/assistants/${ASSISTANT_ID}/threads/${threadId}/messages`;
 
-    // Importante: incluir role: "user"
+    // Según la doc, 'role' es obligatorio, y
+    // content[i].type="text"/"image" => con subcampos "value"/"annotations"
     const userMessage = {
       role: "user",
       content: [
         {
           "type": "text",
-          "text": "Por favor, lee este ticket de lotería y devuélveme un JSON estructurado."
+          "text": {
+            "value": "Por favor, analiza este ticket de lotería y devuélveme JSON.",
+            "annotations": []
+          }
         },
         {
           "type": "image",
-          "image": base64Str
+          "image": {
+            "value": base64Str,
+            "annotations": []
+          }
         }
       ]
     };
@@ -110,17 +118,17 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     );
 
-    // 5) Procesar la respuesta
+    // 5) Procesar respuesta
     console.log("assistantResp data:", assistantResp.data);
 
-    // Respuesta => "content" con JSON (o string).
+    // La respuesta vendrá en assistantResp.data.content
     let rawContent = assistantResp.data.content || "";
     let jugadas = [];
     let camposDudosos = [];
 
+    // Intentar parsear si es string
     try {
       if (typeof rawContent === "string") {
-        // parsea
         const parsed = JSON.parse(rawContent);
         if (Array.isArray(parsed)) {
           jugadas = parsed;
@@ -128,7 +136,6 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
           jugadas = parsed.jugadas;
           camposDudosos = parsed.camposDudosos || [];
         } else {
-          // fallback => single
           jugadas = [parsed];
         }
       } else if (typeof rawContent === "object") {
@@ -140,11 +147,11 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
           jugadas = [rawContent];
         }
       }
-    } catch(e) {
+    } catch (e) {
       console.warn("No se pudo parsear como JSON. Output crudo:", rawContent);
     }
 
-    // 6) (Opcional) Guardar en Mongo (registro)
+    // 6) Guardar en Mongo (opcional)
     await db.collection("ticketsOCR").insertOne({
       createdAt: new Date(),
       rawAssistantOutput: rawContent,
