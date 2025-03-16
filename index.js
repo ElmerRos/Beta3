@@ -4,6 +4,7 @@ const path = require("path");
 const express = require("express");
 const multer = require("multer");
 const axios = require("axios");
+const FormData = require("form-data");
 const sharp = require("sharp");
 const { MongoClient } = require("mongodb");
 
@@ -15,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@cluster/dbName";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
-// Assistant ID y (opcional) Organization ID
+// Assistant y Organization
 const ASSISTANT_ID = "asst_iPQIGQRDCf1YeQ4P3p9ued6W";
 const OPENAI_ORG_ID = "org-16WwdoiZ4EncYTJ278q6TQoF"; // si hace falta
 
@@ -53,20 +54,37 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     console.log("---- /ocr ----");
     console.log("Imagen recibida:", req.file.originalname, "size:", req.file.size);
 
-    // 1) Redimensionar
-    const resized = await sharp(req.file.buffer)
+    // 1) Redimensionar => Buffer
+    const resizedBuf = await sharp(req.file.buffer)
       .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
 
-    // 2) base64 (sin la parte "data:...;base64," para no duplicar)
-    const base64Raw = resized.toString("base64");
+    // 2) Subir a /v1/files con multipart/form-data
+    const formData = new FormData();
+    formData.append("purpose", "tool");  
+    // "purpose" debe ser un string permitido. "tool" suele funcionar para Assistants.
+    formData.append("file", resizedBuf, {
+      filename: req.file.originalname || "ticket.jpeg",
+      contentType: req.file.mimetype
+    });
 
-    // Determina mimeType => si no tienes otra forma, toma el de req.file.mimetype
-    const mimeType = req.file.mimetype || "image/jpeg";
-    // Nombre de archivo arbitrario
-    const filename = req.file.originalname || "ticket.jpeg";
+    const fileUploadResp = await axios.post(
+      "https://api.openai.com/v1/files",
+      formData,
+      {
+        headers: {
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
+          "OpenAI-Beta": "assistants=v2",
+          "OpenAI-Organization": OPENAI_ORG_ID,
+          ...formData.getHeaders()
+        }
+      }
+    );
+    console.log("fileUploadResp data =>", fileUploadResp.data);
+    const fileId = fileUploadResp.data.id; // "file-abc123"
 
-    // 3) Crear "thread + run" => POST /v1/threads/runs
+    // 3) Crear Thread+Run => /v1/threads/runs
+    //    Mensaje con type= "image_file", image_file: { file_id, filename }
     const runResp = await axios.post(
       "https://api.openai.com/v1/threads/runs",
       {
@@ -81,31 +99,24 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
                   text: "Por favor, analiza este ticket manuscrito y devuélveme un JSON."
                 },
                 {
-                  // *** IMPORTANTE: type = "image_file"
                   type: "image_file",
                   image_file: {
-                    // Debe ser un objeto => file + filename
-                    file: {
-                      content: base64Raw,  // base64 sin "data:...;base64,"
-                      mime_type: mimeType
-                    },
-                    filename: filename
+                    file_id: fileId,
+                    filename: req.file.originalname || "ticket.jpeg"
                   }
                 }
               ]
             }
           ]
         },
-        response_format: { type: "json_object" },
-        temperature: 1.0,
-        top_p: 1.0
+        response_format: { type: "json_object" }
       },
       {
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${OPENAI_API_KEY}`,
           "OpenAI-Beta": "assistants=v2",
-          "OpenAI-Organization": OPENAI_ORG_ID // si hace falta
+          "OpenAI-Organization": OPENAI_ORG_ID,
+          "Content-Type": "application/json"
         }
       }
     );
@@ -118,11 +129,10 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     let status = runData.status;
     const finalStates = new Set(["completed","failed","incomplete","cancelled","cancelling","expired"]);
 
-    // Bucle => esperar a que el run pase a "completed" o estado final
+    // 4) Esperar hasta que el run finalice
     while (!finalStates.has(status)) {
       console.log(`Run status = ${status}. Esperando 1s...`);
       await new Promise(r => setTimeout(r, 1000));
-      // GET /v1/threads/{thread_id}/runs/{run_id}
       const check = await axios.get(
         `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
         {
@@ -143,7 +153,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       });
     }
 
-    // 5) GET /v1/threads/{thread_id}/messages => para leer la respuesta
+    // 5) GET /v1/threads/{thread_id}/messages => para leer la respuesta final
     const msgsResp = await axios.get(
       `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
       {
@@ -155,19 +165,19 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     );
     const allMessages = msgsResp.data.data;
-    console.log("Mensajes (desc):", JSON.stringify(allMessages, null, 2));
+    console.log("Mensajes(desc) =>", JSON.stringify(allMessages, null, 2));
 
-    // Buscamos role="assistant"
-    const assistantMsg = allMessages.find(m => m.role==="assistant");
+    // Buscamos role=assistant
+    const assistantMsg = allMessages.find(m => m.role === "assistant");
     if (!assistantMsg) {
-      return res.json({ success:false, error:"No se encontró mensaje del assistant" });
+      return res.json({ success: false, error: "No se encontró mensaje del assistant" });
     }
 
     let rawContent = assistantMsg.content || "";
     let jugadas = [];
     let camposDudosos = [];
 
-    // parse JSON
+    // parse JSON (si es string)
     if (typeof rawContent === "string") {
       try {
         const parsed = JSON.parse(rawContent);
@@ -191,7 +201,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     }
 
-    // 6) Guardar log en Mongo
+    // 6) Guardar en Mongo
     if (db) {
       await db.collection("ticketsOCR").insertOne({
         createdAt: new Date(),
