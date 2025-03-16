@@ -65,11 +65,13 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 2) Convertir la imagen a Base64
     const base64Str = `data:${req.file.mimetype};base64,` + resizedBuffer.toString("base64");
 
-    // 3) Crear Thread efímero
-    //    POST /v1/threads
+    // 3) *** Crear Thread dentro del Assistant ***
+    //    POST /v1/assistants/{assistant_id}/threads
+    //    => la API nos devuelve un thread ID asociado a asst_iPQIGQRDCf1YeQ4P3p9ued6W
+    const createThreadUrl = `https://api.openai.com/v1/assistants/${ASSISTANT_ID}/threads`;
     const threadResp = await axios.post(
-      "https://api.openai.com/v1/threads",
-      {}, // body vacío
+      createThreadUrl,
+      {},
       {
         headers: {
           "Content-Type": "application/json",
@@ -79,13 +81,12 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       }
     );
     const threadId = threadResp.data.id; 
-    console.log("Creado thread ID:", threadId);
+    console.log("Creado thread ID:", threadId, "dentro del assistant", ASSISTANT_ID);
 
     // 4) POST /v1/assistants/{assistant_id}/threads/{thread_id}/messages
     const messagesEndpoint = `https://api.openai.com/v1/assistants/${ASSISTANT_ID}/threads/${threadId}/messages`;
 
-    // Según la doc, 'role' es obligatorio, y
-    // content[i].type="text"/"image" => con subcampos "value"/"annotations"
+    // 'role: user', y formateo de "text"/"image"
     const userMessage = {
       role: "user",
       content: [
@@ -121,7 +122,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     // 5) Procesar respuesta
     console.log("assistantResp data:", assistantResp.data);
 
-    // La respuesta vendrá en assistantResp.data.content
+    // La respuesta vendrá en .content
     let rawContent = assistantResp.data.content || "";
     let jugadas = [];
     let camposDudosos = [];
