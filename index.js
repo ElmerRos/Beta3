@@ -58,8 +58,13 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
       .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
 
-    // 2) base64
-    const base64Str = `data:${req.file.mimetype};base64,${resized.toString("base64")}`;
+    // 2) base64 (sin la parte "data:...;base64," para no duplicar)
+    const base64Raw = resized.toString("base64");
+
+    // Determina mimeType => si no tienes otra forma, toma el de req.file.mimetype
+    const mimeType = req.file.mimetype || "image/jpeg";
+    // Nombre de archivo arbitrario
+    const filename = req.file.originalname || "ticket.jpeg";
 
     // 3) Crear "thread + run" => POST /v1/threads/runs
     const runResp = await axios.post(
@@ -76,9 +81,16 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
                   text: "Por favor, analiza este ticket manuscrito y devuélveme un JSON."
                 },
                 {
-                  // *** IMPORTANTE: type = "image_file", no "image"
+                  // *** IMPORTANTE: type = "image_file"
                   type: "image_file",
-                  image_file: base64Str
+                  image_file: {
+                    // Debe ser un objeto => file + filename
+                    file: {
+                      content: base64Raw,  // base64 sin "data:...;base64,"
+                      mime_type: mimeType
+                    },
+                    filename: filename
+                  }
                 }
               ]
             }
