@@ -17,7 +17,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
 // Assistant ID y (opcional) Organization ID
 const ASSISTANT_ID = "asst_iPQIGQRDCf1YeQ4P3p9ued6W";
-const OPENAI_ORG_ID = "org-16WwdoiZ4EncYTJ278q6TQoF"; // si tu org es esta
+const OPENAI_ORG_ID = "org-16WwdoiZ4EncYTJ278q6TQoF"; // si hace falta
 
 // Mongo
 let db = null;
@@ -31,7 +31,7 @@ let db = null;
   }
 })();
 
-// Servir carpeta public (index.html, scripts.js, etc.)
+// Servir carpeta public
 app.use(express.static("public"));
 
 app.get("/", (req, res) => {
@@ -62,7 +62,6 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
     const base64Str = `data:${req.file.mimetype};base64,${resized.toString("base64")}`;
 
     // 3) Crear "thread + run" => POST /v1/threads/runs
-    // Body => { assistant_id, thread: { messages: [...] } }
     const runResp = await axios.post(
       "https://api.openai.com/v1/threads/runs",
       {
@@ -73,14 +72,13 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
               role: "user",
               content: [
                 {
-                  // "type":"text" => "text" es un string
                   type: "text",
                   text: "Por favor, analiza este ticket manuscrito y devuélveme un JSON."
                 },
                 {
-                  // "type":"image" => "image" es un string (base64)
-                  type: "image",
-                  image: base64Str
+                  // *** IMPORTANTE: type = "image_file", no "image"
+                  type: "image_file",
+                  image_file: base64Str
                 }
               ]
             }
