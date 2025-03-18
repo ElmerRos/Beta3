@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Calculadora de Premios</title>
+
+  <style>
+    /* ======== Variables estilo (Neón vs Light) ======== */
+    :root {
+      --main-bg: #111;
+      --main-text: #eee;
+      --accent-color: #0ff; /* cian neón */
+      --danger-color: #f33;
+      --purple-color: #a0f;
+      --lock-color: #fb0;
+
+      --light-bg: #f3f0e3; 
+      --light-text: #000;
+      --light-accent: #0066cc;
+      --light-border: #999;
+      --light-caja: #fbf9f0;
+      --light-danger: #cc0033;
+      --light-purple: #b57aff;
+    }
+
+    body {
+      margin: 0; 
+      padding: 0;
+      background: var(--main-bg);
+      color: var(--main-text);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      font-size: 18px;
+    }
+    body.light-mode {
+      background: var(--light-bg);
+      color: var(--light-text);
+    }
+
+    /* Barra superior */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: #000;
+      border-bottom: 2px solid var(--accent-color);
+    }
+    .top-bar button {
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 0.3rem 1rem;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--accent-color);
+      font-size: 1rem;
+      transition: transform 0.2s;
+    }
+    .top-bar button:hover {
+      background: var(--accent-color);
+      color: #000;
+      transform: scale(1.05);
+    }
+    body.light-mode .top-bar {
+      background: var(--light-border);
+      border-bottom: 2px solid var(--light-accent);
+    }
+    body.light-mode .top-bar button {
+      background: var(--light-caja);
+      color: var(--light-accent);
+      border: 2px solid var(--light-accent);
+      box-shadow: none;
+    }
+    body.light-mode .top-bar button:hover {
+      background: var(--light-accent);
+      color: #fff;
+    }
+
+    /* Contenedor principal */
+    .container {
+      max-width: 1200px;
+      margin: 1rem auto;
+      padding: 1rem;
+    }
+
+    /* Botón "Agregar fila" etc. */
+    .btnNeon {
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--accent-color);
+      transition: transform 0.2s;
+    }
+    .btnNeon:hover {
+      background: var(--accent-color);
+      color: #000;
+      transform: scale(1.05);
+    }
+    body.light-mode .btnNeon {
+      background: var(--light-caja);
+      color: var(--light-accent);
+      border: 2px solid var(--light-accent);
+      box-shadow: none;
+    }
+    body.light-mode .btnNeon:hover {
+      background: var(--light-accent);
+      color: #fff;
+    }
+
+    /* Tabla principal */
+    .calc-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+    .calc-table thead th {
+      background: rgba(0,0,0,0.4);
+      color: var(--accent-color);
+      border-bottom: 2px solid var(--accent-color);
+      text-shadow: 0 0 3px var(--accent-color);
+      padding: 0.5rem;
+    }
+    .calc-table tbody td {
+      border-bottom: 1px solid #444;
+      text-align: center;
+      padding: 0.4rem;
+    }
+    body.light-mode .calc-table thead th {
+      background: #ddd;
+      color: var(--light-accent);
+      text-shadow: none;
+      border-bottom: 2px solid var(--light-accent);
+    }
+    body.light-mode .calc-table tbody td {
+      border-bottom: 1px solid #ccc;
+      color: #000;
+    }
+
+    /* Inputs */
+    .calc-input {
+      width: 140px;
+      font-size: 1rem;
+      background: #000;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      border-radius: 4px;
+      text-align: center;
+      box-shadow: inset 0 0 5px var(--accent-color);
+      padding: 0.3rem;
+    }
+    .calc-input:focus {
+      outline: none;
+      border-color: #fff;
+    }
+    body.light-mode .calc-input {
+      background: #fff;
+      color: #000;
+      border: 1px solid #999;
+      box-shadow: none;
+    }
+
+    /* Modalidad y Premio (readonly) */
+    .readonlyCell {
+      color: #0f0; /* verde */
+      font-weight: bold;
+    }
+
+    /* Sección "Config Base" */
+    .base-config {
+      margin-top: 2rem;
+      border: 2px solid var(--accent-color);
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 8px var(--accent-color);
+      background: #000;
+    }
+    .base-config h3 {
+      color: var(--accent-color);
+      text-shadow: 0 0 3px var(--accent-color);
+      margin-bottom: 1rem;
+    }
+    body.light-mode .base-config {
+      background: var(--light-caja);
+      border-color: var(--light-accent);
+      box-shadow: none;
+    }
+    body.light-mode .base-config h3 {
+      color: var(--light-accent);
+      text-shadow: none;
+    }
+    .base-config table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+    .base-config table thead th {
+      background: rgba(0,0,0,0.4);
+      color: var(--accent-color);
+      border-bottom: 2px solid var(--accent-color);
+      text-shadow: 0 0 3px var(--accent-color);
+      padding: 0.5rem;
+    }
+    .base-config table tbody td {
+      border-bottom: 1px solid #444;
+      text-align: center;
+      padding: 0.3rem;
+    }
+    body.light-mode .base-config table thead th {
+      background: #ddd;
+      color: var(--light-accent);
+      border-bottom: 2px solid var(--light-accent);
+      text-shadow: none;
+    }
+    body.light-mode .base-config table tbody td {
+      border-bottom: 1px solid #ccc;
+      color: #000;
+    }
+
+  </style>
+</head>
+
+<body>
+  <!-- Barra Superior -->
+  <div class="top-bar">
+    <button id="btnToggleTheme">Dark/Light</button>
+    <button onclick="location.href='reportes.html'">Regresar a Reportes</button>
+  </div>
+
+  <div class="container">
+    <h1 style="color: var(--accent-color); text-shadow: 0 0 5px var(--accent-color);">
+      Calculadora de Premios
+    </h1>
+
+    <!-- Botones de acción -->
+    <div style="margin-bottom:1rem;">
+      <button class="btnNeon" onclick="addRow()">+ Agregar Fila</button>
+      <button class="btnNeon" onclick="calculateAll()">Calcular Todo</button>
+      <button class="btnNeon" onclick="resetTable()" style="background:var(--danger-color);box-shadow:0 0 5px var(--danger-color);">
+        Resetear
+      </button>
+    </div>
+
+    <!-- TABLA DE JUGADAS -->
+    <table class="calc-table" id="calcTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Track</th>
+          <th>Bet Number</th>
+          <th>Straight</th>
+          <th>Box</th>
+          <th>Combo</th>
+          <th>Modalidad</th>
+          <th>Premio</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="calcTbody">
+        <!-- Se generan filas por JS -->
+      </tbody>
+    </table>
+
+    <!-- Sección de "Config Base" para editar los montos base -->
+    <div class="base-config">
+      <h3>Configuración de Bases de Premio</h3>
+      <p style="margin-bottom:1rem;">
+        Aquí puedes editar los montos base por Track + Modalidad.
+        Cuando cambies un valor, te pedirá confirmación para guardarlo.
+      </p>
+      <div id="baseConfigContainer"></div>
+    </div>
+  </div>
+
+  <!-- SCRIPT con toda la lógica -->
+  <script>
+    /*****************************************************
+     * MODO OSCURO/CLARO
+     *****************************************************/
+    let isDark = true;
+    document.getElementById("btnToggleTheme").addEventListener("click", ()=>{
+      isDark = !isDark;
+      if(isDark){
+        document.body.classList.remove("light-mode");
+      } else {
+        document.body.classList.add("light-mode");
+      }
+    });
+
+    /*****************************************************
+     * ESTRUCTURA DE DATOS "BASE PAYS"
+     * Ejemplo: para "Win 4" + "New York" => straight=5000, box=200
+     *****************************************************/
+    // Puedes añadir tantas combinaciones como quieras
+    // track shortName => "NY", "FL", "GA", "VEN", "SD", "USA-other", etc.
+    // mode => "Win 4", "Pick 3", "Pulito", etc.
+    let basePays = {
+      "Win 4": {
+        "New York":    { straight: 5000, box: 200, combo: 0 },
+        "USA-other":   { straight: 2500, box: 100, combo: 0 },
+        "Venezuela":   { straight: 1200, box: 100, combo: 0 },
+        "SantoDomingo":{ straight: 1000, box: 80, combo: 0 },
+      },
+      "Pick 3": {
+        "New York":    { straight: 500, box: 80, combo: 50 },
+        "USA-other":   { straight: 250, box: 40, combo: 25 },
+        "Venezuela":   { straight: 100, box: 10, combo: 5 },
+        "SantoDomingo":{ straight: 120, box: 20, combo: 10 },
+      },
+      "Venezuela": {
+        "Venezuela":   { straight: 80, box: 0, combo: 0 },
+        "New York":    { straight: 0, box: 0, combo: 0 }, 
+        "USA-other":   { straight: 0, box: 0, combo: 0 },
+        "SantoDomingo":{ straight: 0, box: 0, combo: 0 }
+      },
+      "Pulito": {
+        "Venezuela":   { straight: 0, box: 20, combo: 0 },
+        "New York":    { straight: 0, box: 10, combo: 0 },
+        "USA-other":   { straight: 0, box: 10, combo: 0 },
+        "SantoDomingo":{ straight: 0, box: 15, combo: 0 }
+      },
+      "Pale-Ven": {
+        "Venezuela":   { straight: 500, box: 0, combo: 0 },
+        "New York":    { straight: 0, box: 0, combo: 0 },
+        "USA-other":   { straight: 0, box: 0, combo: 0 },
+        "SantoDomingo":{ straight: 0, box: 0, combo: 0 }
+      },
+      "Pale-RD": {
+        "SantoDomingo":{ straight: 600, box: 0, combo: 0 },
+        "Venezuela":   { straight: 0, box: 0, combo: 0 },
+        "New York":    { straight: 0, box: 0, combo: 0 },
+        "USA-other":   { straight: 0, box: 0, combo: 0 }
+      },
+      "RD-Quiniela": {
+        "SantoDomingo":{ straight: 70, box: 0, combo: 0 },
+        "Venezuela":   { straight: 0, box: 0, combo: 0 },
+        "New York":    { straight: 0, box: 0, combo: 0 },
+        "USA-other":   { straight: 0, box: 0, combo: 0 }
+      },
+      "Single Action": {
+        "New York":    { straight: 5, box: 5, combo: 5 },
+        "USA-other":   { straight: 3, box: 3, combo: 3 },
+        "Venezuela":   { straight: 0, box: 0, combo: 0 },
+        "SantoDomingo":{ straight: 0, box: 0, combo: 0 }
+      }
+    };
+
+    /*****************************************************
+     * CARGAR Y GUARDAR basePays en localStorage
+     *****************************************************/
+    function loadBasePays(){
+      let stor = localStorage.getItem("calcBasePays");
+      if(stor){
+        basePays = JSON.parse(stor);
+      }
+    }
+    function saveBasePays(){
+      localStorage.setItem("calcBasePays", JSON.stringify(basePays));
+    }
+
+    /*****************************************************
+     * CREAR / ACTUALIZAR UI para la config de "basePays"
+     *****************************************************/
+    function renderBasePaysConfig(){
+      let container = document.getElementById("baseConfigContainer");
+      container.innerHTML = "";
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>Modalidad</th>
+            <th>Track</th>
+            <th>Straight</th>
+            <th>Box</th>
+            <th>Combo</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      let modeKeys = Object.keys(basePays);
+      modeKeys.forEach(mode=>{
+        let trackObj = basePays[mode];
+        let trackKeys = Object.keys(trackObj);
+        trackKeys.forEach(track=>{
+          let vals = trackObj[track];
+          html += `
+          <tr>
+            <td>${mode}</td>
+            <td>${track}</td>
+            <td><input type="number" 
+                       style="width:80px" 
+                       value="${vals.straight||0}"
+                       onchange="onBasePayChange('${mode}','${track}','straight',this.value)"
+                ></td>
+            <td><input type="number"
+                       style="width:80px" 
+                       value="${vals.box||0}"
+                       onchange="onBasePayChange('${mode}','${track}','box',this.value)"
+                ></td>
+            <td><input type="number"
+                       style="width:80px" 
+                       value="${vals.combo||0}"
+                       onchange="onBasePayChange('${mode}','${track}','combo',this.value)"
+                ></td>
+          </tr>
+          `;
+        });
+      });
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+    function onBasePayChange(mode, track, field, newValStr){
+      let newVal = parseFloat(newValStr)||0;
+      if(confirm(`¿Actualizar base de ${mode} - ${track} - ${field} a ${newVal}?`)){
+        basePays[mode][track][field] = newVal;
+        saveBasePays();
+      } else {
+        // re-render para revertir
+        renderBasePaysConfig();
+      }
+    }
+
+    /*****************************************************
+     * TABLA PRINCIPAL DE JUGADAS
+     *****************************************************/
+    let rowCount = 0;
+    let maxInitialRows = 4;
+
+    // Tracks
+    const trackOptions = [
+      { value:"New York", label:"New York" },
+      { value:"USA-other", label:"USA-other" },
+      { value:"Venezuela", label:"Venezuela" },
+      { value:"SantoDomingo", label:"Santo Domingo" }
+      // Agrega más si gustas (Florida, Georgia, etc.),
+      // y decide si los tratas como "USA-other" en la base.
+    ];
+
+    function initTable(){
+      for(let i=0;i<maxInitialRows;i++){
+        addRow();
+      }
+      loadTableState();
+      calculateAll(); // recalc
+    }
+
+    function addRow(){
+      rowCount++;
+      let tb = document.getElementById("calcTbody");
+      let newTr = document.createElement("tr");
+      newTr.setAttribute("data-rowid", rowCount);
+
+      // Armar <select> track
+      let selectHTML = `<select class="calc-input trackSel" onchange="onFieldChange(${rowCount})">`;
+      trackOptions.forEach(opt=>{
+        selectHTML += `<option value="${opt.value}">${opt.label}</option>`;
+      });
+      selectHTML += `</select>`;
+
+      // Estructura celdas
+      newTr.innerHTML = `
+        <td>${rowCount}</td>
+        <td>${selectHTML}</td>
+        <td><input type="text" class="calc-input betNumber" oninput="onFieldChange(${rowCount})"></td>
+        <td><input type="number" class="calc-input straight" oninput="onFieldChange(${rowCount})"></td>
+        <td><input type="text" class="calc-input box" oninput="onFieldChange(${rowCount})" 
+                   placeholder="(ej. 1,2)"></td>
+        <td><input type="number" class="calc-input combo" oninput="onFieldChange(${rowCount})"></td>
+        <td class="readonlyCell modeCell">-</td>
+        <td class="readonlyCell prizeCell">$0.00</td>
+        <td>
+          <button class="btnNeon" style="background:var(--danger-color);box-shadow:0 0 5px var(--danger-color)"
+                  onclick="removeRow(${rowCount})">X</button>
+        </td>
+      `;
+      tb.appendChild(newTr);
+    }
+
+    function removeRow(rid){
+      let tr = document.querySelector(`tr[data-rowid='${rid}']`);
+      if(!tr) return;
+      tr.remove();
+      saveTableState();
+    }
+
+    function onFieldChange(rid){
+      // Al editar cualquier campo => recalc fila
+      recalcRow(rid);
+      saveTableState();
+    }
+
+    function recalcRow(rid){
+      let tr = document.querySelector(`tr[data-rowid='${rid}']`);
+      if(!tr) return;
+
+      let trackSel   = tr.querySelector(".trackSel");
+      let betNumber  = tr.querySelector(".betNumber").value.trim();
+      let straight   = tr.querySelector(".straight").value.trim();
+      let box        = tr.querySelector(".box").value.trim();
+      let combo      = tr.querySelector(".combo").value.trim();
+
+      let track = trackSel.value||"USA-other";
+      // Determina modalidad
+      let mode = determineGameMode(betNumber, track, straight, box, combo);
+      tr.querySelector(".modeCell").textContent = mode;
+
+      // Calcula premio
+      let prize = calculateRowTotal(betNumber, mode, straight, box, combo, track);
+      tr.querySelector(".prizeCell").textContent = `$${prize.toFixed(2)}`;
+    }
+
+    function calculateAll(){
+      let rows = document.querySelectorAll("#calcTbody tr");
+      rows.forEach(r=>{
+        let rid = r.getAttribute("data-rowid");
+        recalcRow(rid);
+      });
+    }
+
+    function resetTable(){
+      if(!confirm("¿Borrar todas las filas y reiniciar?")) return;
+      let tb = document.getElementById("calcTbody");
+      tb.innerHTML = "";
+      rowCount=0;
+      initTable();
+    }
+
+    /*****************************************************
+     * LÓGICA DE DETERMINACIÓN DE MODALIDAD (adaptación)
+     * Basada en tu scripts.js, ajustada para 1 track.
+     *****************************************************/
+    function determineGameMode(betNumber, track, stVal, bxVal, coVal){
+      if(!betNumber) return "-";
+      // Pale => "XX-XX" o "XXxXX"
+      if(/^\d{2}(\-|x)\d{2}$/.test(betNumber)){
+        // track=Venezuela => "Pale-Ven"
+        if(track==="Venezuela"){
+          return "Pale-Ven";
+        }
+        // track=SantoDomingo => "Pale-RD"
+        if(track==="SantoDomingo"){
+          return "Pale-RD";
+        }
+        // Sino => "-" (o podrías manejar "Pale-other" si gustas)
+        return "-";
+      }
+      // 1 dígito => Single Action
+      if(betNumber.length===1){
+        return "Single Action";
+      }
+      // 2 dígitos
+      if(betNumber.length===2){
+        if(track==="SantoDomingo"){
+          // "RD-Quiniela"
+          return "RD-Quiniela";
+        }
+        if(track==="Venezuela"){
+          // Pulito vs Venezuela
+          if(!bxVal || bxVal.trim()===""){
+            return "Venezuela";
+          } else {
+            // Si Box=1,2 or 1,2,3 => "Pulito"
+            return "Pulito";
+          }
+        }
+        // Sino => "Pulito" si es track=USA-other o NY
+        return "Pulito";
+      }
+      // 3 dígitos => Pick 3
+      if(betNumber.length===3){
+        return "Pick 3";
+      }
+      // 4 dígitos => Win 4
+      if(betNumber.length===4){
+        return "Win 4";
+      }
+      return "-";
+    }
+
+    /*****************************************************
+     * Cálculo de Premio (adaptación)
+     *****************************************************/
+    function calculateRowTotal(bn, mode, stValStr, bxValStr, coValStr, track){
+      if(!mode || mode==="-" || !bn) return 0;
+      let st = parseFloat(stValStr)||0;
+      let co = parseFloat(coValStr)||0;
+      // Box en caso Pulito => a veces es "1,2" => no es un number directo
+      // en otras mod. => parseFloat(bxValStr)
+      let bx = 0;
+      // Ejemplo: si "Pulito" => la box son posiciones "1,2,3"
+      if(mode==="Pulito"){
+        let positions = bxValStr.split(",").map(x=> x.trim()).filter(Boolean);
+        bx = positions.length; // p.ej. 1,2 => 2
+      } else if(mode==="Pale-Ven" || mode==="Pale-RD" || mode==="RD-Quiniela" || mode==="Venezuela"){
+        // usualmente no se usa box= a numeric
+        bx = parseFloat(bxValStr)||0; 
+      } else {
+        // normal parse
+        bx = parseFloat(bxValStr)||0;
+      }
+
+      // Tomar base de la "mode" + "track"
+      let baseObj = (basePays[mode] && basePays[mode][track]) 
+                    ? basePays[mode][track]
+                    : { straight: 0, box: 0, combo: 0 };
+      let baseStraight = baseObj.straight||0;
+      let baseBox      = baseObj.box||0;
+      let baseCombo    = baseObj.combo||0;
+
+      // Calculamos
+      // p.ej: total = (st * baseStraight) + (bx * baseBox) + (co * baseCombo)
+      // Si es Pick3 y combo => a veces multiplican combosCount => depende de tu scripts.js
+      let combosCount = 1; // si quieres factor de combos
+      if(mode==="Pick 3" || mode==="Win 4"){
+        // Ejemplo: combos = factorial(len) / product factorial repetidos
+        combosCount = calcCombos(bn);
+      }
+
+      let total = (st * baseStraight) 
+                + (bx * baseBox) 
+                + (co * baseCombo * combosCount);
+
+      return total;
+    }
+
+    // Copia de tu scripts.js para combos
+    function calcCombos(str){
+      // Factorial
+      function factorial(n){
+        return n<=1 ? 1 : n*factorial(n-1);
+      }
+      let freq={};
+      for(let c of str){
+        freq[c] = (freq[c]||0)+1;
+      }
+      let denom=1;
+      for(let k in freq){
+        denom*= factorial(freq[k]);
+      }
+      return factorial(str.length)/denom;
+    }
+
+    /*****************************************************
+     * GUARDAR/CARGAR TABLA EN LOCALSTORAGE
+     *****************************************************/
+    function saveTableState(){
+      let data = [];
+      let rows = document.querySelectorAll("#calcTbody tr");
+      rows.forEach(r=>{
+        let rid = r.getAttribute("data-rowid");
+        let trackSel = r.querySelector(".trackSel").value;
+        let bnVal = r.querySelector(".betNumber").value.trim();
+        let stVal = r.querySelector(".straight").value.trim();
+        let bxVal = r.querySelector(".box").value.trim();
+        let coVal = r.querySelector(".combo").value.trim();
+        let md = r.querySelector(".modeCell").textContent;
+        let pr = r.querySelector(".prizeCell").textContent;
+        data.push({
+          rid, track: trackSel, betNumber: bnVal,
+          straight: stVal, box: bxVal, combo: coVal,
+          mode: md, prize: pr
+        });
+      });
+      localStorage.setItem("calcPremiosData", JSON.stringify(data));
+    }
+
+    function loadTableState(){
+      let stor = localStorage.getItem("calcPremiosData");
+      if(!stor) return;
+      let arr = JSON.parse(stor);
+      let tb = document.getElementById("calcTbody");
+      tb.innerHTML="";
+      rowCount=0;
+      arr.forEach(obj=>{
+        rowCount++;
+        let newTr = document.createElement("tr");
+        newTr.setAttribute("data-rowid", rowCount);
+        let selectHTML = `<select class="calc-input trackSel" onchange="onFieldChange(${rowCount})">`;
+        trackOptions.forEach(opt=>{
+          let sel = (opt.value===obj.track)? "selected" : "";
+          selectHTML += `<option value="${opt.value}" ${sel}>${opt.label}</option>`;
+        });
+        selectHTML += `</select>`;
+
+        newTr.innerHTML=`
+          <td>${rowCount}</td>
+          <td>${selectHTML}</td>
+          <td><input type="text" class="calc-input betNumber" value="${obj.betNumber||""}"
+                     oninput="onFieldChange(${rowCount})"></td>
+          <td><input type="number" class="calc-input straight" value="${obj.straight||""}"
+                     oninput="onFieldChange(${rowCount})"></td>
+          <td><input type="text" class="calc-input box" value="${obj.box||""}"
+                     oninput="onFieldChange(${rowCount})"></td>
+          <td><input type="number" class="calc-input combo" value="${obj.combo||""}"
+                     oninput="onFieldChange(${rowCount})"></td>
+          <td class="readonlyCell modeCell">${obj.mode||"-"}</td>
+          <td class="readonlyCell prizeCell">${obj.prize||"$0.00"}</td>
+          <td>
+            <button class="btnNeon" style="background:var(--danger-color);box-shadow:0 0 5px var(--danger-color)"
+                    onclick="removeRow(${rowCount})">X</button>
+          </td>
+        `;
+        tb.appendChild(newTr);
+      });
+    }
+
+    /*****************************************************
+     * Iniciar
+     *****************************************************/
+    window.addEventListener("DOMContentLoaded", ()=>{
+      loadBasePays();
+      renderBasePaysConfig();
+      initTable();
+    });
+  </script>
+</body>
+</html>
