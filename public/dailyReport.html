@@ -4,75 +4,166 @@
   <meta charset="UTF-8" />
   <title>BeastBet - 4 Semanas</title>
   <style>
-    /* ========================================================
-       (1) CSS BÁSICO. TÚ PUEDES PEGAR AQUÍ TODO TU CSS EXTENSO.
-       ======================================================== */
+    /* ================ ESTILO GENERAL (NEON/DARK) ================ */
     body {
       margin: 0; padding: 0;
       background: #111; color: #eee;
       font-family: sans-serif;
     }
     .hidden { display:none; }
+
+    /* Overlay de Login */
     .pin-overlay {
-      position: fixed; inset: 0;
+      position: fixed;
+      inset: 0;
       background: rgba(0,0,0,0.8);
-      display: flex; justify-content: center; align-items: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       z-index: 9999;
     }
     .pin-dialog {
-      background: #222; border: 2px solid #0ff; border-radius: 10px;
-      padding: 2rem; width: 400px; max-width: 90%; text-align: center;
+      background: #000;
+      border: 2px solid #0ff;
+      border-radius: 10px;
+      padding: 2rem;
+      width: 400px;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 0 10px #0ff;
     }
-    /* Layout principal */
+    .pin-dialog h2 {
+      margin-bottom: 1rem;
+      color: #0ff;
+      font-size: 1.5rem;
+      text-shadow: 0 0 4px #0ff;
+    }
+    .pin-dialog input {
+      font-size: 2rem;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 1rem;
+      background: #111;
+      color: #0ff;
+      border: 2px solid #0ff;
+      border-radius: 8px;
+      padding: 0.5rem;
+      box-shadow: inset 0 0 5px #0ff;
+    }
+    .pin-dialog button {
+      font-size: 1.2rem;
+      padding: 0.5rem 2rem;
+      background: #000;
+      color: #0ff;
+      border: 2px solid #0ff;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 5px #0ff;
+    }
+    .pin-dialog button:hover {
+      background: #0ff;
+      color: #000;
+    }
+
+    /* ================ LAYOUT PRINCIPAL ================ */
     .container {
-      display: flex; width:100vw; height:100vh;
+      display: flex; 
+      width:100vw; 
+      height:100vh;
     }
     .sidebar {
-      width:300px; background:#000; border-right:2px solid #0ff;
-      overflow-y:auto; padding:1rem;
+      width:300px; 
+      background:#000; 
+      border-right:2px solid #0ff;
+      overflow-y:auto; 
+      padding:1rem;
     }
     .main-content {
-      flex:1; display:flex; flex-direction:column; background:#000;
+      flex:1; 
+      display:flex; 
+      flex-direction:column; 
+      background:#000;
     }
     .top-bar {
-      background:#000; border-bottom:2px solid #0ff; padding:0.5rem;
-      display:flex; gap:1rem; align-items:center;
+      background:#000; 
+      border-bottom:2px solid #0ff; 
+      padding:0.5rem;
+      display:flex; 
+      gap:1rem; 
+      align-items:center;
     }
     .scroll-area {
-      flex:1; overflow-y:auto; padding:1rem;
+      flex:1; 
+      overflow-y:auto; 
+      padding:1rem;
     }
-    /* Acordeón Semanas (en barra lateral) */
+
+    /* ================ ACORDEÓN DE SEMANAS (BARRA LATERAL) ================ */
     .week-header {
-      background:#222; margin-bottom:5px; padding:0.5rem; cursor:pointer;
-      font-weight:bold; display:flex; align-items:center; justify-content:space-between;
+      background:#222; 
+      margin-bottom:5px; 
+      padding:0.5rem; 
+      cursor:pointer; 
+      font-weight:bold;
+      display:flex; 
+      align-items:center; 
+      justify-content:space-between;
     }
     .week-content {
-      margin-left:10px; margin-bottom:1rem; display:none;
+      margin-left:10px;
+      margin-bottom:1rem;
+      display:none;
     }
     .day-item {
-      padding:0.4rem; cursor:pointer; border-bottom:1px solid #444;
+      padding:0.4rem; 
+      cursor:pointer;
+      border-bottom:1px solid #444;
       margin-left:15px;
     }
     .day-item:hover {
       background:#111;
     }
+
+    /* Botón de candado (🔓 / 🔒) */
     .lockBtn {
-      background:transparent; color:#fb0; border:1px solid #fb0;
-      border-radius:4px; padding:0.2rem 0.5rem; cursor:pointer; margin-left:10px;
+      background:transparent; 
+      color:#fb0; 
+      border:1px solid #fb0;
+      border-radius:4px; 
+      padding:0.2rem 0.5rem; 
+      cursor:pointer; 
+      margin-left:10px;
     }
     .lockBtn.locked {
-      background:#fb0; color:#000;
+      background:#fb0; 
+      color:#000;
     }
+
+    /* ================ OTROS DETALLES (Tablas, etc.) ================ */
+    /* Ajusta según tu preferencia. Mantén el look neon, bordes, etc. */
+    table {
+      color: #eee;
+    }
+    table thead {
+      background: #222;
+    }
+    table thead tr th {
+      padding:0.4rem;
+    }
+    table tbody tr td {
+      padding:0.3rem;
+    }
+    /* etc. */
   </style>
 </head>
 <body>
 
-<!-- Overlay LOGIN con 24 códigos -->
+<!-- OVERLAY LOGIN -->
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-dialog">
-    <h2>Ingrese Código (4 dígitos: 2,4,6,8 permutación)</h2>
-    <input type="password" id="pinInput" maxlength="4"
-           style="font-size:2rem;text-align:center;width:100%;margin-bottom:1rem;">
+    <!-- Título genérico. No revelamos “2,4,6,8” -->
+    <h2>Ingrese su clave de 4 dígitos</h2>
+    <input type="password" id="pinInput" maxlength="4">
     <button id="btnPinSubmit">Acceder</button>
   </div>
 </div>
@@ -82,7 +173,7 @@
   <div class="sidebar">
     <h2 style="color:#0ff;">BeastBet</h2>
 
-    <!-- BOTONES GLOBALES -->
+    <!-- Botones globales -->
     <button style="background:green;color:#fff; margin-bottom:0.5rem;"
       onclick="saveToMongo()">Guardar a Mongo</button>
     <button style="background:blue;color:#fff; margin-bottom:1rem;"
@@ -90,48 +181,48 @@
 
     <div id="currentCodeInfo" style="margin-bottom:1rem;">(Código: ???)</div>
 
-    <!-- 4 Semanas (Acordeón) -->
-    <div id="weekHeader0" class="week-header" onclick="toggleWeek(0)">
+    <!-- 4 Semanas (acordeón) -->
+    <!-- (Cada “week-header” con un candado) -->
+    <div class="week-header" id="weekHeader0" onclick="toggleWeek(0)">
       <span>Semana 1 (?)</span>
       <button class="lockBtn" id="weekLock0" onclick="toggleWeekLock(0,event)">🔓</button>
     </div>
-    <div id="weekContent0" class="week-content"></div>
+    <div class="week-content" id="weekContent0"></div>
 
-    <div id="weekHeader1" class="week-header" onclick="toggleWeek(1)">
+    <div class="week-header" id="weekHeader1" onclick="toggleWeek(1)">
       <span>Semana 2 (?)</span>
       <button class="lockBtn" id="weekLock1" onclick="toggleWeekLock(1,event)">🔓</button>
     </div>
-    <div id="weekContent1" class="week-content"></div>
+    <div class="week-content" id="weekContent1"></div>
 
-    <div id="weekHeader2" class="week-header" onclick="toggleWeek(2)">
+    <div class="week-header" id="weekHeader2" onclick="toggleWeek(2)">
       <span>Semana 3 (?)</span>
       <button class="lockBtn" id="weekLock2" onclick="toggleWeekLock(2,event)">🔓</button>
     </div>
-    <div id="weekContent2" class="week-content"></div>
+    <div class="week-content" id="weekContent2"></div>
 
-    <div id="weekHeader3" class="week-header" onclick="toggleWeek(3)">
+    <div class="week-header" id="weekHeader3" onclick="toggleWeek(3)">
       <span>Semana 4 (?)</span>
       <button class="lockBtn" id="weekLock3" onclick="toggleWeekLock(3,event)">🔓</button>
     </div>
-    <div id="weekContent3" class="week-content"></div>
+    <div class="week-content" id="weekContent3"></div>
   </div>
 
-  <!-- CONTENIDO PRINCIPAL (Derecha) -->
+  <!-- PANEL DERECHO -->
   <div class="main-content">
     <div class="top-bar">
       <h3 style="margin:0;">Panel Principal</h3>
     </div>
     <div class="scroll-area" id="mainPanel">
-      <!-- Aquí se mostrará el "Reporte Diario" o el "Resumen Semanal" 
-           según clic del usuario en la barra lateral. -->
+      <!-- Aquí se muestra el reporte diario o el resumen de la semana -->
     </div>
   </div>
 </div>
 
 <script>
-  /********************************************
-   * LISTA 24 CÓDIGOS
-   ********************************************/
+  /*************************************************************
+   * (1) LISTA DE CÓDIGOS PERMITIDOS (SIN MOSTRARLO AL USUARIO)
+   *************************************************************/
   const validCodes = [
     "2468","2486","2648","2684","2846","2864",
     "4268","4286","4628","4682","4826","4862",
@@ -139,43 +230,47 @@
     "8246","8264","8426","8462","8624","8642"
   ];
 
-  /********************************************
-   * ESTRUCTURA GLOBAL
-   ********************************************/
+  /*************************************************************
+   * (2) ESTRUCTURA GLOBAL: dataStore con 4 “weeks”
+   *************************************************************/
   let currentCode = "";
   let dataStore = {
-    weeks:[
+    weeks: [
       { startDate:"", locked:false, days:[] },
       { startDate:"", locked:false, days:[] },
       { startDate:"", locked:false, days:[] },
-      { startDate:"", locked:false, days:[] },
+      { startDate:"", locked:false, days:[] }
     ]
   };
 
-  /********************************************
-   * LOGIN OVERLAY
-   ********************************************/
+  /*************************************************************
+   * (3) OVERLAY LOGIN
+   *************************************************************/
   const pinOverlay = document.getElementById("pinOverlay");
   const pinInput   = document.getElementById("pinInput");
   const mainContainer = document.getElementById("mainContainer");
+
   document.getElementById("btnPinSubmit").addEventListener("click", ()=>{
     let val = pinInput.value.trim();
+    // Compara con validCodes
     if(!validCodes.includes(val)){
-      alert("Código no permitido. Debe ser una permutación de [2,4,6,8].");
+      alert("Código incorrecto.");
       return;
     }
+    // Acceso concedido
     currentCode = val;
     document.getElementById("currentCodeInfo").textContent = "(Código: "+val+")";
     pinOverlay.style.display="none";
     mainContainer.classList.remove("hidden");
+
     loadLocal();
     initWeeksIfNeeded();
     renderSidebarWeeks();
   });
 
-  /********************************************
-   * localStorage
-   ********************************************/
+  /*************************************************************
+   * (4) GUARDAR / CARGAR LOCALSTORAGE
+   *************************************************************/
   function storeLocal(){
     if(!currentCode) return;
     localStorage.setItem("beastbetData_"+currentCode, JSON.stringify(dataStore));
@@ -186,21 +281,22 @@
     if(st) dataStore = JSON.parse(st);
   }
 
-  /********************************************
-   * INICIALIZAR WEEKS (si no tienen fechas)
-   ********************************************/
+  /*************************************************************
+   * (5) INICIALIZAR SEMANAS
+   *************************************************************/
   function initWeeksIfNeeded(){
     let anyDate = dataStore.weeks.some(w=> w.startDate!=="");
-    if(anyDate) return; 
-    let baseMon = findMondayOfCurrentWeek();
+    if(anyDate) return;
+
+    let baseMonday = findMondayOfCurrentWeek();
     for(let i=0; i<4; i++){
-      let dt = new Date(baseMon);
+      let dt = new Date(baseMonday);
       dt.setDate(dt.getDate() + i*7);
       dataStore.weeks[i].startDate = dtToYmd(dt);
       dataStore.weeks[i].locked = false;
-      dataStore.weeks[i].days = [];
+      dataStore.weeks[i].days=[];
       for(let d=0; d<7; d++){
-        let dd = {
+        let dd={
           pages:[],
           overlook:0, overlookNote:"",
           overlookExtra:[],
@@ -209,14 +305,14 @@
           creditTracker:{ pending:[], paid:[] }
         };
         let pArr=[];
-        for(let r=1;r<=20;r++){
+        for(let r=1; r<=20; r++){
           pArr.push({
             pageNo:r, centenas:0, pulitos:0,
             pendingPrizes:[], paidPrizes:[],
             totalSalidas:0
           });
         }
-        dd.pages= pArr;
+        dd.pages=pArr;
         dataStore.weeks[i].days.push(dd);
       }
     }
@@ -224,9 +320,9 @@
   }
   function findMondayOfCurrentWeek(){
     let now=new Date();
-    let dow = now.getDay(); // 0=Dom,1=Mon,...
-    let diff = (dow+6)%7; 
-    let mon=new Date(now);
+    let dayOfWeek= now.getDay();
+    let diff= (dayOfWeek+6)%7;
+    let mon= new Date(now);
     mon.setDate(now.getDate()-diff);
     return mon;
   }
@@ -241,25 +337,29 @@
     return new Date(+y, +m-1, +d);
   }
 
-  /********************************************
-   * RENDER BARRA LATERAL (4 Semanas)
-   ********************************************/
+  /*************************************************************
+   * (6) BARRA LATERAL: 4 Semanas (Acordeón)
+   *************************************************************/
   function renderSidebarWeeks(){
     for(let i=0; i<4; i++){
       let w = dataStore.weeks[i];
-      // Nombre "Semana i+1 (mm/dd - mm/dd)"
+      // Fechas
       let sdt= ymdToDate(w.startDate);
-      let edt= new Date(sdt); edt.setDate(edt.getDate()+6);
-      let sS = formatmmdd(sdt);
-      let sE = formatmmdd(edt);
-      let wh = document.getElementById("weekHeader"+i).querySelector("span");
-      wh.textContent = "Semana "+(i+1)+" ("+sS+" - "+sE+")";
-      // Bloque candado
+      let edt= new Date(sdt);
+      edt.setDate(edt.getDate()+6);
+      let sS= formatmmdd(sdt);
+      let sE= formatmmdd(edt);
+
+      // Título en #weekHeader_i
+      let headerEl= document.getElementById("weekHeader"+i).querySelector("span");
+      headerEl.textContent = "Semana "+(i+1)+" ("+sS+" - "+sE+")";
+
+      // Botón candado
       let lockBtn = document.getElementById("weekLock"+i);
       lockBtn.textContent = w.locked?"🔒":"🔓";
       lockBtn.classList.toggle("locked", w.locked);
 
-      // Rellenar "weekContent i" con 7 días + Resumen
+      // Llenar el “weekContent i”
       let wc = document.getElementById("weekContent"+i);
       let dayHtml="";
       let dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
@@ -267,82 +367,78 @@
         let dayDt= new Date(sdt);
         dayDt.setDate(dayDt.getDate()+d);
         let ds= formatmmdd(dayDt);
-        dayHtml += `
-          <div class="day-item" onclick="selectDay(${i},${d})">
-            Día ${d+1} - ${dayNames[d]} (${ds})
+        dayHtml += \`
+          <div class="day-item" onclick="selectDay(\${i},\${d})">
+            Día \${d+1} - \${dayNames[d]} (\${ds})
           </div>
-        `;
+        \`;
       }
-      dayHtml += `
-        <div class="day-item" style="background:#111;" onclick="selectWeekSummary(${i})">
+      // Resumen Semanal
+      dayHtml += \`
+        <div class="day-item" style="background:#111;" onclick="selectWeekSummary(\${i})">
           Resumen Semanal
         </div>
-      `;
-      wc.innerHTML = dayHtml;
+      \`;
+      wc.innerHTML= dayHtml;
     }
   }
   function formatmmdd(dt){
-    let mm=(dt.getMonth()+1).toString().padStart(2,"0");
-    let dd=dt.getDate().toString().padStart(2,"0");
+    let mm= (dt.getMonth()+1).toString().padStart(2,"0");
+    let dd= dt.getDate().toString().padStart(2,"0");
     return mm+"/"+dd;
   }
   function toggleWeek(i){
-    // Acordeón
     let wc= document.getElementById("weekContent"+i);
     wc.style.display= (wc.style.display==="block")?"none":"block";
-    // Evitamos que el click “accione” el lockBtn
   }
   function toggleWeekLock(i, ev){
-    // Evitamos que se dispare toggleWeek
+    // Evita que se dispare toggleWeek
     ev.stopPropagation();
-    // Cambiamos locked
-    let w = dataStore.weeks[i];
-    w.locked = !w.locked;
+    let w= dataStore.weeks[i];
+    w.locked= !w.locked;
     storeLocal();
     renderSidebarWeeks();
   }
 
-  /********************************************
-   * MOSTRAR DÍA EN LA PARTE DERECHA
-   ********************************************/
+  /*************************************************************
+   * (7) MOSTRAR DÍA EN LA PARTE DERECHA
+   *************************************************************/
   function selectDay(i,d){
     let panel= document.getElementById("mainPanel");
     let w= dataStore.weeks[i];
     let dayData= w.days[d];
-    // Calcular el “Día X - Lunes - mm/dd”
     let dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
     let baseDt= ymdToDate(w.startDate);
     let dayDt= new Date(baseDt);
     dayDt.setDate(dayDt.getDate()+d);
     let ds= formatmmdd(dayDt);
-    let dayName= dayNames[d];
     let locked= w.locked;
 
-    let title= `<h2>Reporte Diario - ${dayName} - ${ds}</h2>`;
-    let buttons= `
+    let title= \`<h2>Reporte Diario - \${dayNames[d]} - \${ds}</h2>\`;
+    let buttons= \`
       <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
         <button style="background:#0ff;color:#000;padding:0.3rem 0.8rem;"
-          onclick="saveDay(${i},${d})" ${locked?'disabled':''}>Guardar Día</button>
+          onclick="saveDay(\${i},\${d})" \${locked?'disabled':''}>Guardar Día</button>
         <button style="background:#f90;color:#000;padding:0.3rem 0.8rem;"
-          onclick="resetDay(${i},${d})" ${locked?'disabled':''}>Reset Día</button>
+          onclick="resetDay(\${i},\${d})" \${locked?'disabled':''}>Reset Día</button>
         <button style="background:#0f0;color:#000;padding:0.3rem 0.8rem;"
-          onclick="addPageRow(${i},${d})" ${locked?'disabled':''}>+ Página</button>
+          onclick="addPageRow(\${i},\${d})" \${locked?'disabled':''}>+ Página</button>
       </div>
-    `;
-    let sucField= `
+    \`;
+    let sucField= \`
       <div style="margin-bottom:0.5rem;">
         <label style="font-weight:bold;">Sucursal:</label>
         <input type="text" style="width:250px;padding:0.3rem;"
-          data-week="${i}" data-day="${d}" data-field="sucursal"
-          value="${dayData.sucursal}"
-          oninput="updateDayStringField(this)" ${locked?'disabled':''}>
+          data-week="\${i}" data-day="\${d}" data-field="sucursal"
+          value="\${dayData.sucursal}"
+          oninput="updateDayStringField(this)" \${locked?'disabled':''}>
       </div>
-    `;
+    \`;
 
     let html= title + buttons + sucField;
-    // Tabla de páginas
+    // Tabla
     html += renderPagesTable(i,d);
-    // Totales Overlook
+    // Overlook
     html += renderDayTotals(i,d);
     // Cuadre + Créditos
     html += renderDayAcordeons(i,d);
@@ -350,7 +446,7 @@
     panel.innerHTML= html;
   }
   function saveDay(i,d){
-    alert("Día "+(d+1)+" guardado (placeholder).");
+    alert("Día "+(d+1)+" guardado local (placeholder).");
     storeLocal();
   }
   function resetDay(i,d){
@@ -387,22 +483,22 @@
     storeLocal();
     selectDay(i,d);
   }
-
   function updateDayStringField(input){
     let i= +input.dataset.week;
     let d= +input.dataset.day;
-    let field = input.dataset.field;
+    let field= input.dataset.field;
     dataStore.weeks[i].days[d][field]= input.value;
     storeLocal();
   }
 
-  /********************************************
-   * RENDER PÁGINAS (CENTENAS, PULITOS, SALIDAS)
-   ********************************************/
+  /*************************************************************
+   * (8) RENDER TABLA PÁGINAS
+   *************************************************************/
   function renderPagesTable(i,d){
-    let dayData= dataStore.weeks[i].days[d];
-    let locked= dataStore.weeks[i].locked;
-    let html= `
+    let w= dataStore.weeks[i];
+    let locked= w.locked;
+    let dayData= w.days[d];
+    let html= \`
     <table border="1" style="width:100%;border-collapse:collapse;margin-bottom:1rem;">
       <thead style="background:#222;">
         <tr>
@@ -414,7 +510,7 @@
         </tr>
       </thead>
       <tbody>
-    `;
+    \`;
     dayData.pages.forEach((p,idx)=>{
       let cVal= p.centenas||"";
       let puVal= p.pulitos||"";
@@ -422,33 +518,37 @@
       let sumPend= p.pendingPrizes.reduce((acc,v)=>acc+v,0);
       let hasPend= sumPend>0;
       let salColor= hasPend?"#a0f":"#f33";
-      html += `
+      html+=\`
         <tr>
           <td>
             <button style="background:#f33;color:#fff;border:none;border-radius:3px;padding:0.2rem 0.5rem;"
-              onclick="deletePageRow(${i},${d},${idx})" ${locked?'disabled':''}>
-              ${p.pageNo}
+              onclick="deletePageRow(\${i},\${d},\${idx})" \${locked?'disabled':''}>
+              \${p.pageNo}
             </button>
           </td>
           <td>
-            <input type="number" max="900000" value="${cVal}"
-              data-week="${i}" data-day="${d}" data-page="${idx}" data-field="centenas"
-              onchange="updatePageField(this)" ${locked?'disabled':''}
+            <input type="number" max="900000"
+              data-week="\${i}" data-day="\${d}" data-page="\${idx}" data-field="centenas"
+              value="\${cVal}"
+              onchange="updatePageField(this)"
+              \${locked?'disabled':''}
               style="width:100px;">
           </td>
           <td>
-            <input type="number" max="900000" value="${puVal}"
-              data-week="${i}" data-day="${d}" data-page="${idx}" data-field="pulitos"
-              onchange="updatePageField(this)" ${locked?'disabled':''}
+            <input type="number" max="900000"
+              data-week="\${i}" data-day="\${d}" data-page="\${idx}" data-field="pulitos"
+              value="\${puVal}"
+              onchange="updatePageField(this)"
+              \${locked?'disabled':''}
               style="width:100px;">
           </td>
-          <td style="color:${salColor};cursor:pointer;"
-            onclick="openPrizesModal(${i},${d},${idx})">
-            $${p.totalSalidas.toFixed(2)}
+          <td style="color:\${salColor};cursor:pointer;"
+            onclick="openPrizesModal(\${i},\${d},\${idx})">
+            $\${p.totalSalidas.toFixed(2)}
           </td>
-          <td>$${totalCP.toFixed(2)}</td>
+          <td>$\${totalCP.toFixed(2)}</td>
         </tr>
-      `;
+      \`;
     });
     html += "</tbody></table>";
     return html;
@@ -457,7 +557,7 @@
     if(!confirm("¿Eliminar esta página?")) return;
     let dayData= dataStore.weeks[i].days[d];
     dayData.pages.splice(idx,1);
-    dayData.pages.forEach((p,ix)=> p.pageNo= ix+1);
+    dayData.pages.forEach((pg,ix)=> pg.pageNo= ix+1);
     storeLocal();
     selectDay(i,d);
   }
@@ -470,82 +570,51 @@
     if(val>900000) val=900000;
     dataStore.weeks[i].days[d].pages[p][field]= val;
     storeLocal();
-    // Para ver el total en vivo, recargamos la vista del día:
+    // Re-render para ver total
     selectDay(i,d);
   }
   function openPrizesModal(i,d,idx){
-    alert("Aquí abrirías tu modal de Pendientes/Pagados. No re-render en cada letra.");
+    alert("Aquí abrirías tu modal (Pendientes/Pagados).");
   }
 
-  /********************************************
-   * TOTALSECTION (Overlook principal + Extra)
-   ********************************************/
+  /*************************************************************
+   * (9) TOTALES DEL DÍA: Overlook principal + Overlook Extra
+   *************************************************************/
   function renderDayTotals(i,d){
-    let dayData= dataStore.weeks[i].days[d];
-    let locked= dataStore.weeks[i].locked;
+    let w= dataStore.weeks[i];
+    let locked= w.locked;
+    let dayData= w.days[d];
     let ovVal= dayData.overlook||0;
     let ovNote= dayData.overlookNote||"";
-    let html= `
+    return \`
     <div style="border:1px solid #0ff;padding:0.5rem;margin-bottom:1rem;">
       <h3>Totales del Día</h3>
       <div style="display:flex;align-items:center;margin-bottom:0.5rem;">
         <label>Overlook:</label>
-        <input type="number" max="900000" value="${ovVal}"
-          style="width:100px;margin-left:5px;"
-          data-week="${i}" data-day="${d}" data-field="overlook"
-          onchange="updateDayField(this)" ${locked?'disabled':''}>
+        <input type="number" max="900000" value="\${ovVal}" style="width:100px;margin-left:5px;"
+          data-week="\${i}" data-day="\${d}" data-field="overlook"
+          onchange="updateDayField(this)"
+          \${locked?'disabled':''}>
         <input type="text" style="margin-left:5px;width:300px;"
-          data-week="${i}" data-day="${d}" data-field="overlookNote"
-          value="${ovNote}" oninput="updateDayStringField(this)"
-          ${locked?'disabled':''} placeholder="Nota Overlook">
+          data-week="\${i}" data-day="\${d}" data-field="overlookNote"
+          value="\${ovNote}"
+          oninput="updateDayStringField(this)"
+          \${locked?'disabled':''} placeholder="Nota Overlook">
         <button style="background:green;margin-left:5px;"
-          onclick="addOverlookRow(${i},${d})" ${locked?'disabled':''}>Add</button>
+          onclick="addOverlookRow(\${i},\${d})" \${locked?'disabled':''}>Add</button>
         <button style="background:red;margin-left:5px;"
-          onclick="clearMainOverlook(${i},${d})" ${locked?'disabled':''}>Del</button>
+          onclick="clearMainOverlook(\${i},\${d})" \${locked?'disabled':''}>Del</button>
       </div>
-      <div id="overlookExtraContainer_${i}_${d}">
-        ${renderOverlookExtraRows(i,d)}
+      <div id="overlookExtraContainer_\${i}_\${d}">
+        \${renderOverlookExtraRows(i,d)}
       </div>
-      ${renderPartialTotals(i,d)}
+      \${renderPartialTotals(i,d)}
     </div>
-    `;
-    return html;
-  }
-  function renderOverlookExtraRows(i,d){
-    let w= dataStore.weeks[i];
-    let locked= w.locked;
-    let dayData= w.days[d];
-    let out="";
-    dayData.overlookExtra.forEach((row,idx)=>{
-      let val=row.amount||0;
-      let note=row.note||"";
-      out+=`
-        <div style="margin-bottom:0.3rem;display:flex;align-items:center;">
-          <label>Overlook:</label>
-          <input type="number" max="900000" style="width:100px;margin-left:5px;"
-            data-week="${i}" data-day="${d}" data-oidx="${idx}" data-type="amount"
-            value="${val}" onchange="updateOverlookExtra(this)" ${locked?'disabled':''}>
-          <input type="text" style="margin-left:5px;width:300px;"
-            data-week="${i}" data-day="${d}" data-oidx="${idx}" data-type="note"
-            value="${note}" oninput="updateOverlookExtra(this)" ${locked?'disabled':''}>
-          <button style="background:green;margin-left:5px;"
-            onclick="addOverlookRow(${i},${d})" ${locked?'disabled':''}>Add</button>
-          <button style="background:red;margin-left:5px;"
-            onclick="deleteOverlookRow(${i},${d},${idx})" ${locked?'disabled':''}>Del</button>
-        </div>
-      `;
-    });
-    return out;
+    \`;
   }
   function addOverlookRow(i,d){
     let dayData= dataStore.weeks[i].days[d];
     dayData.overlookExtra.push({ amount:0, note:"" });
-    storeLocal();
-    selectDay(i,d);
-  }
-  function deleteOverlookRow(i,d,idx){
-    let dayData= dataStore.weeks[i].days[d];
-    dayData.overlookExtra.splice(idx,1);
     storeLocal();
     selectDay(i,d);
   }
@@ -556,13 +625,49 @@
     storeLocal();
     selectDay(i,d);
   }
+  function renderOverlookExtraRows(i,d){
+    let w= dataStore.weeks[i];
+    let locked= w.locked;
+    let dayData= w.days[d];
+    let out="";
+    dayData.overlookExtra.forEach((row,idx)=>{
+      let val=row.amount||0;
+      let note=row.note||"";
+      out+=\`
+        <div style="margin-bottom:0.3rem;display:flex;align-items:center;">
+          <label>Overlook:</label>
+          <input type="number" max="900000" style="width:100px;margin-left:5px;"
+            data-week="\${i}" data-day="\${d}" data-oidx="\${idx}" data-type="amount"
+            value="\${val}"
+            onchange="updateOverlookExtra(this)"
+            \${locked?'disabled':''}>
+          <input type="text" style="margin-left:5px;width:300px;"
+            data-week="\${i}" data-day="\${d}" data-oidx="\${idx}" data-type="note"
+            value="\${note}"
+            oninput="updateOverlookExtra(this)"
+            \${locked?'disabled':''}>
+          <button style="background:green;margin-left:5px;"
+            onclick="addOverlookRow(\${i},\${d})" \${locked?'disabled':''}>Add</button>
+          <button style="background:red;margin-left:5px;"
+            onclick="deleteOverlookRow(\${i},\${d},\${idx})" \${locked?'disabled':''}>Del</button>
+        </div>
+      \`;
+    });
+    return out;
+  }
+  function deleteOverlookRow(i,d,idx){
+    let dayData= dataStore.weeks[i].days[d];
+    dayData.overlookExtra.splice(idx,1);
+    storeLocal();
+    selectDay(i,d);
+  }
   function updateOverlookExtra(input){
     let i= +input.dataset.week;
     let d= +input.dataset.day;
     let rowIndex= +input.dataset.oidx;
-    let field= input.dataset.type;
     let dayData= dataStore.weeks[i].days[d];
     let row= dayData.overlookExtra[rowIndex];
+    let field= input.dataset.type;
     if(field==="amount"){
       let val= parseFloat(input.value)||0;
       if(val>900000) val=900000;
@@ -571,18 +676,17 @@
       row.note= input.value;
     }
     storeLocal();
-    // Actualiza totales sin re-render total:
+    // Actualizar totales Overlook sin re-render todo:
     updatePartialTotals(i,d);
   }
-
   function renderPartialTotals(i,d){
     let t= calcDayTotals(dataStore.weeks[i].days[d]);
-    return `
+    return \`
       <div style="margin-top:0.5rem;">
-        <div>Total Salidas: <span id="day${i}${d}_salidas">$${t.totalSalidas.toFixed(2)}</span></div>
-        <div>Total Ventas: <span id="day${i}${d}_ventas">$${t.totalVentas.toFixed(2)}</span></div>
+        <div>Total Salidas: <span id="day\${i}\${d}_salidas">$\${t.totalSalidas.toFixed(2)}</span></div>
+        <div>Total Ventas: <span id="day\${i}\${d}_ventas">$\${t.totalVentas.toFixed(2)}</span></div>
       </div>
-    `;
+    \`;
   }
   function updatePartialTotals(i,d){
     let t= calcDayTotals(dataStore.weeks[i].days[d]);
@@ -598,7 +702,7 @@
       tp+=(p.pulitos||0);
       ts+=(p.totalSalidas||0);
     });
-    ts+=(dayData.overlook||0);
+    ts += (dayData.overlook||0);
     dayData.overlookExtra.forEach(r=> ts+=(r.amount||0));
     return {
       totalCentenas: tc,
@@ -608,27 +712,27 @@
     };
   }
 
-  /********************************************
-   * ACORDEÓN: Cuadre + Créditos
-   ********************************************/
+  /*************************************************************
+   * (10) ACORDEÓN “CUADRE & CRÉDITOS”
+   *************************************************************/
   function renderDayAcordeons(i,d){
-    return `
+    return \`
       <div style="border:1px solid #0ff;padding:0.5rem;">
         <h3>Cuadre & Créditos</h3>
         <div>
-          <button onclick="toggleSubSection('cuadre_${i}_${d}')">Cuadre del Día</button>
-          <div id="cuadre_${i}_${d}" style="display:none;">
-            ${renderCuadreDia(i,d)}
+          <button onclick="toggleSubSection('cuadre_\${i}_\${d}')">Cuadre del Día</button>
+          <div id="cuadre_\${i}_\${d}" style="display:none;">
+            \${renderCuadreDia(i,d)}
           </div>
         </div>
         <div>
-          <button onclick="toggleSubSection('credit_${i}_${d}')">Créditos Otorgados</button>
-          <div id="credit_${i}_${d}" style="display:none;">
-            ${renderCreditSection(i,d)}
+          <button onclick="toggleSubSection('credit_\${i}_\${d}')">Créditos Otorgados</button>
+          <div id="credit_\${i}_\${d}" style="display:none;">
+            \${renderCreditSection(i,d)}
           </div>
         </div>
       </div>
-    `;
+    \`;
   }
   function toggleSubSection(id){
     let el= document.getElementById(id);
@@ -645,45 +749,47 @@
     });
     let sumOpt= dayData.cash + dayData.sucursal + dayData.credito + dayData.descuento + dayData.tickets;
     let netBal= subT - sumOpt + totalPending;
-    let nbColor= (netBal<0)?"lime": (netBal>0?"red":"#fff");
+    let nbColor= netBal<0?"lime":(netBal>0?"red":"#fff");
 
-    return `
+    return \`
     <div style="border:1px solid #444;padding:0.3rem;margin-top:0.5rem;">
-      <div>Ventas: $${t.totalVentas.toFixed(2)}</div>
-      <div>Salidas: <span style="color:#f33;">$${t.totalSalidas.toFixed(2)}</span></div>
-      <div>SubTotal: <span style="color:#ff0;">$${subT.toFixed(2)}</span></div>
-      <div>Prem.Pend: <span style="color:#a0f;">$${totalPending.toFixed(2)}</span></div>
+      <div>Ventas: $\${t.totalVentas.toFixed(2)}</div>
+      <div>Salidas: <span style="color:#f33;">$\${t.totalSalidas.toFixed(2)}</span></div>
+      <div>SubTotal: <span style="color:#ff0;">$\${subT.toFixed(2)}</span></div>
+      <div>Prem.Pend: <span style="color:#a0f;">$\${totalPending.toFixed(2)}</span></div>
 
-      <div>Cash: 
+      <div>Cash:
         <input type="number" max="900000" style="width:100px;"
-          value="${dayData.cash||0}"
-          data-week="${i}" data-day="${d}" data-field="cash"
+          value="\${dayData.cash||0}"
+          data-week="\${i}" data-day="\${d}" data-field="cash"
           onchange="updateDayField(this)">
       </div>
-      <div>Sucursal: 
+      <div>Sucursal:
         <input type="number" max="900000" style="width:100px;"
-          value="${dayData.sucursal||0}"
-          data-week="${i}" data-day="${d}" data-field="sucursal"
+          value="\${dayData.sucursal||0}"
+          data-week="\${i}" data-day="\${d}" data-field="sucursal"
           onchange="updateDayField(this)">
       </div>
       <div>Crédito (lectura):
-        <span style="color:#a0f;">$${dayData.credito||0}</span>
+        <span style="color:#a0f;">$\${dayData.credito||0}</span>
       </div>
       <div>Descuento:
         <input type="number" max="900000" style="width:100px;"
-          value="${dayData.descuento||0}"
-          data-week="${i}" data-day="${d}" data-field="descuento"
+          value="\${dayData.descuento||0}"
+          data-week="\${i}" data-day="\${d}" data-field="descuento"
           onchange="updateDayField(this)">
       </div>
       <div>Tickets:
         <input type="number" max="900000" style="width:100px;"
-          value="${dayData.tickets||0}"
-          data-week="${i}" data-day="${d}" data-field="tickets"
+          value="\${dayData.tickets||0}"
+          data-week="\${i}" data-day="\${d}" data-field="tickets"
           onchange="updateDayField(this)">
       </div>
-      <div>NetBalance: <span style="color:${nbColor};">$${netBal.toFixed(2)}</span></div>
+      <div>NetBalance:
+        <span style="color:\${nbColor};">$\${netBal.toFixed(2)}</span>
+      </div>
     </div>
-    `;
+    \`;
   }
   function renderCreditSection(i,d){
     let w= dataStore.weeks[i];
@@ -694,76 +800,73 @@
     c.pending.forEach((obj,idx)=>{
       pendingHTML += makeCreditRow(i,d,"pending",idx,obj,locked);
     });
-    let paidHTML="";
+    let paidHTML= "";
     c.paid.forEach((obj,idx)=>{
       paidHTML += makeCreditRow(i,d,"paid",idx,obj,locked);
     });
     let totalPend= c.pending.reduce((acc,o)=>acc+(o.amount||0),0);
     let totalPaid= c.paid.reduce((acc,o)=>acc+(o.amount||0),0);
 
-    return `
+    return \`
       <div style="padding:0.5rem;">
         <h4>Pendientes</h4>
         <table border="1" style="border-collapse:collapse;width:100%;">
-          <thead>
-            <tr><th>#</th><th>Cliente</th><th>Monto</th><th></th></tr>
-          </thead>
-          <tbody>${pendingHTML}</tbody>
+          <thead><tr><th>#</th><th>Cliente</th><th>Monto</th><th></th></tr></thead>
+          <tbody>\${pendingHTML}</tbody>
         </table>
         <button style="background:#0ff;color:#000;"
-          onclick="addCreditItem(${i},${d},'pending')" ${locked?'disabled':''}>+Pend</button>
-        <p>Total Pend: <span style="color:#a0f;">$${totalPend.toFixed(2)}</span></p>
+          onclick="addCreditItem(\${i},\${d},'pending')" \${locked?'disabled':''}>+Pend</button>
+        <p>Total Pend: <span style="color:#a0f;">$\${totalPend.toFixed(2)}</span></p>
 
         <h4>Pagados</h4>
         <table border="1" style="border-collapse:collapse;width:100%;">
-          <thead>
-            <tr><th>#</th><th>Cliente</th><th>Monto</th><th></th></tr>
-          </thead>
-          <tbody>${paidHTML}</tbody>
+          <thead><tr><th>#</th><th>Cliente</th><th>Monto</th><th></th></tr></thead>
+          <tbody>\${paidHTML}</tbody>
         </table>
         <button style="background:#0ff;color:#000;"
-          onclick="addCreditItem(${i},${d},'paid')" ${locked?'disabled':''}>+Paid</button>
-        <p>Total Paid: <span style="color:#f33;">$${totalPaid.toFixed(2)}</span></p>
+          onclick="addCreditItem(\${i},\${d},'paid')" \${locked?'disabled':''}>+Paid</button>
+        <p>Total Paid: <span style="color:#f33;">$\${totalPaid.toFixed(2)}</span></p>
       </div>
-    `;
+    \`;
   }
   function makeCreditRow(i,d,type,idx,obj,locked){
     let client= obj.client||"";
     let amt= obj.amount||0;
-    let btn= (type==="pending")
-      ? `<button style="background:#f33;color:#fff;"
-           onclick="moveCreditItem(${i},${d},${idx},'pending')"
-           ${locked?'disabled':''}>→Pag</button>`
-      : `<button style="background:#a0f;color:#fff;"
-           onclick="moveCreditItem(${i},${d},${idx},'paid')"
-           ${locked?'disabled':''}>→Pend</button>`;
+    let arrowBtn = (type==="pending")
+      ? \`<button style="background:#f33;color:#fff;" 
+           onclick="moveCreditItem(\${i},\${d},\${idx},'pending')" \${locked?'disabled':''}>
+           →Pag
+         </button>\`
+      : \`<button style="background:#a0f;color:#fff;" 
+           onclick="moveCreditItem(\${i},\${d},\${idx},'paid')" \${locked?'disabled':''}>
+           →Pend
+         </button>\`;
 
-    return `
+    return \`
       <tr>
         <td>
           <button style="background:#f33;color:#fff;"
-            onclick="deleteCreditRow(${i},${d},'${type}',${idx})"
-            ${locked?'disabled':''}>
-            ${idx+1}
+            onclick="deleteCreditRow(\${i},\${d},'\${type}',\${idx})" \${locked?'disabled':''}>
+            \${idx+1}
           </button>
         </td>
         <td>
-          <input type="text" maxlength="10" value="${client}"
-            data-week="${i}" data-day="${d}"
-            data-type="${type}" data-idx="${idx}" data-field="client"
-            oninput="updateCreditItem(this)" ${locked?'disabled':''}
-            style="width:80px;">
+          <input type="text" maxlength="10" style="width:80px;"
+            data-week="\${i}" data-day="\${d}" data-type="\${type}" data-idx="\${idx}" data-field="client"
+            value="\${client}"
+            oninput="updateCreditItem(this)"
+            \${locked?'disabled':''}>
         </td>
         <td>
-          <input type="number" max="900000" value="${amt}"
-            data-week="${i}" data-day="${d}"
-            data-type="${type}" data-idx="${idx}" data-field="amount"
-            onchange="updateCreditItem(this)" ${locked?'disabled':''}
-            style="width:80px;">
+          <input type="number" max="900000" style="width:80px;"
+            data-week="\${i}" data-day="\${d}" data-type="\${type}" data-idx="\${idx}" data-field="amount"
+            value="\${amt}"
+            onchange="updateCreditItem(this)"
+            \${locked?'disabled':''}>
         </td>
-        <td>${btn}</td>
+        <td>${arrowBtn}</td>
       </tr>
-    `;
+    \`;
   }
   function addCreditItem(i,d,type){
     let dayData= dataStore.weeks[i].days[d];
@@ -793,11 +896,9 @@
       if(val>900000) val=900000;
       item.amount= val;
     }
-    // recalcular "credito" => sum of pending
-    dayData.credito= dayData.creditTracker.pending.reduce((acc,o)=> acc+(o.amount||0),0);
+    // recalcular dayData.credito
+    dayData.credito= dayData.creditTracker.pending.reduce((acc,o)=>acc+(o.amount||0),0);
     storeLocal();
-    // Si deseas ver “partial update” de totales, hazlo aquí. 
-    // Ej: update “Crédito(lectura)” en DOM. 
   }
   function moveCreditItem(i,d,idx,fromType){
     let dayData= dataStore.weeks[i].days[d];
@@ -808,18 +909,17 @@
     } else {
       dayData.creditTracker.pending.push(item);
     }
-    // recalcular
     dayData.credito= dayData.creditTracker.pending.reduce((acc,o)=>acc+(o.amount||0),0);
     storeLocal();
     selectDay(i,d);
   }
 
-  /********************************************
-   * SELECCIONAR “RESUMEN SEMANAL”
-   ********************************************/
+  /*************************************************************
+   * (11) SELECCIONAR “RESUMEN SEMANAL”
+   *************************************************************/
   function selectWeekSummary(i){
     let panel= document.getElementById("mainPanel");
-    let html= `<h2>Resumen Semanal (Semana ${i+1})</h2>`;
+    let html= \`<h2>Resumen Semanal (Semana \${i+1})</h2>\`;
     html += renderWeeklySummary(i);
     panel.innerHTML= html;
   }
@@ -827,6 +927,7 @@
     let w= dataStore.weeks[i];
     let sumCent=0, sumPul=0, sumSal=0, sumVent=0;
     let sumPendAll=0, sumCash=0, sumSuc=0, sumCred=0, sumDesc=0, sumTic=0;
+
     for(let d=0; d<7; d++){
       let dayData= w.days[d];
       let t= calcDayTotals(dayData);
@@ -835,10 +936,10 @@
       sumSal += t.totalSalidas;
       sumVent+= t.totalVentas;
 
-      // PremPend
+      // Pend
       let dayPend=0;
       dayData.pages.forEach(pg=>{
-        dayPend += pg.pendingPrizes.reduce((acc,v)=>acc+v,0);
+        dayPend += pg.pendingPrizes.reduce((a,v)=>a+v,0);
       });
       sumPendAll += dayPend;
       sumCash += dayData.cash;
@@ -850,11 +951,11 @@
     let c25= sumCent*0.25;
     let p10= sumPul*0.10;
     let totalCom= c25+p10;
-    let subTotal= sumVent - (sumSal + totalCom);
+    let subTotal= sumVent - (sumSal+totalCom);
     let balOfic= subTotal;
     let boColor= (balOfic>0)?"red":(balOfic<0?"lime":"#fff");
 
-    return `
+    return \`
       <table border="1" style="width:100%;border-collapse:collapse;">
         <thead>
           <tr>
@@ -866,41 +967,43 @@
         </thead>
         <tbody>
           <tr>
-            <td>$${sumCent.toFixed(2)}</td>
-            <td>$${sumPul.toFixed(2)}</td>
-            <td style="color:#f33;">$${sumSal.toFixed(2)}</td>
-            <td>$${sumVent.toFixed(2)}</td>
+            <td>$\${sumCent.toFixed(2)}</td>
+            <td>$\${sumPul.toFixed(2)}</td>
+            <td style="color:#f33;">$\${sumSal.toFixed(2)}</td>
+            <td>$\${sumVent.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
-      <div>Total Ventas: $${sumVent.toFixed(2)}</div>
-      <div>Centenas 25%: $${c25.toFixed(2)}</div>
-      <div>Pulitos 10%: $${p10.toFixed(2)}</div>
-      <div>Total Comisión: $${totalCom.toFixed(2)}</div>
-      <div style="color:#f33;">Total Salidas: $${sumSal.toFixed(2)}</div>
-      <div style="color:#ff0;">Sub Total: $${subTotal.toFixed(2)}</div>
+      <div>Total Ventas: $\${sumVent.toFixed(2)}</div>
+      <div>Centenas 25%: $\${c25.toFixed(2)}</div>
+      <div>Pulitos 10%: $\${p10.toFixed(2)}</div>
+      <div>Total Comisión: $\${totalCom.toFixed(2)}</div>
+      <div style="color:#f33;">Total Salidas: $\${sumSal.toFixed(2)}</div>
+      <div style="color:#ff0;">Sub Total: $\${subTotal.toFixed(2)}</div>
 
       <hr/>
-      <h4>Cuadre Sucursal (Semana ${i+1})</h4>
-      <div>PremPend (sum): <span style="color:#a0f;">$${sumPendAll.toFixed(2)}</span></div>
-      <div>Cash (sum): $${sumCash.toFixed(2)}</div>
-      <div>Sucursal (sum): $${sumSuc.toFixed(2)}</div>
-      <div>Crédito (sum): <span style="color:#a0f;">$${sumCred.toFixed(2)}</span></div>
-      <div>Descuento (sum): $${sumDesc.toFixed(2)}</div>
-      <div>Tickets (sum): $${sumTic.toFixed(2)}</div>
-      <div>Balance Oficina: <span style="color:${boColor};">$${balOfic.toFixed(2)}</span></div>
-    `;
+      <h4>Cuadre Sucursal (Semana \${i+1})</h4>
+      <div>PremPend (sum): <span style="color:#a0f;">$\${sumPendAll.toFixed(2)}</span></div>
+      <div>Cash (sum): $\${sumCash.toFixed(2)}</div>
+      <div>Sucursal (sum): $\${sumSuc.toFixed(2)}</div>
+      <div>Crédito (sum): <span style="color:#a0f;">$\${sumCred.toFixed(2)}</span></div>
+      <div>Descuento (sum): $\${sumDesc.toFixed(2)}</div>
+      <div>Tickets (sum): $\${sumTic.toFixed(2)}</div>
+      <div>Balance Oficina: 
+        <span style="color:\${boColor};">$\${balOfic.toFixed(2)}</span>
+      </div>
+    \`;
   }
 
-  /********************************************
-   * GUARDAR / CARGAR MONGO
-   ********************************************/
+  /*************************************************************
+   * (12) GUARDAR / CARGAR desde MONGO
+   *************************************************************/
   async function saveToMongo(){
     if(!currentCode){
       alert("No hay código de acceso!");
       return;
     }
-    try{
+    try {
       let resp= await fetch("/api/reportes_"+currentCode, {
         method:"POST",
         headers: { "Content-Type":"application/json" },
@@ -911,7 +1014,7 @@
       else alert("Guardado en Mongo con éxito.");
     } catch(e){
       console.error(e);
-      alert("Error POST /api/reportes_"+currentCode);
+      alert("Error al POST /api/reportes_{code}");
     }
   }
   async function loadFromMongo(){
@@ -919,7 +1022,7 @@
       alert("No hay código de acceso!");
       return;
     }
-    try{
+    try {
       let resp= await fetch("/api/reportes_"+currentCode);
       let j= await resp.json();
       if(j.error){
@@ -933,11 +1036,10 @@
       dataStore = j.data;
       storeLocal();
       renderSidebarWeeks();
-      document.getElementById("mainPanel").innerHTML=
-        "<h2>Data cargada desde Mongo. Selecciona Semana/Día.</h2>";
+      document.getElementById("mainPanel").innerHTML="<h2>Data cargada desde Mongo. Selecciona Semana/Día.</h2>";
     } catch(e){
       console.error(e);
-      alert("Error GET /api/reportes_"+currentCode);
+      alert("Error al GET /api/reportes_{code}");
     }
   }
 </script>
