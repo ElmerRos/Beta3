@@ -1,33 +1,37 @@
-/************************************************
- * server.js
+ /************************************************
+ * server.js - Ejemplo con require("./index.js")
  ************************************************/
 const express = require("express");
 const mongoose = require("mongoose");
 const path = require("path");
-const app = express();
 
-// ========== TU URI de Mongo (ENV var) ==========
+// Si tu index.js está en la misma carpeta que server.js:
+require("./index.js"); 
+// Con esto, se carga y ejecuta todo el contenido de index.js. 
+// Así no pierdes la funcionalidad que tenías allí.
+
+// ========== Tu URI de Mongo (ENV var) ==========
 const MONGODB_URI = process.env.MONGODB_URI 
   || "mongodb+srv://BeastBetTwo:Amiguito2468@beastbet.lleyk.mongodb.net/beastbetdb?retryWrites=true&w=majority&appName=Beastbet";
 
+// Conectamos Mongoose a la URI
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser:true, 
   useUnifiedTopology:true
 }).then(()=>{
   console.log("Conectado a Mongo OK");
 }).catch(err=>{
-  console.error("Error conectando a Mongo:",err);
+  console.error("Error conectando a Mongo:", err);
 });
 
 // ========== SCHEMA/MODEL ==========
-// usaremos un doc para cada code => { code, data }
+// Ejemplo: un doc por cada code => { code, data }
 const beastSchema = new mongoose.Schema({
   code: { type:String, required:true },
   data: { type:Object, required:true }
 }, 
 { collection:"generic_collection" }); 
-// Puedes cambiar "generic_collection" por un nombre más genérico.
-// Cada doc se distinguirá por 'code'. 
+// Cambia "generic_collection" si prefieres otro nombre.
 
 const BeastModel = mongoose.model("BeastModel", beastSchema);
 
@@ -39,11 +43,11 @@ const validCodes = [
   "8246","8264","8426","8462","8624","8642"
 ];
 
-// Config para parsear JSON 
+// Iniciamos Express
+const app = express();
 app.use(express.json({limit:"10mb"}));
 
-// Servimos el contenido estático de la carpeta "public" 
-// (allí pondremos dailyReports.html)
+// Servimos estáticos desde la carpeta "public":
 app.use(express.static("public"));
 
 /************************************************
@@ -59,10 +63,10 @@ app.get("/api/reportes_:code", async (req,res)=>{
     if(!doc){
       return res.json({ notFound:true, data:null });
     }
-    res.json({ notFound:false, data: doc.data });
+    return res.json({ notFound:false, data: doc.data });
   }catch(e){
     console.error(e);
-    return res.status(500).json({ error:"Error interno" });
+    return res.status(500).json({ error:"Error interno al leer de Mongo" });
   }
 });
 
@@ -73,12 +77,13 @@ app.post("/api/reportes_:code", async (req,res)=>{
   }
   let newData = req.body; // { weeks: [...], etc. }
   try{
+    // upsert: si no existe, lo crea.
     let doc = await BeastModel.findOneAndUpdate(
       { code },
       { code, data:newData },
       { upsert:true, new:true }
     );
-    res.json({ ok:true });
+    return res.json({ ok:true });
   }catch(e){
     console.error(e);
     return res.status(500).json({ error:"Error al guardar en Mongo" });
@@ -90,6 +95,9 @@ const PORT = process.env.PORT || 3000;
 
 // Start server
 app.listen(PORT, ()=>{
-  console.log("Server on port", PORT);
-  console.log("Visita http://localhost:"+PORT+"/dailyReports.html para ver la app");
+  console.log("=====================================");
+  console.log("Servidor corriendo en puerto", PORT);
+  console.log("Visita http://localhost:"+PORT+"/dailyReport.html");
+  console.log("o la URL que Render asigne (p.ej. https://beasreaderbeta3.onrender.com/dailyReport.html)");
+  console.log("=====================================");
 });
