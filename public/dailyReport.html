@@ -38,6 +38,11 @@
       font-size: 1.5rem;
       text-shadow: 0 0 4px #0ff;
     }
+    /* 
+      OJO: Ajustamos a type="text" temporalmente para que puedas ver 
+      lo que tecleas. (Después puedes volver a type="password" 
+      si confirmas que funciona.)
+    */
     .pin-dialog input {
       font-size: 2rem;
       text-align: center;
@@ -123,8 +128,6 @@
     .day-item:hover {
       background:#111;
     }
-
-    /* Botón de candado (🔓 / 🔒) */
     .lockBtn {
       background:transparent; 
       color:#fb0; 
@@ -139,21 +142,10 @@
       color:#000;
     }
 
-    /* ================ OTROS DETALLES (Tablas, etc.) ================ */
-    /* Ajusta según tu preferencia. Mantén el look neon, bordes, etc. */
-    table {
-      color: #eee;
-    }
-    table thead {
-      background: #222;
-    }
-    table thead tr th {
-      padding:0.4rem;
-    }
-    table tbody tr td {
-      padding:0.3rem;
-    }
-    /* etc. */
+    /* Ajuste de tablas, etc., 
+       copia el CSS extra que necesites 
+       para tu look neon/dark
+    */
   </style>
 </head>
 <body>
@@ -161,9 +153,9 @@
 <!-- OVERLAY LOGIN -->
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-dialog">
-    <!-- Título genérico. No revelamos “2,4,6,8” -->
     <h2>Ingrese su clave de 4 dígitos</h2>
-    <input type="password" id="pinInput" maxlength="4">
+    <!-- Cambiamos a type="text" para depurar -->
+    <input type="text" id="pinInput" maxlength="4" />
     <button id="btnPinSubmit">Acceder</button>
   </div>
 </div>
@@ -182,7 +174,6 @@
     <div id="currentCodeInfo" style="margin-bottom:1rem;">(Código: ???)</div>
 
     <!-- 4 Semanas (acordeón) -->
-    <!-- (Cada “week-header” con un candado) -->
     <div class="week-header" id="weekHeader0" onclick="toggleWeek(0)">
       <span>Semana 1 (?)</span>
       <button class="lockBtn" id="weekLock0" onclick="toggleWeekLock(0,event)">🔓</button>
@@ -208,20 +199,20 @@
     <div class="week-content" id="weekContent3"></div>
   </div>
 
-  <!-- PANEL DERECHO -->
+  <!-- CONTENIDO DERECHO -->
   <div class="main-content">
     <div class="top-bar">
       <h3 style="margin:0;">Panel Principal</h3>
     </div>
     <div class="scroll-area" id="mainPanel">
-      <!-- Aquí se muestra el reporte diario o el resumen de la semana -->
+      <!-- Se muestran Días o Resumen Semanal -->
     </div>
   </div>
 </div>
 
 <script>
   /*************************************************************
-   * (1) LISTA DE CÓDIGOS PERMITIDOS (SIN MOSTRARLO AL USUARIO)
+   * 1) Lista de códigos válidos (NO se muestra al usuario)
    *************************************************************/
   const validCodes = [
     "2468","2486","2648","2684","2846","2864",
@@ -231,34 +222,37 @@
   ];
 
   /*************************************************************
-   * (2) ESTRUCTURA GLOBAL: dataStore con 4 “weeks”
+   * 2) Estructura global
    *************************************************************/
-  let currentCode = "";
-  let dataStore = {
-    weeks: [
-      { startDate:"", locked:false, days:[] },
-      { startDate:"", locked:false, days:[] },
-      { startDate:"", locked:false, days:[] },
-      { startDate:"", locked:false, days:[] }
+  let currentCode="";
+  let dataStore={
+    weeks:[
+      {startDate:"", locked:false, days:[]},
+      {startDate:"", locked:false, days:[]},
+      {startDate:"", locked:false, days:[]},
+      {startDate:"", locked:false, days:[]},
     ]
   };
 
   /*************************************************************
-   * (3) OVERLAY LOGIN
+   * 3) Overlay login
    *************************************************************/
   const pinOverlay = document.getElementById("pinOverlay");
   const pinInput   = document.getElementById("pinInput");
-  const mainContainer = document.getElementById("mainContainer");
-
+  const mainContainer= document.getElementById("mainContainer");
   document.getElementById("btnPinSubmit").addEventListener("click", ()=>{
     let val = pinInput.value.trim();
-    // Compara con validCodes
+    // Tomamos solo dígitos (p.ej. por si ingresan algo)
+    val = val.replace(/\D/g,""); 
+    console.log("PIN typed:", val); // Debug en la consola
+
+    // Verificamos en validCodes
     if(!validCodes.includes(val)){
       alert("Código incorrecto.");
       return;
     }
-    // Acceso concedido
-    currentCode = val;
+    // Ok
+    currentCode= val;
     document.getElementById("currentCodeInfo").textContent = "(Código: "+val+")";
     pinOverlay.style.display="none";
     mainContainer.classList.remove("hidden");
@@ -269,7 +263,7 @@
   });
 
   /*************************************************************
-   * (4) GUARDAR / CARGAR LOCALSTORAGE
+   * 4) localStorage
    *************************************************************/
   function storeLocal(){
     if(!currentCode) return;
@@ -277,23 +271,22 @@
   }
   function loadLocal(){
     if(!currentCode) return;
-    let st = localStorage.getItem("beastbetData_"+currentCode);
-    if(st) dataStore = JSON.parse(st);
+    let st= localStorage.getItem("beastbetData_"+currentCode);
+    if(st) dataStore= JSON.parse(st);
   }
 
   /*************************************************************
-   * (5) INICIALIZAR SEMANAS
+   * 5) initWeeksIfNeeded()
    *************************************************************/
   function initWeeksIfNeeded(){
-    let anyDate = dataStore.weeks.some(w=> w.startDate!=="");
+    let anyDate= dataStore.weeks.some(w=> w.startDate!=="");
     if(anyDate) return;
-
-    let baseMonday = findMondayOfCurrentWeek();
+    let baseMon= findMondayOfCurrentWeek();
     for(let i=0; i<4; i++){
-      let dt = new Date(baseMonday);
+      let dt= new Date(baseMon);
       dt.setDate(dt.getDate() + i*7);
       dataStore.weeks[i].startDate = dtToYmd(dt);
-      dataStore.weeks[i].locked = false;
+      dataStore.weeks[i].locked=false;
       dataStore.weeks[i].days=[];
       for(let d=0; d<7; d++){
         let dd={
@@ -305,7 +298,7 @@
           creditTracker:{ pending:[], paid:[] }
         };
         let pArr=[];
-        for(let r=1; r<=20; r++){
+        for(let r=1;r<=20;r++){
           pArr.push({
             pageNo:r, centenas:0, pulitos:0,
             pendingPrizes:[], paidPrizes:[],
@@ -333,34 +326,31 @@
     return \`\${y}-\${m}-\${d}\`;
   }
   function ymdToDate(str){
-    let [y,m,d] = str.split("-");
+    let [y,m,d]= str.split("-");
     return new Date(+y, +m-1, +d);
   }
 
   /*************************************************************
-   * (6) BARRA LATERAL: 4 Semanas (Acordeón)
+   * 6) Render “Barra Lateral” (4 semanas)
    *************************************************************/
   function renderSidebarWeeks(){
     for(let i=0; i<4; i++){
-      let w = dataStore.weeks[i];
-      // Fechas
+      let w= dataStore.weeks[i];
       let sdt= ymdToDate(w.startDate);
       let edt= new Date(sdt);
       edt.setDate(edt.getDate()+6);
       let sS= formatmmdd(sdt);
       let sE= formatmmdd(edt);
 
-      // Título en #weekHeader_i
       let headerEl= document.getElementById("weekHeader"+i).querySelector("span");
-      headerEl.textContent = "Semana "+(i+1)+" ("+sS+" - "+sE+")";
+      headerEl.textContent= "Semana "+(i+1)+" ("+sS+" - "+sE+")";
 
-      // Botón candado
-      let lockBtn = document.getElementById("weekLock"+i);
-      lockBtn.textContent = w.locked?"🔒":"🔓";
+      // candado
+      let lockBtn= document.getElementById("weekLock"+i);
+      lockBtn.textContent= w.locked?"🔒":"🔓";
       lockBtn.classList.toggle("locked", w.locked);
 
-      // Llenar el “weekContent i”
-      let wc = document.getElementById("weekContent"+i);
+      let wc= document.getElementById("weekContent"+i);
       let dayHtml="";
       let dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
       for(let d=0; d<7; d++){
@@ -373,7 +363,6 @@
           </div>
         \`;
       }
-      // Resumen Semanal
       dayHtml += \`
         <div class="day-item" style="background:#111;" onclick="selectWeekSummary(\${i})">
           Resumen Semanal
@@ -392,7 +381,6 @@
     wc.style.display= (wc.style.display==="block")?"none":"block";
   }
   function toggleWeekLock(i, ev){
-    // Evita que se dispare toggleWeek
     ev.stopPropagation();
     let w= dataStore.weeks[i];
     w.locked= !w.locked;
@@ -401,7 +389,7 @@
   }
 
   /*************************************************************
-   * (7) MOSTRAR DÍA EN LA PARTE DERECHA
+   * 7) selectDay(i,d) => Muestra reporte diario
    *************************************************************/
   function selectDay(i,d){
     let panel= document.getElementById("mainPanel");
@@ -412,8 +400,8 @@
     let dayDt= new Date(baseDt);
     dayDt.setDate(dayDt.getDate()+d);
     let ds= formatmmdd(dayDt);
-    let locked= w.locked;
 
+    let locked= w.locked;
     let title= \`<h2>Reporte Diario - \${dayNames[d]} - \${ds}</h2>\`;
     let buttons= \`
       <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
@@ -436,11 +424,8 @@
     \`;
 
     let html= title + buttons + sucField;
-    // Tabla
     html += renderPagesTable(i,d);
-    // Overlook
     html += renderDayTotals(i,d);
-    // Cuadre + Créditos
     html += renderDayAcordeons(i,d);
 
     panel.innerHTML= html;
@@ -463,7 +448,8 @@
     for(let r=1;r<=20;r++){
       pArr.push({
         pageNo:r, centenas:0, pulitos:0,
-        pendingPrizes:[], paidPrizes:[], totalSalidas:0
+        pendingPrizes:[], paidPrizes:[],
+        totalSalidas:0
       });
     }
     dd.pages=pArr;
@@ -492,7 +478,7 @@
   }
 
   /*************************************************************
-   * (8) RENDER TABLA PÁGINAS
+   * 8) Render tabla de páginas (similar a la previa)
    *************************************************************/
   function renderPagesTable(i,d){
     let w= dataStore.weeks[i];
@@ -550,7 +536,7 @@
         </tr>
       \`;
     });
-    html += "</tbody></table>";
+    html+="</tbody></table>";
     return html;
   }
   function deletePageRow(i,d,idx){
@@ -570,7 +556,7 @@
     if(val>900000) val=900000;
     dataStore.weeks[i].days[d].pages[p][field]= val;
     storeLocal();
-    // Re-render para ver total
+    // Forzamos re-render
     selectDay(i,d);
   }
   function openPrizesModal(i,d,idx){
@@ -578,7 +564,7 @@
   }
 
   /*************************************************************
-   * (9) TOTALES DEL DÍA: Overlook principal + Overlook Extra
+   * 9) Overlook principal + Extra
    *************************************************************/
   function renderDayTotals(i,d){
     let w= dataStore.weeks[i];
@@ -591,8 +577,9 @@
       <h3>Totales del Día</h3>
       <div style="display:flex;align-items:center;margin-bottom:0.5rem;">
         <label>Overlook:</label>
-        <input type="number" max="900000" value="\${ovVal}" style="width:100px;margin-left:5px;"
+        <input type="number" max="900000" style="width:100px;margin-left:5px;"
           data-week="\${i}" data-day="\${d}" data-field="overlook"
+          value="\${ovVal}"
           onchange="updateDayField(this)"
           \${locked?'disabled':''}>
         <input type="text" style="margin-left:5px;width:300px;"
@@ -667,8 +654,7 @@
     let rowIndex= +input.dataset.oidx;
     let dayData= dataStore.weeks[i].days[d];
     let row= dayData.overlookExtra[rowIndex];
-    let field= input.dataset.type;
-    if(field==="amount"){
+    if(input.dataset.type==="amount"){
       let val= parseFloat(input.value)||0;
       if(val>900000) val=900000;
       row.amount= val;
@@ -676,7 +662,6 @@
       row.note= input.value;
     }
     storeLocal();
-    // Actualizar totales Overlook sin re-render todo:
     updatePartialTotals(i,d);
   }
   function renderPartialTotals(i,d){
@@ -692,8 +677,8 @@
     let t= calcDayTotals(dataStore.weeks[i].days[d]);
     let salSpan= document.getElementById(\`day\${i}\${d}_salidas\`);
     let venSpan= document.getElementById(\`day\${i}\${d}_ventas\`);
-    if(salSpan) salSpan.textContent = "$"+t.totalSalidas.toFixed(2);
-    if(venSpan) venSpan.textContent = "$"+t.totalVentas.toFixed(2);
+    if(salSpan) salSpan.textContent= "$"+t.totalSalidas.toFixed(2);
+    if(venSpan) venSpan.textContent= "$"+t.totalVentas.toFixed(2);
   }
   function calcDayTotals(dayData){
     let tc=0, tp=0, ts=0;
@@ -705,15 +690,15 @@
     ts += (dayData.overlook||0);
     dayData.overlookExtra.forEach(r=> ts+=(r.amount||0));
     return {
-      totalCentenas: tc,
-      totalPulitos: tp,
-      totalSalidas: ts,
+      totalCentenas:tc,
+      totalPulitos:tp,
+      totalSalidas:ts,
       totalVentas: tc+tp
     };
   }
 
   /*************************************************************
-   * (10) ACORDEÓN “CUADRE & CRÉDITOS”
+   * 10) Cuadre & Créditos (acordeones)
    *************************************************************/
   function renderDayAcordeons(i,d){
     return \`
@@ -736,7 +721,7 @@
   }
   function toggleSubSection(id){
     let el= document.getElementById(id);
-    if(!el)return;
+    if(!el) return;
     el.style.display= (el.style.display==="none")?"block":"none";
   }
   function renderCuadreDia(i,d){
@@ -749,7 +734,7 @@
     });
     let sumOpt= dayData.cash + dayData.sucursal + dayData.credito + dayData.descuento + dayData.tickets;
     let netBal= subT - sumOpt + totalPending;
-    let nbColor= netBal<0?"lime":(netBal>0?"red":"#fff");
+    let nbColor= (netBal<0)?"lime":(netBal>0?"red":"#fff");
 
     return \`
     <div style="border:1px solid #444;padding:0.3rem;margin-top:0.5rem;">
@@ -796,11 +781,11 @@
     let locked= w.locked;
     let dayData= w.days[d];
     let c= dayData.creditTracker;
-    let pendingHTML= "";
+    let pendingHTML="";
     c.pending.forEach((obj,idx)=>{
       pendingHTML += makeCreditRow(i,d,"pending",idx,obj,locked);
     });
-    let paidHTML= "";
+    let paidHTML="";
     c.paid.forEach((obj,idx)=>{
       paidHTML += makeCreditRow(i,d,"paid",idx,obj,locked);
     });
@@ -832,21 +817,20 @@
   function makeCreditRow(i,d,type,idx,obj,locked){
     let client= obj.client||"";
     let amt= obj.amount||0;
-    let arrowBtn = (type==="pending")
-      ? \`<button style="background:#f33;color:#fff;" 
-           onclick="moveCreditItem(\${i},\${d},\${idx},'pending')" \${locked?'disabled':''}>
-           →Pag
-         </button>\`
-      : \`<button style="background:#a0f;color:#fff;" 
-           onclick="moveCreditItem(\${i},\${d},\${idx},'paid')" \${locked?'disabled':''}>
-           →Pend
-         </button>\`;
+    let arrowBtn= (type==="pending")
+      ? \`<button style="background:#f33;color:#fff;"
+           onclick="moveCreditItem(\${i},\${d},\${idx},'pending')"
+           \${locked?'disabled':''}>→Pag</button>\`
+      : \`<button style="background:#a0f;color:#fff;"
+           onclick="moveCreditItem(\${i},\${d},\${idx},'paid')"
+           \${locked?'disabled':''}>→Pend</button>\`;
 
     return \`
       <tr>
         <td>
           <button style="background:#f33;color:#fff;"
-            onclick="deleteCreditRow(\${i},\${d},'\${type}',\${idx})" \${locked?'disabled':''}>
+            onclick="deleteCreditRow(\${i},\${d},'\${type}',\${idx})"
+            \${locked?'disabled':''}>
             \${idx+1}
           </button>
         </td>
@@ -896,7 +880,6 @@
       if(val>900000) val=900000;
       item.amount= val;
     }
-    // recalcular dayData.credito
     dayData.credito= dayData.creditTracker.pending.reduce((acc,o)=>acc+(o.amount||0),0);
     storeLocal();
   }
@@ -915,7 +898,7 @@
   }
 
   /*************************************************************
-   * (11) SELECCIONAR “RESUMEN SEMANAL”
+   * 11) Resumen Semanal
    *************************************************************/
   function selectWeekSummary(i){
     let panel= document.getElementById("mainPanel");
@@ -927,7 +910,6 @@
     let w= dataStore.weeks[i];
     let sumCent=0, sumPul=0, sumSal=0, sumVent=0;
     let sumPendAll=0, sumCash=0, sumSuc=0, sumCred=0, sumDesc=0, sumTic=0;
-
     for(let d=0; d<7; d++){
       let dayData= w.days[d];
       let t= calcDayTotals(dayData);
@@ -936,17 +918,16 @@
       sumSal += t.totalSalidas;
       sumVent+= t.totalVentas;
 
-      // Pend
       let dayPend=0;
       dayData.pages.forEach(pg=>{
         dayPend += pg.pendingPrizes.reduce((a,v)=>a+v,0);
       });
-      sumPendAll += dayPend;
-      sumCash += dayData.cash;
-      sumSuc  += dayData.sucursal;
-      sumCred += dayData.credito;
-      sumDesc += dayData.descuento;
-      sumTic  += dayData.tickets;
+      sumPendAll+= dayPend;
+      sumCash+= dayData.cash;
+      sumSuc += dayData.sucursal;
+      sumCred+= dayData.credito;
+      sumDesc+= dayData.descuento;
+      sumTic += dayData.tickets;
     }
     let c25= sumCent*0.25;
     let p10= sumPul*0.10;
@@ -996,25 +977,28 @@
   }
 
   /*************************************************************
-   * (12) GUARDAR / CARGAR desde MONGO
+   * 12) Guardar / Cargar en Mongo
    *************************************************************/
   async function saveToMongo(){
     if(!currentCode){
       alert("No hay código de acceso!");
       return;
     }
-    try {
+    try{
       let resp= await fetch("/api/reportes_"+currentCode, {
         method:"POST",
-        headers: { "Content-Type":"application/json" },
+        headers:{ "Content-Type":"application/json" },
         body: JSON.stringify(dataStore)
       });
       let j= await resp.json();
-      if(j.error) alert("Error: "+j.error);
-      else alert("Guardado en Mongo con éxito.");
+      if(j.error){
+        alert("Error: "+j.error);
+      } else {
+        alert("Guardado en Mongo con éxito.");
+      }
     } catch(e){
       console.error(e);
-      alert("Error al POST /api/reportes_{code}");
+      alert("Error POST /api/reportes_{code}");
     }
   }
   async function loadFromMongo(){
@@ -1022,7 +1006,7 @@
       alert("No hay código de acceso!");
       return;
     }
-    try {
+    try{
       let resp= await fetch("/api/reportes_"+currentCode);
       let j= await resp.json();
       if(j.error){
@@ -1033,13 +1017,14 @@
         alert("No se encontró data en Mongo para este code");
         return;
       }
-      dataStore = j.data;
+      dataStore= j.data;
       storeLocal();
       renderSidebarWeeks();
-      document.getElementById("mainPanel").innerHTML="<h2>Data cargada desde Mongo. Selecciona Semana/Día.</h2>";
+      document.getElementById("mainPanel").innerHTML=
+        "<h2>Data cargada desde Mongo. Selecciona Semana/Día.</h2>";
     } catch(e){
       console.error(e);
-      alert("Error al GET /api/reportes_{code}");
+      alert("Error GET /api/reportes_{code}");
     }
   }
 </script>
