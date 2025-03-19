@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Reporte Diario y Semanal (Neón/Dark)</title>
-
   <style>
     /* ================== RESET & BASE ================== */
-    * { box-sizing: border-box; margin:0; padding:0; }
+    * {
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0;
+    }
     :root {
       --main-bg: #111;
       --main-text: #eee;
@@ -16,7 +19,8 @@
       --purple-color: #a0f;
       --purple-strong: #ff00ff;
       --shared-tab-bg: #222;
-      /* Light palette */
+
+      /* Paleta Light */
       --light-bg: #f3f0e3;
       --light-text: #000;
       --light-accent: #0066cc;
@@ -36,7 +40,7 @@
     }
     .hidden { display: none !important; }
 
-    /* ================== MODO CLARO ================== */
+    /* =========== MODO CLARO =========== */
     body.light-mode {
       background: var(--light-bg);
       color: var(--light-text);
@@ -106,7 +110,7 @@
       border-color: var(--light-accent);
       box-shadow: none;
     }
-    /* => Título “Totales” en light = negro */
+    /* Título “Totales” en modo claro => color oscuro */
     body.light-mode .totals-section h3 {
       color: #000 !important; 
     }
@@ -138,275 +142,434 @@
       text-shadow: none !important;
     }
 
-    /* ================== LAYOUT ================== */
+    /* =========== LAYOUT PRINCIPAL =========== */
     .container {
       display: flex;
-      width: 100vw; height: 100vh;
+      width: 100vw; 
+      height: 100vh;
     }
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button {
       -webkit-appearance: none;
     }
-    input[type=number] { -moz-appearance:textfield; }
+    input[type=number] { -moz-appearance: textfield; }
 
-    /* Overlay PIN */
+    /* PIN OVERLAY */
     .pin-overlay {
-      position: fixed; inset:0; 
+      position: fixed; 
+      inset: 0;
       background: rgba(0,0,0,0.8);
-      display:flex; justify-content:center; align-items:center;
-      z-index:999999;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      z-index: 999999;
     }
     .pin-dialog {
-      background:#222; border:2px solid var(--accent-color); border-radius:10px;
-      padding:2rem; width:400px; max-width:90%; text-align:center;
-      box-shadow:0 0 10px var(--accent-color);
+      background: #222;
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 2rem;
+      width: 400px;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 0 10px var(--accent-color);
     }
     .pin-dialog h2 {
-      margin-bottom:1rem; color:var(--accent-color); font-size:1.5rem;
-      text-shadow:0 0 5px var(--accent-color);
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+      font-size: 1.5rem;
+      text-shadow: 0 0 5px var(--accent-color);
     }
     .pin-dialog input {
-      font-size:2rem; text-align:center; width:100%; margin-bottom:1rem;
-      background:#000; color:var(--accent-color);
-      border:2px solid var(--accent-color); border-radius:8px;
-      padding:0.5rem; 
+      font-size: 2rem;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 1rem;
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 0.5rem;
+      box-shadow: none; /* para que se vea texto en la captura */
     }
     .pin-dialog button {
-      font-size:1.2rem; padding:0.5rem 2rem; background:#000; color:var(--accent-color);
-      border:2px solid var(--accent-color); border-radius:8px; cursor:pointer;
-      box-shadow:0 0 5px var(--accent-color);
+      font-size: 1.2rem;
+      padding: 0.5rem 2rem;
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--accent-color);
     }
     .pin-dialog button:hover {
       background: var(--accent-color);
-      color:#000;
+      color: #000;
     }
 
-    /* ================== SIDEBAR (TABS) ================== */
+    /* =========== SIDEBAR (TABS) =========== */
     .sidebar {
-      width:260px; background:#000; border-right:2px solid var(--accent-color);
-      display:flex; flex-direction:column; overflow-y:auto; align-items:stretch;
+      width: 260px;
+      background: #000;
+      border-right: 2px solid var(--accent-color);
+      display: flex; 
+      flex-direction: column;
+      overflow-y: auto;
+      align-items: stretch;
     }
     .sidebar button {
-      display:block; width:100%; padding:1rem;
-      background:transparent; border:none; color:var(--accent-color);
-      font-size:1.1rem; border-bottom:1px solid #444; cursor:pointer;
-      transition:background 0.3s, color 0.3s; text-align:left;
-      text-shadow:0 0 3px var(--accent-color);
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: transparent;
+      border: none;
+      color: var(--accent-color);
+      font-size: 1.1rem;
+      border-bottom: 1px solid #444;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      text-align: left;
+      text-shadow: 0 0 3px var(--accent-color);
     }
     .sidebar button:hover {
-      background:#111; color:#fff;
+      background: #111;
+      color: #fff;
     }
     .sidebar button.active {
-      background:#222; color:#0ff; font-weight:bold;
+      background: #222;
+      color: #0ff;
+      font-weight: bold;
     }
 
-    /* ================== MAIN CONTENT ================== */
+    /* =========== MAIN CONTENT =========== */
     .main-content {
-      flex:1; display:flex; flex-direction:column;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
     .top-bar {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:0.5rem 1rem; background:#000;
-      border-bottom:2px solid var(--accent-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      background: #000;
+      border-bottom: 2px solid var(--accent-color);
     }
     .btnNeon {
-      background:#000; color:var(--accent-color); border:2px solid var(--accent-color);
-      border-radius:8px; padding:0.5rem 1rem; cursor:pointer;
-      box-shadow:0 0 5px var(--accent-color); font-size:1rem; transition:transform 0.2s;
+      background: #000;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--accent-color);
+      font-size: 1rem;
+      transition: transform 0.2s;
     }
     .btnNeon:hover {
-      background:var(--accent-color); color:#000; transform:scale(1.05);
+      background: var(--accent-color);
+      color: #000;
+      transform: scale(1.05);
     }
     .btnLockDay {
-      display:inline-flex; align-items:center; justify-content:center;
-      background:#000; color:var(--lock-color);
-      border:2px solid var(--lock-color); border-radius:50%; 
-      width:50px; height:50px; font-size:1.5rem; cursor:pointer;
-      box-shadow:0 0 10px var(--lock-color); transition:transform 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: var(--lock-color);
+      border: 2px solid var(--lock-color);
+      border-radius: 50%;
+      width: 50px; 
+      height: 50px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--lock-color);
+      transition: transform 0.2s;
     }
-    .btnLockDay:hover { transform:scale(1.1); }
+    .btnLockDay:hover { transform: scale(1.1); }
     .btnLockDay.locked {
-      background:var(--lock-color); color:#000; transform:scale(1);
+      background: var(--lock-color);
+      color: #000;
+      transform: scale(1);
     }
 
     .scroll-area {
-      flex:1; overflow-y:auto; padding:1rem; background:#000;
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      background: #000;
     }
 
-    /* ================== TAB CONTENT ================== */
+    /* =========== TAB CONTENT =========== */
     .tabContent {
-      display:none; padding:1rem; border:2px solid var(--accent-color);
-      border-radius:8px; min-height:90%; background:var(--shared-tab-bg);
-      box-shadow:0 0 8px var(--accent-color);
+      display: none;
+      padding: 1rem;
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      min-height: 90%;
+      background: var(--shared-tab-bg);
+      box-shadow: 0 0 8px var(--accent-color);
     }
-    .tabContent.active { display:block; }
+    .tabContent.active {
+      display: block;
+    }
 
-    /* ================== TABLA DIARIO ================== */
+    /* =========== TABLA PÁGINAS (DIARIO) =========== */
     .report-table {
-      width:100%; border-collapse:collapse; margin-bottom:1rem;
-      color:var(--main-text);
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+      color: var(--main-text);
     }
-    .report-table thead th, .report-table tbody td {
-      font-size:1.4rem; /* Ajustamos un poco mayor */
-      text-align:center; border-bottom:1px solid #444; 
-      vertical-align:middle; padding:0.5rem;
+    .report-table thead th,
+    .report-table tbody td {
+      font-size: 1.4rem; /* un poco más grande */
+      text-align: center;
+      border-bottom: 1px solid #444;
+      vertical-align: middle;
+      padding: 0.5rem;
     }
     .report-table thead th {
-      background:rgba(0,0,0,0.4); color:var(--accent-color);
-      border-bottom:2px solid var(--accent-color);
-      text-shadow:0 0 3px var(--accent-color);
+      background: rgba(0,0,0,0.4);
+      color: var(--accent-color);
+      border-bottom: 2px solid var(--accent-color);
+      text-shadow: 0 0 3px var(--accent-color);
     }
 
-    /* Para que el texto en los inputs aparezca en la captura */
+    /* Para que html2canvas muestre el texto */
     input, textarea, select {
-      -webkit-print-color-adjust: exact; 
+      -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
-      color: var(--accent-color) !important; /* fuerza color en la captura */
+      color: var(--accent-color)!important;
     }
-
-    input[type="number"], input[type="text"] {
-      background:#000; 
-      /* Aumentamos font-size */
-      font-size:1.3rem; 
-      color:var(--accent-color)!important;
-      border:1px solid var(--accent-color);
-      border-radius:4px; text-align:right;
-      /* Quitar box-shadow del input 
-         para que no desaparezca el texto en la captura */
-      box-shadow:none; 
-      width:90%; /* para alinear dentro de la celda */
-      margin:2px 0; padding:0.4rem;
+    input[type="number"], 
+    input[type="text"] {
+      background: #000;
+      font-size: 1.3rem; /* Grande */
+      color: var(--accent-color)!important;
+      border: 1px solid var(--accent-color);
+      border-radius: 4px;
+      text-align: right;
+      box-shadow: none; /* Quitar shadow => evitar bug en capturas */
+      width: 90%; /* Dejar que se alinee en la celda */
+      margin: 2px 0;
+      padding: 0.4rem;
     }
-    input[type="number"]:focus, input[type="text"]:focus {
-      outline:none; border-color:#fff;
+    input[type="number"]:focus, 
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #fff;
     }
 
     .pageBtn {
-      background:var(--danger-color); color:#fff; border:none;
-      border-radius:6px; padding:0.3rem 0.6rem; cursor:pointer;
-      font-size:1.2rem; transition:transform 0.2s;
-      box-shadow:0 0 5px var(--danger-color);
+      background: var(--danger-color);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      font-size: 1.2rem;
+      box-shadow: 0 0 5px var(--danger-color);
+      transition: transform 0.2s;
     }
     .pageBtn:hover {
-      background:#f66; transform:scale(1.05);
+      background: #f66;
+      transform: scale(1.05);
     }
 
     .totals-section, .cuadre-section {
-      border:2px solid var(--accent-color); border-radius:8px;
-      padding:1rem; margin-bottom:1rem; background:#000;
-      box-shadow:0 0 8px var(--accent-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: #000;
+      box-shadow: 0 0 8px var(--accent-color);
     }
     .totals-section h3, .cuadre-section h3 {
-      color:var(--accent-color); 
-      margin-bottom:1rem; 
-      text-shadow:0 0 3px var(--accent-color);
-      font-size:1.3rem; /* agrandamos un poco */
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+      text-shadow: 0 0 3px var(--accent-color);
+      font-size: 1.3rem;
     }
 
     .form-group {
-      display:flex; align-items:center; margin-bottom:0.5rem;
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
     }
     .form-group label {
-      width:150px; font-weight:bold; margin-right:0.5rem; text-shadow:none;
+      width: 150px;
+      font-weight: bold;
+      margin-right: 0.5rem;
+      text-shadow: none;
     }
 
-    /* ================== SEMANAL ================== */
+    /* =========== TABLA SEMANAL =========== */
     .weekly-table {
-      width:100%; border-collapse:collapse; margin-bottom:1rem;
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
     }
-    .weekly-table thead th, .weekly-table tbody td {
-      font-size:1.3rem; text-align:center; border-bottom:1px solid #444; padding:0.5rem;
+    .weekly-table thead th,
+    .weekly-table tbody td {
+      font-size: 1.3rem;
+      text-align: center;
+      border-bottom: 1px solid #444;
+      padding: 0.5rem;
     }
     .weekly-table thead th {
-      background:rgba(0,0,0,0.4); color:var(--accent-color);
-      border-bottom:2px solid var(--accent-color);
-      text-shadow:0 0 3px var(--accent-color);
+      background: rgba(0,0,0,0.4);
+      color: var(--accent-color);
+      border-bottom: 2px solid var(--accent-color);
+      text-shadow: 0 0 3px var(--accent-color);
     }
 
-    /* ================== MODAL SALIDAS ================== */
+    /* =========== MODAL SALIDAS =========== */
     .modal-overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,0.7);
-      display:none; justify-content:center; align-items:center;
-      z-index:99999;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
     }
     .modal {
-      background:#000; border:2px solid var(--accent-color); border-radius:10px;
-      padding:1rem; width:90%; max-width:500px;
-      box-shadow:0 0 10px var(--accent-color);
-      position:relative; color:var(--accent-color);
+      background: #000;
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 1rem;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 10px var(--accent-color);
+      position: relative;
+      color: var(--accent-color);
     }
     .modal h3 {
-      margin-bottom:1rem; text-shadow:0 0 2px var(--accent-color);
-      text-align:center; font-size:1.4rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 2px var(--accent-color);
+      text-align: center;
+      font-size: 1.4rem;
     }
     .closeModal {
-      position:absolute; top:8px; right:8px;
-      background:var(--danger-color); color:#fff; border:none; 
-      border-radius:4px; padding:0.3rem 0.6rem; cursor:pointer;
-      box-shadow:0 0 5px var(--danger-color);
+      position: absolute;
+      top: 8px; 
+      right: 8px;
+      background: var(--danger-color);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      box-shadow: 0 0 5px var(--danger-color);
     }
     .modal table {
-      width:100%; margin:0.5rem 0; border-collapse:collapse;
+      width: 100%;
+      margin: 0.5rem 0;
+      border-collapse: collapse;
     }
     .modal table td {
-      border-bottom:1px solid #444; padding:0.3rem; text-align:center;
+      border-bottom: 1px solid #444;
+      padding: 0.3rem;
+      text-align: center;
     }
     .modal table input {
-      width:100px; font-size:1.1rem; background:#000; 
-      color:var(--accent-color)!important; border:1px solid var(--accent-color);
-      border-radius:4px; text-align:right; box-shadow:none; 
+      width: 100px;
+      font-size: 1.1rem;
+      background: #000;
+      color: var(--accent-color)!important;
+      border: 1px solid var(--accent-color);
+      border-radius: 4px;
+      text-align: right;
+      box-shadow: none;
     }
     .addPrizeBtn {
-      background:#000; color:var(--purple-color);
-      border:1px solid var(--purple-color); border-radius:4px; 
-      cursor:pointer; padding:0.3rem 0.6rem; margin-bottom:1rem;
-      box-shadow:0 0 5px var(--purple-color);
+      background: #000;
+      color: var(--purple-color);
+      border: 1px solid var(--purple-color);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 0 5px var(--purple-color);
     }
     .addPrizeBtn:hover {
-      background:var(--purple-color); color:#000;
+      background: var(--purple-color);
+      color: #000;
     }
     .paidBtn, .pendingBtn {
-      font-size:0.9rem; padding:0.2rem 0.4rem; cursor:pointer; margin-right:0.3rem;
-      border:none; border-radius:4px; color:#fff;
+      font-size: 0.9rem;
+      padding: 0.2rem 0.4rem;
+      cursor: pointer;
+      margin-right: 0.3rem;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
     }
-    .paidBtn { background:var(--danger-color); box-shadow:0 0 3px var(--danger-color); }
-    .pendingBtn { background:var(--purple-color); box-shadow:0 0 3px var(--purple-color); }
+    .paidBtn {
+      background: var(--danger-color);
+      box-shadow: 0 0 3px var(--danger-color);
+    }
+    .pendingBtn {
+      background: var(--purple-color);
+      box-shadow: 0 0 3px var(--purple-color);
+    }
 
-    /* ================== MANUAL CONTENT ================== */
+    /* =========== MANUAL CONTENT =========== */
     .manual-content {
-      background:#000; border:2px solid var(--accent-color); border-radius:8px;
-      padding:1rem; box-shadow:0 0 8px var(--accent-color);
+      background: #000;
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 0 8px var(--accent-color);
     }
     .manual-content h3, .manual-content h4 {
-      color:var(--accent-color); text-shadow:0 0 2px var(--accent-color);
-      margin-bottom:0.5rem;
+      color: var(--accent-color);
+      text-shadow: 0 0 2px var(--accent-color);
+      margin-bottom: 0.5rem;
     }
-    .manual-content p { margin-bottom:1rem; }
-    .manual-content ul { margin-left:1.5rem; margin-bottom:1rem; }
-    .manual-content li { margin-bottom:0.5rem; }
-
+    .manual-content p {
+      margin-bottom: 1rem;
+    }
+    .manual-content ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .manual-content li {
+      margin-bottom: 0.5rem;
+    }
     .tabPremiosContent {
-      border:2px solid var(--accent-color); border-radius:8px;
-      background:var(--shared-tab-bg); box-shadow:0 0 8px var(--accent-color);
-      min-height:90%; padding:1rem;
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      background: var(--shared-tab-bg);
+      box-shadow: 0 0 8px var(--accent-color);
+      min-height: 90%;
+      padding: 1rem;
     }
     .accordion {
-      margin-bottom:1rem; border:2px solid var(--accent-color); border-radius:8px;
-      box-shadow:0 0 8px var(--accent-color); background:#000;
+      margin-bottom: 1rem;
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      box-shadow: 0 0 8px var(--accent-color);
+      background: #000;
     }
     .accordion-header {
-      padding:0.8rem; cursor:pointer; font-weight:bold;
-      color:var(--accent-color); text-shadow:0 0 3px var(--accent-color);
-      border-bottom:1px solid #444;
+      padding: 0.8rem;
+      cursor: pointer;
+      font-weight: bold;
+      color: var(--accent-color);
+      text-shadow: 0 0 3px var(--accent-color);
+      border-bottom: 1px solid #444;
     }
     .accordion-content {
-      display:none; padding:1rem;
+      display: none;
+      padding: 1rem;
     }
   </style>
 </head>
 <body>
 
-<!-- PIN OVERLAY -->
+<!-- OVERLAY PIN -->
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-dialog">
     <h2>Ingrese PIN (4 dígitos)</h2>
@@ -415,10 +578,10 @@
   </div>
 </div>
 
-<!-- Contenedor principal -->
+<!-- CONTENEDOR PRINCIPAL -->
 <div class="container hidden" id="mainContainer">
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
     <button class="tabBtn active" data-tab="tabDay1">Lunes (XX/XX/XXXX)</button>
     <button class="tabBtn" data-tab="tabDay2">Martes (XX/XX/XXXX)</button>
     <button class="tabBtn" data-tab="tabDay3">Miércoles (XX/XX/XXXX)</button>
@@ -431,7 +594,7 @@
     <button class="tabBtn" data-tab="tabManual">Manual</button>
   </div>
 
-  <!-- Main content -->
+  <!-- MAIN CONTENT -->
   <div class="main-content">
     <!-- TOP BAR -->
     <div class="top-bar">
@@ -444,11 +607,10 @@
       </div>
     </div>
 
-    <!-- SCROLL AREA -->
+    <!-- SCROLL AREA (Aquí van los .tabContent) -->
     <div class="scroll-area">
-      <!-- Dia1..7 + Semanal + Premios + Manual -->
+      <!-- Ejemplo: Día 1 -->
       <div id="tabDay1" class="tabContent active">
-        <!-- Encabezado + Botones -->
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <h2 id="titleDay1">Reporte Diario - Lunes - 01/Ene</h2>
           <div style="display:flex;gap:1rem;">
@@ -467,15 +629,33 @@
         <div id="day1Container"></div>
       </div>
 
-      <!-- Días 2..7, Semanal, etc. (idéntico a tu snippet con IDs tabDay2.. tabWeekly...) -->
-      <!-- ... no repetimos por brevedad, pero con la misma estructura ... -->
+      <!-- Repetir para day2..day7, tabWeekly, tabPremios, tabManual -->
+      <div id="tabDay2" class="tabContent">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h2 id="titleDay2">Reporte Diario - Martes - 02/Ene</h2>
+          <div style="display:flex;gap:1rem;">
+            <button class="btnNeon" onclick="sendDayToSheets('day2')">Guardar Día</button>
+            <button class="btnNeon" onclick="resetDay('day2')">Reset Día</button>
+            <button class="btnNeon" onclick="addPageRow('day2')">+ Página</button>
+            <button class="btnLockDay" id="lockDay2Btn" data-day="day2"><i>🔓</i></button>
+          </div>
+        </div>
+        <div style="margin:0.5rem 0;">
+          <label style="font-weight:bold;">Sucursal:</label>
+          <input type="text" id="sucursalGlobal2" class="sucursalGlobalInput"
+                 style="width:250px;padding:0.4rem;"
+                 oninput="updateSucursal(this.value)">
+        </div>
+        <div id="day2Container"></div>
+      </div>
+      <!-- ... día3..día7 ... -->
 
+      <!-- TAB SEMANAL -->
       <div id="tabWeekly" class="tabContent">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <h2>Resumen Semanal</h2>
           <div style="display:flex;gap:1rem;">
             <button class="btnNeon" onclick="sendWeekToSheets()">Guardar Semana</button>
-            <!-- Quitar “Refresh” si ya no lo necesitas. O lo dejas de adorno. -->
             <button class="btnNeon" onclick="resetWeek()">Reset Semana</button>
             <button class="btnLockDay" id="lockAllBtn"><i>🔒</i></button>
             <button class="btnLockDay" id="unlockAllBtn"><i>🔓</i></button>
@@ -490,24 +670,26 @@
         <div id="weeklyContainer"></div>
       </div>
 
+      <!-- TAB CÁLCULO PREMIOS -->
       <div id="tabPremios" class="tabContent">
         <div class="tabPremiosContent">
           <h2 style="margin-bottom:1rem;">Cálculo Premios</h2>
-          <p>...</p>
+          <p>(Placeholder)</p>
         </div>
       </div>
 
+      <!-- TAB MANUAL -->
       <div id="tabManual" class="tabContent">
         <h2>Manual / Ayuda</h2>
         <div class="manual-content">
-          <p>Descripción...</p>
+          <p>Aquí tu ayuda...</p>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MODAL SALIDAS -->
+<!-- MODAL SALIDAS (Pend/Pag) -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <button class="closeModal" id="closePrizeModal">X</button>
@@ -521,10 +703,11 @@
       <div style="flex:1; min-width:150px;">
         <h4 style="color:var(--danger-color); text-align:center;">Pagados</h4>
         <table><tbody id="paidTbody"></tbody></table>
-        <button class="addPrizeBtn"
-          style="color:var(--danger-color); border-color:var(--danger-color);
-                 box-shadow:0 0 5px var(--danger-color);"
-          onclick="addPrizeRow('paid')">+ Pagado</button>
+        <button class="addPrizeBtn" 
+          style="color:var(--danger-color);border-color:var(--danger-color);
+                 box-shadow:0 0 5px var(--danger-color);" 
+          onclick="addPrizeRow('paid')">+ Pagado
+        </button>
       </div>
     </div>
   </div>
@@ -534,76 +717,65 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
-/********************************************************
- * 1) CONFIGURACIÓN GLOBAL
- ********************************************************/
-const REAL_PIN = "8325";
-let lockedDays = {};
-let lockedAll = false;
-let isDarkMode = true;
-let pinValidated = (localStorage.getItem("pinValidated")==="true");
-
+/****************************************************
+ * 1) PIN + DATA
+ ****************************************************/
+const REAL_PIN="8325"; 
+let lockedDays={};
+let lockedAll=false;
+let isDarkMode=true;
+let pinValidated=(localStorage.getItem("pinValidated")==="true");
 let dataStore={
   globalSucursal:"",
   day1:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
          cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{ pending:[], paid:[] }
+         creditTracker:{pending:[],paid:[]}
        },
   day2:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
          cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{ pending:[], paid:[] }
+         creditTracker:{pending:[],paid:[]}
        },
   day3:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
          cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{ pending:[], paid:[] }
+         creditTracker:{pending:[],paid:[]}
        },
   day4:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
          cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{ pending:[], paid:[] }
+         creditTracker:{pending:[],paid:[]}
        },
   day5:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
          cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{ pending:[], paid:[] }
+         creditTracker:{pending:[],paid:[]}
        },
   day6:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
          cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{ pending:[], paid:[] }
+         creditTracker:{pending:[],paid:[]}
        },
   day7:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
          cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{ pending:[], paid:[] }
+         creditTracker:{pending:[],paid:[]}
        },
-  weekly:{ caidas:0, adelantoOficina:0 }
+  weekly:{caidas:0, adelantoOficina:0}
 };
-
-let dayMappings=[
-  {key:"day1", label:"Lunes", offset:0},
-  {key:"day2", label:"Martes", offset:1},
-  {key:"day3", label:"Miércoles", offset:2},
-  {key:"day4", label:"Jueves", offset:3},
-  {key:"day5", label:"Viernes", offset:4},
-  {key:"day6", label:"Sábado", offset:5},
-  {key:"day7", label:"Domingo", offset:6}
-];
 
 let accordionStates={};
 
-/********************************************************
+/****************************************************
  * 2) DOMContentLoaded
- ********************************************************/
-window.addEventListener("DOMContentLoaded", ()=>{
-  let stored = localStorage.getItem("dailyReportNeonData2");
-  if(stored) dataStore= JSON.parse(stored);
+ ****************************************************/
+window.addEventListener("DOMContentLoaded",()=>{
+  let stored=localStorage.getItem("dailyReportNeonData2");
+  if(stored) dataStore=JSON.parse(stored);
 
   for(let i=1;i<=7;i++){
     if(lockedDays["day"+i]===undefined) lockedDays["day"+i]=false;
   }
-  // Generar 20 filas si no existen
+  // Generar 20 filas
   for(let i=1;i<=7;i++){
     let dk="day"+i;
     if(!dataStore[dk].pages) dataStore[dk].pages=[];
     if(dataStore[dk].pages.length<1){
-      for(let r=1; r<=20; r++){
+      for(let r=1;r<=20;r++){
         dataStore[dk].pages.push({
           pageNo:r, centenas:0, pulitos:0,
           pendingPrizes:[], paidPrizes:[],
@@ -613,64 +785,30 @@ window.addEventListener("DOMContentLoaded", ()=>{
     }
     if(!dataStore[dk].overlookExtra) dataStore[dk].overlookExtra=[];
   }
-
-  // PIN
   if(pinValidated){
     document.getElementById("pinOverlay").style.display="none";
     document.getElementById("mainContainer").classList.remove("hidden");
   }
 
-  // Fechas en sidebar
-  let startOfWeek = findMondayOfCurrentWeek();
-  dayMappings.forEach((dm,i)=>{
-    let dt=new Date(startOfWeek.getTime());
-    dt.setDate(dt.getDate()+dm.offset);
-    let dStrTab= formatDateMMDDYYYY(dt);
-    let dStrTitle= formatDateDDMMM(dt);
-    let btn=document.querySelector(`.sidebar button[data-tab="tabDay${i+1}"]`);
-    if(btn) btn.textContent= `${dm.label} (${dStrTab})`;
-    let h2title=document.getElementById(`titleDay${i+1}`);
-    if(h2title) h2title.textContent= `Reporte Diario - ${dm.label} - ${dStrTitle}`;
-  });
-
   initPinOverlay();
   initTabs();
   initLockButtons();
   initToggleTheme();
-  renderAllDays(); // -> se verán los 20 renglones
-  updateWeeklyView(); // Para que muestre todo desde el principio
+  renderAllDays();
+  updateWeeklyView();
   addTabKeyNavigation();
-
   applySucursalToAllFields(dataStore.globalSucursal);
 });
 
-function findMondayOfCurrentWeek(){
-  let now=new Date();
-  let dayOfWeek=now.getDay(); // Sunday=0
-  let diff=(dayOfWeek+6)%7;
-  let monday=new Date(now);
-  monday.setDate(now.getDate()-diff);
-  return monday;
-}
-function formatDateMMDDYYYY(dt){
-  let mm=(dt.getMonth()+1).toString().padStart(2,"0");
-  let dd=dt.getDate().toString().padStart(2,"0");
-  let yy=dt.getFullYear();
-  return `${mm}/${dd}/${yy}`;
-}
-function formatDateDDMMM(dt){
-  let day= dt.getDate().toString().padStart(2,"0");
-  let abbr=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  let m= abbr[ dt.getMonth() ]||"???";
-  return `${day}/${m}`;
-}
-
-/********************************************************
- * 3) initPinOverlay => filtrar dígitos
- ********************************************************/
+/****************************************************
+ * 3) initPinOverlay => filtrar dígitos + ENTER
+ ****************************************************/
 function initPinOverlay(){
-  document.getElementById("btnPinSubmit").addEventListener("click",()=>{
-    let val=document.getElementById("pinInput").value.trim();
+  const pinInput=document.getElementById("pinInput");
+  const btnPinSubmit=document.getElementById("btnPinSubmit");
+
+  btnPinSubmit.addEventListener("click", ()=>{
+    let val=pinInput.value.trim();
     val= val.replace(/\D/g,"");
     if(val===REAL_PIN){
       localStorage.setItem("pinValidated","true");
@@ -681,11 +819,18 @@ function initPinOverlay(){
       alert("PIN incorrecto");
     }
   });
+
+  // Soporte ENTER
+  pinInput.addEventListener("keydown",(e)=>{
+    if(e.key==="Enter"){
+      btnPinSubmit.click();
+    }
+  });
 }
 
-/********************************************************
+/****************************************************
  * 4) initTabs
- ********************************************************/
+ ****************************************************/
 function initTabs(){
   let tabBtns=document.querySelectorAll(".sidebar .tabBtn");
   tabBtns.forEach(btn=>{
@@ -693,18 +838,19 @@ function initTabs(){
       tabBtns.forEach(b=> b.classList.remove("active"));
       e.currentTarget.classList.add("active");
       let targetId=e.currentTarget.dataset.tab;
-      document.querySelectorAll(".tabContent").forEach(tc=>tc.classList.remove("active"));
+      document.querySelectorAll(".tabContent").forEach(tc=> tc.classList.remove("active"));
       document.getElementById(targetId).classList.add("active");
     });
   });
 }
 
-/********************************************************
- * 5) initLockButtons => candados
- ********************************************************/
+/****************************************************
+ * 5) initLockButtons
+ ****************************************************/
 function initLockButtons(){
   for(let i=1;i<=7;i++){
     let b=document.getElementById(`lockDay${i}Btn`);
+    if(!b) continue;
     b.addEventListener("click",(ev)=>{
       let dk=ev.currentTarget.dataset.day;
       lockedDays[dk]=!lockedDays[dk];
@@ -713,31 +859,37 @@ function initLockButtons(){
       renderDay(dk);
     });
   }
-  document.getElementById("lockAllBtn").addEventListener("click",()=>{
+  const lockAllBtn=document.getElementById("lockAllBtn");
+  const unlockAllBtn=document.getElementById("unlockAllBtn");
+  if(lockAllBtn) lockAllBtn.addEventListener("click",()=>{
     lockedAll=true;
     for(let i=1;i<=7;i++){
       lockedDays["day"+i]=true;
       let b=document.getElementById(`lockDay${i}Btn`);
-      b.classList.add("locked");
-      b.innerHTML="<i>🔒</i>";
+      if(b){
+        b.classList.add("locked");
+        b.innerHTML="<i>🔒</i>";
+      }
     }
     renderAllDays();
   });
-  document.getElementById("unlockAllBtn").addEventListener("click",()=>{
+  if(unlockAllBtn) unlockAllBtn.addEventListener("click",()=>{
     lockedAll=false;
     for(let i=1;i<=7;i++){
       lockedDays["day"+i]=false;
       let b=document.getElementById(`lockDay${i}Btn`);
-      b.classList.remove("locked");
-      b.innerHTML="<i>🔓</i>";
+      if(b){
+        b.classList.remove("locked");
+        b.innerHTML="<i>🔓</i>";
+      }
     }
     renderAllDays();
   });
 }
 
-/********************************************************
+/****************************************************
  * 6) initToggleTheme => Dark/Light
- ********************************************************/
+ ****************************************************/
 function initToggleTheme(){
   document.getElementById("btnToggleTheme").addEventListener("click",()=>{
     isDarkMode=!isDarkMode;
@@ -749,116 +901,124 @@ function initToggleTheme(){
   });
 }
 
-/********************************************************
- * 7) Sucursal Global
- ********************************************************/
+/****************************************************
+ * 7) Sucursal Global => update & replicate
+ ****************************************************/
 function updateSucursal(val){
   dataStore.globalSucursal= val;
   storeData();
   applySucursalToAllFields(val);
-  // Actualiza Weekly de una vez
+  // Actualizar en tiempo real
+  renderAllDays();
   updateWeeklyView();
-  // Si quieres que cada cambio en la sucursal re-renderice los días, haz:
-  // renderAllDays();
 }
 function applySucursalToAllFields(val){
   document.querySelectorAll(".sucursalGlobalInput").forEach(inp=>{
-    if(inp.value!==val) inp.value=val;
+    if(inp.value!==val) inp.value= val;
   });
 }
 
-/********************************************************
- * 8) Render días => renderAllDays + renderDay
- ********************************************************/
+/****************************************************
+ * 8) RenderAllDays + RenderDay
+ ****************************************************/
 function renderAllDays(){
   for(let i=1;i<=7;i++){
     renderDay(`day${i}`);
   }
   storeData();
-  // Actualizar Weekly en tiempo real también
   updateWeeklyView();
 }
 function renderDay(dayKey){
-  let container=document.getElementById(dayKey+"Container");
+  let container=document.getElementById(`${dayKey}Container`);
   if(!container) return;
   let dayData=dataStore[dayKey];
   let locked=(lockedDays[dayKey]||lockedAll);
 
-  // TABLA PÁGINAS
-  let html=`
-    <table class="report-table">
-      <thead>
-        <tr>
-          <th>#Página</th>
-          <th>Centenas</th>
-          <th>Pulitos</th>
-          <th>Salidas</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
+  // ... (Aquí la misma lógica de la tabla, Overlook, etc.)
+  // Por brevedad, lo omitimos, pero igual que antes:
+
+  let html= buildDayHtml(dayKey, dayData, locked); 
+  container.innerHTML= html;
+}
+
+/** buildDayHtml => para no repetir en texto largo */
+function buildDayHtml(dayKey, dayData, locked){
+  // Genera la tabla, Overlook, Cuadre, etc. (igual al snippet anterior).
+  // Ahorraremos la verborrea, pero sin error de sintaxis.
+  // ...
+
+  // 1) Tabla Páginas
+  let tbl=`
+  <table class="report-table">
+    <thead>
+      <tr>
+        <th>#Página</th>
+        <th>Centenas</th>
+        <th>Pulitos</th>
+        <th>Salidas</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
   `;
   dayData.pages.forEach((p,idx)=>{
     let cVal=(p.centenas||"");
     let puVal=(p.pulitos||"");
-    let totalCP=(p.centenas+p.pulitos);
-    let sumPend=(p.pendingPrizes||[]).reduce((a,v)=>a+v,0);
+    let sumPend=(p.pendingPrizes||[]).reduce((acc,v)=>acc+v,0);
     let hasPend=(sumPend>0);
-    let salidasColor= hasPend?"var(--purple-color)":"var(--danger-color)";
-    let salidasVal=p.totalSalidas.toFixed(2);
-
-    html+=`
+    let salColor= hasPend?"var(--purple-color)":"var(--danger-color)";
+    let salVal=p.totalSalidas.toFixed(2);
+    let totalCP=(p.centenas+p.pulitos);
+    tbl+=`
       <tr>
         <td>
-          <button class="pageBtn" onclick="deletePageRow('${dayKey}',${idx})" 
+          <button class="pageBtn" onclick="deletePageRow('${dayKey}',${idx})"
             ${locked?'disabled':''}>${p.pageNo}</button>
         </td>
         <td>
-          <input type="number" data-day="${dayKey}" data-pindex="${idx}" data-field="centenas" 
-                 max="900000"
-                 value="${cVal}"
+          <input type="number" data-day="${dayKey}" data-pindex="${idx}" data-field="centenas"
+                 max="900000" value="${cVal}"
                  onchange="updatePageField(this)"
                  ${locked?'disabled':''}>
         </td>
         <td>
           <input type="number" data-day="${dayKey}" data-pindex="${idx}" data-field="pulitos"
-                 max="900000"
-                 value="${puVal}"
+                 max="900000" value="${puVal}"
                  onchange="updatePageField(this)"
                  ${locked?'disabled':''}>
         </td>
-        <td style="cursor:pointer; color:${salidasColor};"
+        <td style="cursor:pointer;color:${salColor};"
             onclick="openPrizesModal('${dayKey}',${idx})">
-          $${salidasVal}
+          $${salVal}
         </td>
         <td>$${totalCP.toFixed(2)}</td>
       </tr>
     `;
   });
-  html+="</tbody></table>";
+  tbl+=`</tbody></table>`;
 
-  // Cálculo NetBalance
-  let totalCredPend= dayData.creditTracker.pending.reduce((a,o)=>a+(o.amount||0),0);
+  // 2) NetBalance
+  let totalCredPend= dayData.creditTracker.pending
+    .reduce((acc,o)=>acc+(o.amount||0),0);
   dayData.credito= totalCredPend;
-
   let totalPending=0;
   dayData.pages.forEach(pg=>{
     totalPending+= pg.pendingPrizes.reduce((acc,v)=>acc+v,0);
   });
-
   let t= calcDayTotals(dayKey);
-  let subT= (t.totalVentas - t.totalSalidas);
-  let sumOpt= (dayData.cash+dayData.sucursal+dayData.credito+dayData.descuento+dayData.tickets);
-  let netBal= subT - sumOpt + totalPending;
-  let nbColor= "#000";
-  if(netBal<0) nbColor="#0f0"; else if(netBal>0) nbColor="#f33";
+  let subT=(t.totalVentas - t.totalSalidas);
+  let sumOpt=(dayData.cash+dayData.sucursal+dayData.credito+dayData.descuento+dayData.tickets);
+  let netBal=(subT - sumOpt + totalPending);
+  let nbColor="#000";
+  if(netBal<0) nbColor="#0f0";
+  else if(netBal>0) nbColor="#f33";
 
   // Overlook principal
   let ovVal=(dayData.overlook||"");
   let ovNote=(dayData.overlookNote||"");
 
   // TOTALSECTION
-  html+=`
+  let totalsSec=`
   <div class="totals-section">
     <h3>Totales</h3>
     <div class="form-group">
@@ -873,8 +1033,7 @@ function renderDay(dayKey){
     <div class="form-group" style="align-items:center;">
       <label>Overlook</label>
       <input type="number" data-day="${dayKey}" data-field="overlook"
-             max="900000"
-             value="${ovVal}"
+             max="900000" value="${ovVal}"
              onchange="updateDayField(this)"
              ${locked?'disabled':''}>
       <input type="text" data-day="${dayKey}" data-field="overlookNote"
@@ -884,25 +1043,24 @@ function renderDay(dayKey){
              oninput="updateDayNoteField(this)"
              ${locked?'disabled':''}>
       <button class="pageBtn" style="background:green;margin-left:8px;"
-              onclick="addOverlookRow('${dayKey}')"
-              ${locked?'disabled':''}>Add</button>
+        onclick="addOverlookRow('${dayKey}')"
+        ${locked?'disabled':''}>Add</button>
       <button class="pageBtn" style="background:red;margin-left:8px;"
-              onclick="clearMainOverlook('${dayKey}')"
-              ${locked?'disabled':''}>Del</button>
+        onclick="clearMainOverlook('${dayKey}')"
+        ${locked?'disabled':''}>Del</button>
     </div>
 
-    <!-- Overlook Extra Rows -->
+    <!-- Overlook Extra -->
     <div id="overlookExtraContainer_${dayKey}">
   `;
-  dayData.overlookExtra.forEach((row,idx)=>{
+  dayData.overlookExtra.forEach((row, idx)=>{
     let val=(row.amount||"");
     let note=(row.note||"");
-    html+=`
+    totalsSec+=`
       <div class="form-group" style="align-items:center;">
         <label>Overlook</label>
         <input type="number" data-day="${dayKey}" data-oidx="${idx}" data-field="amount"
-               max="900000"
-               value="${val}"
+               max="900000" value="${val}"
                onchange="updateOverlookExtra(this)"
                ${locked?'disabled':''}>
         <input type="text" data-day="${dayKey}" data-oidx="${idx}" data-field="note"
@@ -911,15 +1069,15 @@ function renderDay(dayKey){
                oninput="updateOverlookExtra(this)"
                ${locked?'disabled':''}>
         <button class="pageBtn" style="background:green;margin-left:8px;"
-                onclick="addOverlookRow('${dayKey}')"
-                ${locked?'disabled':''}>Add</button>
+          onclick="addOverlookRow('${dayKey}')"
+          ${locked?'disabled':''}>Add</button>
         <button class="pageBtn" style="background:red;margin-left:8px;"
-                onclick="deleteOverlookRow('${dayKey}',${idx})"
-                ${locked?'disabled':''}>Del</button>
+          onclick="deleteOverlookRow('${dayKey}',${idx})"
+          ${locked?'disabled':''}>Del</button>
       </div>
     `;
   });
-  html+=`
+  totalsSec+=`
     </div>
 
     <div class="form-group">
@@ -934,11 +1092,11 @@ function renderDay(dayKey){
   </div>
   `;
 
-  // Cuadre & Créditos => acordion
-  let isCOpen= accordionStates[dayKey+"_cuadre"]?"block":"none";
+  // CUADRE & CRÉDITOS
+  let isCOpen=accordionStates[dayKey+"_cuadre"]?"block":"none";
   let isCredOpen=accordionStates[dayKey+"_credit"]?"block":"none";
 
-  html+=`
+  let cSec=`
   <div class="accordion">
     <div class="accordion-header" onclick="toggleSubSection('${dayKey}_cuadre')">
       Cuadre del Día
@@ -947,6 +1105,7 @@ function renderDay(dayKey){
       ${renderCuadreDia(dayKey, netBal, nbColor, totalPending)}
     </div>
   </div>
+
   <div class="accordion">
     <div class="accordion-header" onclick="toggleSubSection('${dayKey}_credit')">
       Créditos Otorgados
@@ -957,108 +1116,112 @@ function renderDay(dayKey){
   </div>
   `;
 
-  container.innerHTML=html;
+  return tbl+ totalsSec + cSec;
 }
 
-function toggleSubSection(id){
-  accordionStates[id]= !accordionStates[id];
-  // Re-render => que se actualicen
-  renderAllDays();
-}
-function renderCuadreDia(dayKey, netBal, nbColor, totalPending){
-  let d=dataStore[dayKey];
-  let t= calcDayTotals(dayKey);
-  let subT=(t.totalVentas - t.totalSalidas);
-
-  return `
-    <div class="cuadre-section">
-      <h3>Cuadre del Día</h3>
-      <div class="form-group">
-        <label>Ventas</label>
-        <input type="text" readonly value="${t.totalVentas.toFixed(2)}">
-      </div>
-      <div class="form-group">
-        <label>Salidas</label>
-        <input type="text" readonly style="color:var(--danger-color);"
-               value="${t.totalSalidas.toFixed(2)}">
-      </div>
-      <div class="form-group">
-        <label>Sub Total</label>
-        <input type="text" readonly style="color:var(--purple-strong);"
-               value="${subT.toFixed(2)}">
-      </div>
-      <div class="form-group">
-        <label>Prem. Pend.</label>
-        <input type="text" readonly style="color:var(--purple-color);"
-               value="${totalPending.toFixed(2)}">
-      </div>
-      <div class="form-group">
-        <label>Cash</label>
-        <input type="number" data-day="${dayKey}" data-field="cash"
-               max="900000" value="${d.cash||0}"
-               onchange="updateDayField(this)">
-      </div>
-      <div class="form-group">
-        <label>Sucursal</label>
-        <input type="number" data-day="${dayKey}" data-field="sucursal"
-               max="900000" value="${d.sucursal||0}"
-               onchange="updateDayField(this)">
-      </div>
-      <div class="form-group">
-        <label>Crédito</label>
-        <input type="number" readonly style="color:var(--purple-color);"
-               value="${d.credito||0}">
-      </div>
-      <div class="form-group">
-        <label>Descuento</label>
-        <input type="number" data-day="${dayKey}" data-field="descuento"
-               max="900000" value="${d.descuento||0}"
-               onchange="updateDayField(this)">
-      </div>
-      <div class="form-group">
-        <label>Tickets</label>
-        <input type="number" data-day="${dayKey}" data-field="tickets"
-               max="900000" value="${d.tickets||0}"
-               onchange="updateDayField(this)">
-      </div>
-      <div class="form-group">
-        <label>NetBalance</label>
-        <input type="text" readonly style="color:${nbColor};"
-               value="${netBal.toFixed(2)}">
-      </div>
-    </div>
-  `;
-}
-
-/********************************************************
+/****************************************************
  * 9) calcDayTotals
- ********************************************************/
+ ****************************************************/
 function calcDayTotals(dayKey){
   let d=dataStore[dayKey];
-  if(!d) return { totalCentenas:0, totalPulitos:0, totalSalidas:0, totalVentas:0 };
-  let tc=0, tp=0, ts=0;
+  if(!d) return {totalCentenas:0,totalPulitos:0,totalSalidas:0,totalVentas:0};
+  let tc=0,tp=0,ts=0;
   d.pages.forEach(p=>{
-    tc+= (p.centenas||0);
-    tp+= (p.pulitos||0);
-    ts+= (p.totalSalidas||0);
+    tc+=(p.centenas||0);
+    tp+=(p.pulitos||0);
+    ts+=(p.totalSalidas||0);
   });
-  // Overlook principal
   ts+=(d.overlook||0);
-  // Overlook Extra
   d.overlookExtra.forEach(ov=>{
     ts+=(ov.amount||0);
   });
   return {
-    totalCentenas:tc,
-    totalPulitos:tp,
-    totalSalidas:ts,
-    totalVentas:(tc+tp)
+    totalCentenas: tc,
+    totalPulitos: tp,
+    totalSalidas: ts,
+    totalVentas: (tc+tp)
   };
 }
 
-/********************************************************
- * 10) createCreditSection
- ********************************************************/
+/****************************************************
+ * 10) toggleSubSection => re-render
+ ****************************************************/
+function toggleSubSection(id){
+  accordionStates[id]= !accordionStates[id];
+  renderAllDays();
+}
+
+/****************************************************
+ * 11) renderCuadreDia
+ ****************************************************/
+function renderCuadreDia(dayKey, netBal, nbColor, totalPending){
+  let d=dataStore[dayKey];
+  let t=calcDayTotals(dayKey);
+  let subT=(t.totalVentas - t.totalSalidas);
+
+  return `
+  <div class="cuadre-section">
+    <h3>Cuadre del Día</h3>
+    <div class="form-group">
+      <label>Ventas</label>
+      <input type="text" readonly value="${t.totalVentas.toFixed(2)}">
+    </div>
+    <div class="form-group">
+      <label>Salidas</label>
+      <input type="text" readonly style="color:var(--danger-color);"
+             value="${t.totalSalidas.toFixed(2)}">
+    </div>
+    <div class="form-group">
+      <label>Sub Total</label>
+      <input type="text" readonly style="color:var(--purple-strong);"
+             value="${subT.toFixed(2)}">
+    </div>
+    <div class="form-group">
+      <label>Prem. Pend.</label>
+      <input type="text" readonly style="color:var(--purple-color);"
+             value="${totalPending.toFixed(2)}">
+    </div>
+    <div class="form-group">
+      <label>Cash</label>
+      <input type="number" data-day="${dayKey}" data-field="cash"
+             max="900000" value="${d.cash||0}"
+             onchange="updateDayField(this)">
+    </div>
+    <div class="form-group">
+      <label>Sucursal</label>
+      <input type="number" data-day="${dayKey}" data-field="sucursal"
+             max="900000" value="${d.sucursal||0}"
+             onchange="updateDayField(this)">
+    </div>
+    <div class="form-group">
+      <label>Crédito</label>
+      <input type="number" readonly style="color:var(--purple-color);"
+             value="${d.credito||0}">
+    </div>
+    <div class="form-group">
+      <label>Descuento</label>
+      <input type="number" data-day="${dayKey}" data-field="descuento"
+             max="900000" value="${d.descuento||0}"
+             onchange="updateDayField(this)">
+    </div>
+    <div class="form-group">
+      <label>Tickets</label>
+      <input type="number" data-day="${dayKey}" data-field="tickets"
+             max="900000" value="${d.tickets||0}"
+             onchange="updateDayField(this)">
+    </div>
+    <div class="form-group">
+      <label>NetBalance</label>
+      <input type="text" readonly style="color:${nbColor};"
+             value="${netBal.toFixed(2)}">
+    </div>
+  </div>
+  `;
+}
+
+/****************************************************
+ * 12) createCreditSection
+ ****************************************************/
 function createCreditSection(dayKey, locked){
   let c=dataStore[dayKey].creditTracker;
   let pendingHTML="", paidHTML="";
@@ -1067,27 +1230,26 @@ function createCreditSection(dayKey, locked){
       <tr>
         <td>
           <button class="pageBtn" style="font-size:1rem;"
-                  onclick="deleteCreditRow('${dayKey}','pending',${idx})"
-                  ${locked?'disabled':''}>${idx+1}
+            onclick="deleteCreditRow('${dayKey}','pending',${idx})"
+            ${locked?'disabled':''}>${idx+1}
           </button>
         </td>
         <td>
-          <input type="text" maxlength="10"
-                 style="width:100px;"
-                 onchange="updateCreditItem('${dayKey}','pending',${idx},'client',this.value)"
-                 value="${item.client||''}"
-                 ${locked?'disabled':''}>
+          <input type="text" maxlength="10" style="width:100px;"
+            onchange="updateCreditItem('${dayKey}','pending',${idx},'client',this.value)"
+            value="${item.client||''}"
+            ${locked?'disabled':''}>
         </td>
         <td>
-          <input type="number" max="900000"
-                 style="width:100px;"
-                 onchange="updateCreditItem('${dayKey}','pending',${idx},'amount',this.value)"
-                 value="${item.amount||''}"
-                 ${locked?'disabled':''}>
+          <input type="number" max="900000" style="width:100px;"
+            onchange="updateCreditItem('${dayKey}','pending',${idx},'amount',this.value)"
+            value="${item.amount||''}"
+            ${locked?'disabled':''}>
         </td>
         <td>
           <button class="paidBtn" onclick="moveCreditItem('${dayKey}',${idx},'pending')"
-            ${locked?'disabled':''}>→Pagado</button>
+            ${locked?'disabled':''}>→Pagado
+          </button>
         </td>
       </tr>
     `;
@@ -1097,37 +1259,37 @@ function createCreditSection(dayKey, locked){
       <tr>
         <td>
           <button class="pageBtn" style="font-size:1rem;"
-                  onclick="deleteCreditRow('${dayKey}','paid',${idx})"
-                  ${locked?'disabled':''}>${idx+1}
+            onclick="deleteCreditRow('${dayKey}','paid',${idx})"
+            ${locked?'disabled':''}>${idx+1}
           </button>
         </td>
         <td>
-          <input type="text" maxlength="10"
-                 style="width:100px;"
-                 onchange="updateCreditItem('${dayKey}','paid',${idx},'client',this.value)"
-                 value="${item.client||''}"
-                 ${locked?'disabled':''}>
+          <input type="text" maxlength="10" style="width:100px;"
+            onchange="updateCreditItem('${dayKey}','paid',${idx},'client',this.value)"
+            value="${item.client||''}"
+            ${locked?'disabled':''}>
         </td>
         <td>
-          <input type="number" max="900000"
-                 style="width:100px;"
-                 onchange="updateCreditItem('${dayKey}','paid',${idx},'amount',this.value)"
-                 value="${item.amount||''}"
-                 ${locked?'disabled':''}>
+          <input type="number" max="900000" style="width:100px;"
+            onchange="updateCreditItem('${dayKey}','paid',${idx},'amount',this.value)"
+            value="${item.amount||''}"
+            ${locked?'disabled':''}>
         </td>
         <td>
           <button class="pendingBtn" onclick="moveCreditItem('${dayKey}',${idx},'paid')"
-            ${locked?'disabled':''}>→Pend</button>
+            ${locked?'disabled':''}>→Pend
+          </button>
         </td>
       </tr>
     `;
   });
+
   let totalPend=c.pending.reduce((acc,o)=>acc+(o.amount||0),0);
-  let totalPaid=c.paid.reduce((acc,o)=>acc+(o.amount||0),0;
+  let totalPaid=c.paid.reduce((acc,o)=>acc+(o.amount||0),0);
 
   return `
     <div style="padding:1rem;">
-      <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+      <div style="display:flex; gap:2rem; flex-wrap:wrap;">
         <div style="flex:1; min-width:220px;">
           <h4 style="color:var(--purple-color);margin-bottom:0.5rem;">Pendientes</h4>
           <table style="width:100%;border-collapse:collapse;">
@@ -1136,9 +1298,7 @@ function createCreditSection(dayKey, locked){
             </thead>
             <tbody>${pendingHTML}</tbody>
           </table>
-          <button class="addPrizeBtn" onclick="addCreditItem('${dayKey}','pending')" ${locked?'disabled':''}>
-            + Pendiente
-          </button>
+          <button class="addPrizeBtn" onclick="addCreditItem('${dayKey}','pending')" ${locked?'disabled':''}>+ Pendiente</button>
           <p>Total Pend: <span style="color:var(--purple-color);">$${totalPend.toFixed(2)}</span></p>
         </div>
 
@@ -1151,10 +1311,9 @@ function createCreditSection(dayKey, locked){
             <tbody>${paidHTML}</tbody>
           </table>
           <button class="addPrizeBtn"
-            style="color:var(--danger-color);border-color:var(--danger-color);"
-            onclick="addCreditItem('${dayKey}','paid')" ${locked?'disabled':''}>
-            + Pagado
-          </button>
+            style="color:var(--danger-color); border-color:var(--danger-color);"
+            onclick="addCreditItem('${dayKey}','paid')"
+            ${locked?'disabled':''}>+ Pagado</button>
           <p>Total Paid: <span style="color:var(--danger-color);">$${totalPaid.toFixed(2)}</span></p>
         </div>
       </div>
@@ -1162,37 +1321,37 @@ function createCreditSection(dayKey, locked){
   `;
 }
 
-/********************************************************
- * 11) Créditos: add,del,update
- ********************************************************/
-function addCreditItem(dayKey, type){
-  dataStore[dayKey].creditTracker[type].push({client:"", amount:0});
+/****************************************************
+ * 13) Créditos: add, delete, update, move
+ ****************************************************/
+function addCreditItem(dayKey,type){
+  dataStore[dayKey].creditTracker[type].push({client:"",amount:0});
   storeData();
   renderDay(dayKey);
 }
-function deleteCreditRow(dayKey, type, idx){
+function deleteCreditRow(dayKey,type,idx){
   if(!confirm("¿Eliminar este registro de crédito?")) return;
   dataStore[dayKey].creditTracker[type].splice(idx,1);
   storeData();
   renderDay(dayKey);
 }
-function updateCreditItem(dayKey, type, idx, field, valStr){
+function updateCreditItem(dayKey,type,idx,field,valStr){
   let c=dataStore[dayKey].creditTracker[type];
   let item=c[idx];
   if(field==="client"){
     item.client= valStr.substring(0,10);
-  } else if(field==="amount"){
+  } else {
     let n=parseFloat(valStr)||0;
     if(n>900000)n=900000;
     item.amount=n;
   }
-  // recalcular crédito
+  // Recalc
   dataStore[dayKey].credito= dataStore[dayKey].creditTracker.pending
     .reduce((acc,o)=>acc+(o.amount||0),0);
   storeData();
   renderDay(dayKey);
 }
-function moveCreditItem(dayKey, idx, fromType){
+function moveCreditItem(dayKey,idx,fromType){
   let c=dataStore[dayKey].creditTracker;
   let item=c[fromType][idx];
   c[fromType].splice(idx,1);
@@ -1201,21 +1360,20 @@ function moveCreditItem(dayKey, idx, fromType){
   } else {
     c.pending.push(item);
   }
-  dataStore[dayKey].credito= c.pending.reduce((acc,o)=>acc+(o.amount||0),0;
+  dataStore[dayKey].credito= c.pending.reduce((acc,o)=>acc+(o.amount||0),0);
   storeData();
   renderDay(dayKey);
 }
 
-/********************************************************
- * 12) Overlook Extra => Add, Del, Update 
- ********************************************************/
+/****************************************************
+ * 14) Overlook Extra
+ ****************************************************/
 function addOverlookRow(dayKey){
   dataStore[dayKey].overlookExtra.push({amount:0,note:""});
   storeData();
-  // re-render => se vea de inmediato
   renderDay(dayKey);
 }
-function deleteOverlookRow(dayKey, idx){
+function deleteOverlookRow(dayKey,idx){
   if(!confirm("¿Eliminar fila Overlook?")) return;
   dataStore[dayKey].overlookExtra.splice(idx,1);
   storeData();
@@ -1235,7 +1393,7 @@ function updateOverlookExtra(input){
     row.note= valStr;
   }
   storeData();
-  // re-render => actualice “Total Salidas” al instante
+  // Re-render => sumarse al momento
   renderDay(dayKey);
 }
 function clearMainOverlook(dayKey){
@@ -1245,13 +1403,13 @@ function clearMainOverlook(dayKey){
   renderDay(dayKey);
 }
 
-/********************************************************
- * 13) Page Rows => add/del + fields
- ********************************************************/
+/****************************************************
+ * 15) Page Rows => add, delete, update
+ ****************************************************/
 function deletePageRow(dayKey, idx){
   if(!confirm("¿Eliminar esta página?")) return;
   dataStore[dayKey].pages.splice(idx,1);
-  dataStore[dayKey].pages.forEach((p,i)=>p.pageNo=i+1);
+  dataStore[dayKey].pages.forEach((p,i)=> p.pageNo=i+1);
   storeData();
   renderDay(dayKey);
 }
@@ -1260,7 +1418,8 @@ function addPageRow(dayKey){
   let nextNo=d.pages.length+1;
   d.pages.push({
     pageNo:nextNo, centenas:0, pulitos:0,
-    pendingPrizes:[], paidPrizes:[], totalSalidas:0
+    pendingPrizes:[], paidPrizes:[],
+    totalSalidas:0
   });
   storeData();
   renderDay(dayKey);
@@ -1290,16 +1449,16 @@ function updateDayNoteField(input){
   storeData();
 }
 
-/********************************************************
- * 14) SALIDAS (modal)
- ********************************************************/
+/****************************************************
+ * 16) SALIDAS (MODAL)
+ ****************************************************/
 let currentModalDayKey="", currentModalIndex=0;
 function openPrizesModal(dayKey, idx){
   currentModalDayKey=dayKey;
   currentModalIndex=idx;
   document.getElementById("modalOverlay").style.display="flex";
   let pg=dataStore[dayKey].pages[idx];
-  document.getElementById("prizeModalPageNo").textContent= pg.pageNo;
+  document.getElementById("prizeModalPageNo").textContent=pg.pageNo;
   paintPrizeLists();
 }
 document.getElementById("closePrizeModal").addEventListener("click",()=>{
@@ -1314,9 +1473,10 @@ function paintPrizeLists(){
   pageData.pendingPrizes.forEach((v,i)=>{
     pendHTML+=`
       <tr>
-        <td><input type="number" max="900000"
-                   value="${v||0}"
-                   onchange="updatePrizeValue(${i},'pending',this.value)">
+        <td>
+          <input type="number" max="900000"
+                 value="${v||0}"
+                 onchange="updatePrizeValue(${i},'pending',this.value)">
         </td>
         <td>
           <button class="paidBtn" onclick="movePrize(${i},'pending')">→Pagado</button>
@@ -1328,9 +1488,10 @@ function paintPrizeLists(){
   pageData.paidPrizes.forEach((v,i)=>{
     paidHTML+=`
       <tr>
-        <td><input type="number" max="900000"
-                   value="${v||0}"
-                   onchange="updatePrizeValue(${i},'paid',this.value)">
+        <td>
+          <input type="number" max="900000"
+                 value="${v||0}"
+                 onchange="updatePrizeValue(${i},'paid',this.value)">
         </td>
         <td>
           <button class="pendingBtn" onclick="movePrize(${i},'paid')">→Pend</button>
@@ -1339,50 +1500,51 @@ function paintPrizeLists(){
       </tr>
     `;
   });
+
   pendingTbody.innerHTML=pendHTML;
   paidTbody.innerHTML=paidHTML;
 }
 function addPrizeRow(type){
-  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
-  if(type==="pending") pageData.pendingPrizes.push(0);
-  else pageData.paidPrizes.push(0);
+  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
+  if(type==="pending") pg.pendingPrizes.push(0);
+  else pg.paidPrizes.push(0);
   paintPrizeLists();
   recalcPageSalidas();
   storeData();
 }
-function updatePrizeValue(idx, type, valStr){
-  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
+function updatePrizeValue(idx,type,valStr){
+  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
   let n=parseFloat(valStr)||0;
-  if(n>900000) n=900000;
+  if(n>900000)n=900000;
   if(type==="pending"){
-    pageData.pendingPrizes[idx]=n;
+    pg.pendingPrizes[idx]=n;
   } else {
-    pageData.paidPrizes[idx]=n;
+    pg.paidPrizes[idx]=n;
   }
   recalcPageSalidas();
   storeData();
 }
-function deletePrize(idx, type){
-  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
+function deletePrize(idx,type){
+  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
   if(type==="pending"){
-    pageData.pendingPrizes.splice(idx,1);
+    pg.pendingPrizes.splice(idx,1);
   } else {
-    pageData.paidPrizes.splice(idx,1);
+    pg.paidPrizes.splice(idx,1);
   }
   paintPrizeLists();
   recalcPageSalidas();
   storeData();
 }
-function movePrize(idx, fromType){
-  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
+function movePrize(idx,fromType){
+  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
   if(fromType==="pending"){
-    let val=pageData.pendingPrizes[idx];
-    pageData.pendingPrizes.splice(idx,1);
-    pageData.paidPrizes.push(val);
+    let val= pg.pendingPrizes[idx];
+    pg.pendingPrizes.splice(idx,1);
+    pg.paidPrizes.push(val);
   } else {
-    let val=pageData.paidPrizes[idx];
-    pageData.paidPrizes.splice(idx,1);
-    pageData.pendingPrizes.push(val);
+    let val= pg.paidPrizes[idx];
+    pg.paidPrizes.splice(idx,1);
+    pg.pendingPrizes.push(val);
   }
   paintPrizeLists();
   recalcPageSalidas();
@@ -1392,14 +1554,14 @@ function recalcPageSalidas(){
   let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
   let sumPend= pg.pendingPrizes.reduce((acc,v)=>acc+v,0);
   let sumPaid= pg.paidPrizes.reduce((acc,v)=>acc+v,0);
-  pg.totalSalidas= sumPend+sumPaid;
+  pg.totalSalidas=(sumPend+sumPaid);
   storeData();
   renderDay(currentModalDayKey);
 }
 
-/********************************************************
- * 15) SEMANAL => updateWeeklyView
- ********************************************************/
+/****************************************************
+ * 17) SEMANAL => updateWeeklyView
+ ****************************************************/
 function updateWeeklyView(){
   let wCont=document.getElementById("weeklyContainer");
   if(!wCont) return;
@@ -1409,12 +1571,12 @@ function updateWeeklyView(){
 
   for(let i=1;i<=7;i++){
     let dk="day"+i;
-    let t= calcDayTotals(dk);
+    let t=calcDayTotals(dk);
     sumCent+= t.totalCentenas;
     sumPul += t.totalPulitos;
     sumSal += t.totalSalidas;
     sumVent+= t.totalVentas;
-    // Sum premios pendientes
+
     let dayPend=0;
     dataStore[dk].pages.forEach(pg=>{
       dayPend+= pg.pendingPrizes.reduce((acc,v)=>acc+v,0);
@@ -1428,19 +1590,18 @@ function updateWeeklyView(){
 
     dayTotals.push(t);
   }
+
   let c25=(sumCent*0.25);
   let p10=(sumPul*0.10);
   let totalCom=(c25+p10);
   let subTotal=(sumVent - (sumSal+totalCom));
-
   let caidas=dataStore.weekly.caidas||0;
   let adelanto=dataStore.weekly.adelantoOficina||0;
-  let balOfic= subTotal - caidas - adelanto;
+  let balOfic=(subTotal - caidas - adelanto);
   let boColor="#000";
-  if(balOfic>0) boColor="#f33";
-  else if(balOfic<0) boColor="#0f0";
-
+  if(balOfic>0) boColor="#f33"; else if(balOfic<0) boColor="#0f0";
   const dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+
   let html=`
     <table class="weekly-table">
       <thead>
@@ -1454,7 +1615,7 @@ function updateWeeklyView(){
       </thead>
       <tbody>
   `;
-  for(let i=0; i<7; i++){
+  for(let i=0;i<7;i++){
     html+=`
       <tr>
         <td>${dayNames[i]}</td>
@@ -1556,9 +1717,9 @@ function updateWeeklyView(){
   wCont.innerHTML=html;
 }
 
-/********************************************************
- * 16) updateWeeklyField
- ********************************************************/
+/****************************************************
+ * 18) updateWeeklyField
+ ****************************************************/
 function updateWeeklyField(field, valStr){
   let n=parseFloat(valStr.trim())||0;
   if(n>900000)n=900000;
@@ -1567,9 +1728,9 @@ function updateWeeklyField(field, valStr){
   updateWeeklyView();
 }
 
-/********************************************************
- * 17) storeData, resetDay, resetWeek
- ********************************************************/
+/****************************************************
+ * 19) storeData, resetDay, resetWeek, etc.
+ ****************************************************/
 function storeData(){
   localStorage.setItem("dailyReportNeonData2", JSON.stringify(dataStore));
 }
@@ -1577,16 +1738,17 @@ function sendDayToSheets(dayKey){
   alert("Guardando día: "+dayKey+" (placeholder).");
 }
 function resetDay(dayKey){
-  if(!confirm("¿Resetear todos los datos del día?")) return;
+  if(!confirm("¿Resetear este día por completo?")) return;
   dataStore[dayKey]={
     pages:[], overlook:0, overlookNote:"", overlookExtra:[],
     cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
     creditTracker:{ pending:[], paid:[] }
   };
-  for(let r=1; r<=20; r++){
+  for(let r=1;r<=20;r++){
     dataStore[dayKey].pages.push({
       pageNo:r, centenas:0, pulitos:0,
-      pendingPrizes:[], paidPrizes:[], totalSalidas:0
+      pendingPrizes:[], paidPrizes:[],
+      totalSalidas:0
     });
   }
   storeData();
@@ -1596,56 +1758,57 @@ function sendWeekToSheets(){
   alert("Guardando la semana (placeholder).");
 }
 function resetWeek(){
-  if(!confirm("¿Resetear toda la semana?")) return;
+  if(!confirm("¿Resetear TODA la semana?")) return;
   for(let i=1;i<=7;i++){
     let dk="day"+i;
     dataStore[dk]={
       pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-      cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
-      creditTracker:{ pending:[], paid:[]}
+      cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
+      creditTracker:{ pending:[], paid:[] }
     };
-    for(let r=1; r<=20;r++){
+    for(let r=1;r<=20;r++){
       dataStore[dk].pages.push({
         pageNo:r, centenas:0, pulitos:0,
-        pendingPrizes:[], paidPrizes:[], totalSalidas:0
+        pendingPrizes:[], paidPrizes:[],
+        totalSalidas:0
       });
     }
   }
-  dataStore.weekly={ caidas:0, adelantoOficina:0};
+  dataStore.weekly={ caidas:0, adelantoOficina:0 };
   storeData();
   renderAllDays();
 }
 
-/********************************************************
- * 18) “Realizar Captura” => html2canvas
- ********************************************************/
+/****************************************************
+ * 20) “Realizar Captura” => html2canvas
+ ****************************************************/
 document.getElementById("btnExportPDF").addEventListener("click",()=>{
   let activeTab=document.querySelector(".tabContent.active");
   if(!activeTab){
-    alert("No hay pestaña activa.");
+    alert("No hay pestaña activa para capturar.");
     return;
   }
   let accordions=activeTab.querySelectorAll(".accordion");
-  accordions.forEach(a=>a.style.display="none");
+  accordions.forEach(a=> a.style.display="none");
 
   setTimeout(()=>{
     html2canvas(activeTab,{ scale:2, useCORS:true }).then(canvas=>{
-      accordions.forEach(a=>a.style.display="");
+      accordions.forEach(a=> a.style.display="");
       let link=document.createElement("a");
       link.download="Reporte.png";
-      link.href=canvas.toDataURL("image/png");
+      link.href= canvas.toDataURL("image/png");
       link.click();
     }).catch(err=>{
       console.error(err);
       alert("Error al generar la captura.");
-      accordions.forEach(a=>a.style.display="");
+      accordions.forEach(a=> a.style.display="");
     });
   },200);
 });
 
-/********************************************************
- * 19) EXPORT EXCEL => CSV (Centenas/Pulitos)
- ********************************************************/
+/****************************************************
+ * 21) EXPORT EXCEL => CSV
+ ****************************************************/
 document.getElementById("btnExportExcel").addEventListener("click",()=>{
   let activeTab=document.querySelector(".tabContent.active");
   if(!activeTab){
@@ -1654,7 +1817,7 @@ document.getElementById("btnExportExcel").addEventListener("click",()=>{
   }
   let tabId=activeTab.id;
   if(!tabId.startsWith("tabDay")){
-    alert("Solo exporta el reporte diario (Centenas/Pulitos).");
+    alert("Esta función exporta el reporte diario (Centenas/Pulitos).");
     return;
   }
   let dayKey="day"+ tabId.replace("tabDay","");
@@ -1667,8 +1830,8 @@ document.getElementById("btnExportExcel").addEventListener("click",()=>{
   dayData.pages.forEach(p=>{
     lines.push(`${p.pageNo},${p.centenas},${p.pulitos}`);
   });
-  let csv= lines.join("\n");
-  let blob=new Blob([csv],{ type:"text/csv" });
+  let csv=lines.join("\n");
+  let blob=new Blob([csv],{type:"text/csv"});
   let url=URL.createObjectURL(blob);
 
   let a=document.createElement("a");
@@ -1678,9 +1841,9 @@ document.getElementById("btnExportExcel").addEventListener("click",()=>{
   URL.revokeObjectURL(url);
 });
 
-/********************************************************
- * 20) TAB/ENTER NAVIGATION (Shift+Tab)
- ********************************************************/
+/****************************************************
+ * 22) TAB/ENTER NAVIGATION
+ ****************************************************/
 function addTabKeyNavigation(){
   document.addEventListener("keydown",(e)=>{
     if(e.key!=="Tab" && e.key!=="Enter") return;
@@ -1690,13 +1853,13 @@ function addTabKeyNavigation(){
 
     e.preventDefault();
     let dayKey=el.dataset.day;
-    let inputs= Array.from(document.querySelectorAll(`#${dayKey}Container input[type='number']`));
-    let idx=inputs.indexOf(el);
+    let inputs=Array.from(document.querySelectorAll(`#${dayKey}Container input[type='number']`));
+    let idx= inputs.indexOf(el);
     if(idx<0) return;
 
-    let step=(e.shiftKey)?-1:+1;
-    let nextIdx=idx+step;
-    if(nextIdx<0) nextIdx=inputs.length-1;
+    let step=(e.shiftKey)? -1 : +1;
+    let nextIdx= idx+step;
+    if(nextIdx<0) nextIdx= inputs.length-1;
     if(nextIdx>=inputs.length) nextIdx=0;
 
     inputs[nextIdx].focus();
