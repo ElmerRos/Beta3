@@ -4,12 +4,8 @@
   <meta charset="UTF-8">
   <title>Reporte Diario y Semanal (Neón/Dark)</title>
   <style>
-    /* ================== RESET & BASE ================== */
-    * {
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0;
-    }
+    /* =================== RESET & BASE =================== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --main-bg: #111;
       --main-text: #eee;
@@ -40,7 +36,7 @@
     }
     .hidden { display: none !important; }
 
-    /* =========== MODO CLARO =========== */
+    /* =================== MODO CLARO =================== */
     body.light-mode {
       background: var(--light-bg);
       color: var(--light-text);
@@ -110,10 +106,6 @@
       border-color: var(--light-accent);
       box-shadow: none;
     }
-    /* Título “Totales” en modo claro => color oscuro */
-    body.light-mode .totals-section h3 {
-      color: #000 !important; 
-    }
     body.light-mode input[type="number"],
     body.light-mode input[type="text"] {
       background: #fff;
@@ -132,6 +124,7 @@
     body.light-mode .pageBtn:hover {
       background: #ff6677;
     }
+
     /* Acordeón en modo claro */
     body.light-mode .accordion,
     body.light-mode .accordion-header,
@@ -141,26 +134,33 @@
       border-color: var(--light-accent) !important;
       text-shadow: none !important;
     }
+    body.light-mode .accordion-content h3,
+    body.light-mode .accordion-content h4 {
+      color: inherit !important;
+      text-shadow: none !important;
+    }
 
-    /* =========== LAYOUT PRINCIPAL =========== */
+    /* =================== LAYOUT PRINCIPAL =================== */
     .container {
       display: flex;
-      width: 100vw; 
+      width: 100vw;
       height: 100vh;
     }
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button {
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button {
       -webkit-appearance: none;
     }
-    input[type=number] { -moz-appearance: textfield; }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
 
-    /* PIN OVERLAY */
+    /* =================== OVERLAY PIN =================== */
     .pin-overlay {
-      position: fixed; 
+      position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.8);
-      display: flex; 
-      justify-content: center; 
+      display: flex;
+      justify-content: center;
       align-items: center;
       z-index: 999999;
     }
@@ -190,7 +190,7 @@
       border: 2px solid var(--accent-color);
       border-radius: 8px;
       padding: 0.5rem;
-      box-shadow: none; /* para que se vea texto en la captura */
+      box-shadow: inset 0 0 5px var(--accent-color);
     }
     .pin-dialog button {
       font-size: 1.2rem;
@@ -207,12 +207,12 @@
       color: #000;
     }
 
-    /* =========== SIDEBAR (TABS) =========== */
+    /* =================== SIDEBAR (TABS) =================== */
     .sidebar {
       width: 260px;
       background: #000;
       border-right: 2px solid var(--accent-color);
-      display: flex; 
+      display: flex;
       flex-direction: column;
       overflow-y: auto;
       align-items: stretch;
@@ -241,7 +241,7 @@
       font-weight: bold;
     }
 
-    /* =========== MAIN CONTENT =========== */
+    /* =================== MAIN CONTENT =================== */
     .main-content {
       flex: 1;
       display: flex;
@@ -254,6 +254,11 @@
       padding: 0.5rem 1rem;
       background: #000;
       border-bottom: 2px solid var(--accent-color);
+    }
+    .top-bar-left, .top-bar-right {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
     }
     .btnNeon {
       background: #000;
@@ -286,7 +291,9 @@
       box-shadow: 0 0 10px var(--lock-color);
       transition: transform 0.2s;
     }
-    .btnLockDay:hover { transform: scale(1.1); }
+    .btnLockDay:hover {
+      transform: scale(1.1);
+    }
     .btnLockDay.locked {
       background: var(--lock-color);
       color: #000;
@@ -300,7 +307,7 @@
       background: #000;
     }
 
-    /* =========== TAB CONTENT =========== */
+    /* =================== TAB CONTENT =================== */
     .tabContent {
       display: none;
       padding: 1rem;
@@ -314,7 +321,7 @@
       display: block;
     }
 
-    /* =========== TABLA PÁGINAS (DIARIO) =========== */
+    /* =================== TABLA PÁGINAS (DIARIO) =================== */
     .report-table {
       width: 100%;
       border-collapse: collapse;
@@ -323,7 +330,7 @@
     }
     .report-table thead th,
     .report-table tbody td {
-      font-size: 1.4rem; /* un poco más grande */
+      font-size: 1.3rem;
       text-align: center;
       border-bottom: 1px solid #444;
       vertical-align: middle;
@@ -336,31 +343,24 @@
       text-shadow: 0 0 3px var(--accent-color);
     }
 
-    /* Para que html2canvas muestre el texto */
-    input, textarea, select {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-      color: var(--accent-color)!important;
-    }
     input[type="number"], 
     input[type="text"] {
       background: #000;
-      font-size: 1.3rem; /* Grande */
-      color: var(--accent-color)!important;
+      color: var(--accent-color);
       border: 1px solid var(--accent-color);
       border-radius: 4px;
       text-align: right;
-      box-shadow: none; /* Quitar shadow => evitar bug en capturas */
-      width: 90%; /* Dejar que se alinee en la celda */
+      box-shadow: inset 0 0 5px var(--accent-color);
+      width: 120px;
+      font-size: 1rem;
+      padding: 0.3rem;
       margin: 2px 0;
-      padding: 0.4rem;
     }
     input[type="number"]:focus, 
     input[type="text"]:focus {
       outline: none;
       border-color: #fff;
     }
-
     .pageBtn {
       background: var(--danger-color);
       color: #fff;
@@ -389,42 +389,10 @@
       color: var(--accent-color);
       margin-bottom: 1rem;
       text-shadow: 0 0 3px var(--accent-color);
-      font-size: 1.3rem;
+      font-size: 1.2rem;
     }
 
-    .form-group {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
-    .form-group label {
-      width: 150px;
-      font-weight: bold;
-      margin-right: 0.5rem;
-      text-shadow: none;
-    }
-
-    /* =========== TABLA SEMANAL =========== */
-    .weekly-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-    }
-    .weekly-table thead th,
-    .weekly-table tbody td {
-      font-size: 1.3rem;
-      text-align: center;
-      border-bottom: 1px solid #444;
-      padding: 0.5rem;
-    }
-    .weekly-table thead th {
-      background: rgba(0,0,0,0.4);
-      color: var(--accent-color);
-      border-bottom: 2px solid var(--accent-color);
-      text-shadow: 0 0 3px var(--accent-color);
-    }
-
-    /* =========== MODAL SALIDAS =========== */
+    /* =================== MODAL SALIDAS =================== */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -475,13 +443,13 @@
     }
     .modal table input {
       width: 100px;
-      font-size: 1.1rem;
+      font-size: 1rem;
       background: #000;
-      color: var(--accent-color)!important;
+      color: var(--accent-color);
       border: 1px solid var(--accent-color);
       border-radius: 4px;
       text-align: right;
-      box-shadow: none;
+      box-shadow: inset 0 0 5px var(--accent-color);
     }
     .addPrizeBtn {
       background: #000;
@@ -515,7 +483,7 @@
       box-shadow: 0 0 3px var(--purple-color);
     }
 
-    /* =========== MANUAL CONTENT =========== */
+    /* =================== OTRAS TABS =================== */
     .manual-content {
       background: #000;
       border: 2px solid var(--accent-color);
@@ -573,12 +541,11 @@
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-dialog">
     <h2>Ingrese PIN (4 dígitos)</h2>
-    <input type="password" id="pinInput" maxlength="4">
+    <input type="password" id="pinInput" maxlength="4" />
     <button id="btnPinSubmit">Acceder</button>
   </div>
 </div>
 
-<!-- CONTENEDOR PRINCIPAL -->
 <div class="container hidden" id="mainContainer">
   <!-- SIDEBAR -->
   <div class="sidebar">
@@ -607,9 +574,12 @@
       </div>
     </div>
 
-    <!-- SCROLL AREA (Aquí van los .tabContent) -->
+    <!-- SCROLL AREA -->
     <div class="scroll-area">
-      <!-- Ejemplo: Día 1 -->
+      <!-- DIA 1..7 + SEMANAL + PREMIO + MANUAL -->
+      <!-- (igual que tu snippet “tabs”) -->
+
+      <!-- DIA 1 -->
       <div id="tabDay1" class="tabContent active">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <h2 id="titleDay1">Reporte Diario - Lunes - 01/Ene</h2>
@@ -620,16 +590,16 @@
             <button class="btnLockDay" id="lockDay1Btn" data-day="day1"><i>🔓</i></button>
           </div>
         </div>
-        <div style="margin:0.5rem 0;">
+        <div style="margin: 0.5rem 0;">
           <label style="font-weight:bold;">Sucursal:</label>
-          <input type="text" id="sucursalGlobal1" class="sucursalGlobalInput" 
+          <input type="text" id="sucursalGlobal1" class="sucursalGlobalInput"
                  style="width:250px;padding:0.4rem;"
                  oninput="updateSucursal(this.value)">
         </div>
         <div id="day1Container"></div>
       </div>
 
-      <!-- Repetir para day2..day7, tabWeekly, tabPremios, tabManual -->
+      <!-- DIA 2 -->
       <div id="tabDay2" class="tabContent">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <h2 id="titleDay2">Reporte Diario - Martes - 02/Ene</h2>
@@ -640,7 +610,7 @@
             <button class="btnLockDay" id="lockDay2Btn" data-day="day2"><i>🔓</i></button>
           </div>
         </div>
-        <div style="margin:0.5rem 0;">
+        <div style="margin: 0.5rem 0;">
           <label style="font-weight:bold;">Sucursal:</label>
           <input type="text" id="sucursalGlobal2" class="sucursalGlobalInput"
                  style="width:250px;padding:0.4rem;"
@@ -648,7 +618,106 @@
         </div>
         <div id="day2Container"></div>
       </div>
-      <!-- ... día3..día7 ... -->
+
+      <!-- DIA 3 -->
+      <div id="tabDay3" class="tabContent">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h2 id="titleDay3">Reporte Diario - Miércoles - 03/Ene</h2>
+          <div style="display:flex;gap:1rem;">
+            <button class="btnNeon" onclick="sendDayToSheets('day3')">Guardar Día</button>
+            <button class="btnNeon" onclick="resetDay('day3')">Reset Día</button>
+            <button class="btnNeon" onclick="addPageRow('day3')">+ Página</button>
+            <button class="btnLockDay" id="lockDay3Btn" data-day="day3"><i>🔓</i></button>
+          </div>
+        </div>
+        <div style="margin: 0.5rem 0;">
+          <label style="font-weight:bold;">Sucursal:</label>
+          <input type="text" id="sucursalGlobal3" class="sucursalGlobalInput"
+                 style="width:250px;padding:0.4rem;"
+                 oninput="updateSucursal(this.value)">
+        </div>
+        <div id="day3Container"></div>
+      </div>
+
+      <!-- DIA 4 -->
+      <div id="tabDay4" class="tabContent">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h2 id="titleDay4">Reporte Diario - Jueves - 04/Ene</h2>
+          <div style="display:flex;gap:1rem;">
+            <button class="btnNeon" onclick="sendDayToSheets('day4')">Guardar Día</button>
+            <button class="btnNeon" onclick="resetDay('day4')">Reset Día</button>
+            <button class="btnNeon" onclick="addPageRow('day4')">+ Página</button>
+            <button class="btnLockDay" id="lockDay4Btn" data-day="day4"><i>🔓</i></button>
+          </div>
+        </div>
+        <div style="margin: 0.5rem 0;">
+          <label style="font-weight:bold;">Sucursal:</label>
+          <input type="text" id="sucursalGlobal4" class="sucursalGlobalInput"
+                 style="width:250px;padding:0.4rem;"
+                 oninput="updateSucursal(this.value)">
+        </div>
+        <div id="day4Container"></div>
+      </div>
+
+      <!-- DIA 5 -->
+      <div id="tabDay5" class="tabContent">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h2 id="titleDay5">Reporte Diario - Viernes - 05/Ene</h2>
+          <div style="display:flex;gap:1rem;">
+            <button class="btnNeon" onclick="sendDayToSheets('day5')">Guardar Día</button>
+            <button class="btnNeon" onclick="resetDay('day5')">Reset Día</button>
+            <button class="btnNeon" onclick="addPageRow('day5')">+ Página</button>
+            <button class="btnLockDay" id="lockDay5Btn" data-day="day5"><i>🔓</i></button>
+          </div>
+        </div>
+        <div style="margin: 0.5rem 0;">
+          <label style="font-weight:bold;">Sucursal:</label>
+          <input type="text" id="sucursalGlobal5" class="sucursalGlobalInput"
+                 style="width:250px;padding:0.4rem;"
+                 oninput="updateSucursal(this.value)">
+        </div>
+        <div id="day5Container"></div>
+      </div>
+
+      <!-- DIA 6 -->
+      <div id="tabDay6" class="tabContent">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h2 id="titleDay6">Reporte Diario - Sábado - 06/Ene</h2>
+          <div style="display:flex;gap:1rem;">
+            <button class="btnNeon" onclick="sendDayToSheets('day6')">Guardar Día</button>
+            <button class="btnNeon" onclick="resetDay('day6')">Reset Día</button>
+            <button class="btnNeon" onclick="addPageRow('day6')">+ Página</button>
+            <button class="btnLockDay" id="lockDay6Btn" data-day="day6"><i>🔓</i></button>
+          </div>
+        </div>
+        <div style="margin: 0.5rem 0;">
+          <label style="font-weight:bold;">Sucursal:</label>
+          <input type="text" id="sucursalGlobal6" class="sucursalGlobalInput"
+                 style="width:250px;padding:0.4rem;"
+                 oninput="updateSucursal(this.value)">
+        </div>
+        <div id="day6Container"></div>
+      </div>
+
+      <!-- DIA 7 -->
+      <div id="tabDay7" class="tabContent">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <h2 id="titleDay7">Reporte Diario - Domingo - 07/Ene</h2>
+          <div style="display:flex;gap:1rem;">
+            <button class="btnNeon" onclick="sendDayToSheets('day7')">Guardar Día</button>
+            <button class="btnNeon" onclick="resetDay('day7')">Reset Día</button>
+            <button class="btnNeon" onclick="addPageRow('day7')">+ Página</button>
+            <button class="btnLockDay" id="lockDay7Btn" data-day="day7"><i>🔓</i></button>
+          </div>
+        </div>
+        <div style="margin: 0.5rem 0;">
+          <label style="font-weight:bold;">Sucursal:</label>
+          <input type="text" id="sucursalGlobal7" class="sucursalGlobalInput"
+                 style="width:250px;padding:0.4rem;"
+                 oninput="updateSucursal(this.value)">
+        </div>
+        <div id="day7Container"></div>
+      </div>
 
       <!-- TAB SEMANAL -->
       <div id="tabWeekly" class="tabContent">
@@ -656,12 +725,13 @@
           <h2>Resumen Semanal</h2>
           <div style="display:flex;gap:1rem;">
             <button class="btnNeon" onclick="sendWeekToSheets()">Guardar Semana</button>
+            <button class="btnNeon" onclick="updateWeeklyView()">Refresh</button>
             <button class="btnNeon" onclick="resetWeek()">Reset Semana</button>
             <button class="btnLockDay" id="lockAllBtn"><i>🔒</i></button>
             <button class="btnLockDay" id="unlockAllBtn"><i>🔓</i></button>
           </div>
         </div>
-        <div style="margin:0.5rem 0;">
+        <div style="margin: 0.5rem 0;">
           <label style="font-weight:bold;">Sucursal:</label>
           <input type="text" id="sucursalGlobalW" class="sucursalGlobalInput"
                  style="width:250px;padding:0.4rem;"
@@ -670,11 +740,11 @@
         <div id="weeklyContainer"></div>
       </div>
 
-      <!-- TAB CÁLCULO PREMIOS -->
+      <!-- TAB CÁLCULO DE PREMIOS (placeholder) -->
       <div id="tabPremios" class="tabContent">
         <div class="tabPremiosContent">
           <h2 style="margin-bottom:1rem;">Cálculo Premios</h2>
-          <p>(Placeholder)</p>
+          <p>Aquí tu lógica de cálculo de premios global...</p>
         </div>
       </div>
 
@@ -682,14 +752,19 @@
       <div id="tabManual" class="tabContent">
         <h2>Manual / Ayuda</h2>
         <div class="manual-content">
-          <p>Aquí tu ayuda...</p>
+          <h3>Nueve pestañas totales (+1 de Premios):</h3>
+          <p>1–7: Días de la semana<br/>8: Semanal<br/>9: Cálculo Premios<br/>10: Manual</p>
+          <p>PIN de acceso 8325. Se almacena en localStorage para no volverlo a pedir.</p>
+          <p>Botones “Reset”, “Guardar Día”, “Realizar Captura” y “Export Excel”. Data en localStorage.</p>
+          <p>Campo “Sucursal” se replica a todos los días y al semanal.</p>
+          <p>Balance: Ventas - Salidas - (Cash+Sucursal+Crédito+Descuento+Tickets) + Pend.</p>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MODAL SALIDAS (Pend/Pag) -->
+<!-- MODAL DE SALIDAS (Pend/Pag) -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <button class="closeModal" id="closePrizeModal">X</button>
@@ -697,80 +772,100 @@
     <div style="display:flex;gap:1rem;flex-wrap:wrap;">
       <div style="flex:1; min-width:150px;">
         <h4 style="color:var(--purple-color); text-align:center;">Pendientes</h4>
-        <table><tbody id="pendingTbody"></tbody></table>
+        <table>
+          <tbody id="pendingTbody"></tbody>
+        </table>
         <button class="addPrizeBtn" onclick="addPrizeRow('pending')">+ Pendiente</button>
       </div>
       <div style="flex:1; min-width:150px;">
         <h4 style="color:var(--danger-color); text-align:center;">Pagados</h4>
-        <table><tbody id="paidTbody"></tbody></table>
-        <button class="addPrizeBtn" 
-          style="color:var(--danger-color);border-color:var(--danger-color);
-                 box-shadow:0 0 5px var(--danger-color);" 
-          onclick="addPrizeRow('paid')">+ Pagado
-        </button>
+        <table>
+          <tbody id="paidTbody"></tbody>
+        </table>
+        <button class="addPrizeBtn"
+          style="color:var(--danger-color); border-color:var(--danger-color);
+                 box-shadow:0 0 5px var(--danger-color);"
+          onclick="addPrizeRow('paid')">+ Pagado</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Librería html2canvas -->
+<!-- Librería html2canvas para Captura -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
 /****************************************************
- * 1) PIN + DATA
+ * 0) CONFIGURACIONES GLOBALES
  ****************************************************/
-const REAL_PIN="8325"; 
-let lockedDays={};
-let lockedAll=false;
-let isDarkMode=true;
-let pinValidated=(localStorage.getItem("pinValidated")==="true");
-let dataStore={
+const REAL_PIN = "8325";
+let lockedDays = {};
+let lockedAll = false;
+let isDarkMode = true;
+let pinValidated = (localStorage.getItem("pinValidated")==="true");
+
+// Estructura con Overlook, Créditos, etc.
+let dataStore = {
   globalSucursal:"",
   day1:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-         cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{pending:[],paid:[]}
+         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+         creditTracker:{ pending:[], paid:[] }
        },
   day2:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-         cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{pending:[],paid:[]}
+         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+         creditTracker:{ pending:[], paid:[] }
        },
   day3:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-         cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{pending:[],paid:[]}
+         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+         creditTracker:{ pending:[], paid:[] }
        },
   day4:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-         cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{pending:[],paid:[]}
+         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+         creditTracker:{ pending:[], paid:[] }
        },
   day5:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-         cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{pending:[],paid:[]}
+         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+         creditTracker:{ pending:[], paid:[] }
        },
   day6:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-         cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{pending:[],paid:[]}
+         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+         creditTracker:{ pending:[], paid:[] }
        },
   day7:{ pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-         cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-         creditTracker:{pending:[],paid:[]}
+         cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+         creditTracker:{ pending:[], paid:[] }
        },
-  weekly:{caidas:0, adelantoOficina:0}
+  weekly:{ caidas:0, adelantoOficina:0 }
 };
 
-let accordionStates={};
+let accordionStates={};  // Para abrir/cerrar
+
+const dayMappings = [
+  {key:"day1", label:"Lunes", offset:0},
+  {key:"day2", label:"Martes", offset:1},
+  {key:"day3", label:"Miércoles", offset:2},
+  {key:"day4", label:"Jueves", offset:3},
+  {key:"day5", label:"Viernes", offset:4},
+  {key:"day6", label:"Sábado", offset:5},
+  {key:"day7", label:"Domingo", offset:6}
+];
 
 /****************************************************
- * 2) DOMContentLoaded
+ * 1) DOMContentLoaded => init 
  ****************************************************/
-window.addEventListener("DOMContentLoaded",()=>{
-  let stored=localStorage.getItem("dailyReportNeonData2");
-  if(stored) dataStore=JSON.parse(stored);
+window.addEventListener("DOMContentLoaded", ()=>{
 
-  for(let i=1;i<=7;i++){
-    if(lockedDays["day"+i]===undefined) lockedDays["day"+i]=false;
+  // Cargar data local
+  let stored = localStorage.getItem("dailyReportNeonData2");
+  if(stored){
+    dataStore = JSON.parse(stored);
   }
-  // Generar 20 filas
+  // lockedDays
+  for(let i=1;i<=7;i++){
+    if(lockedDays["day"+i]===undefined) lockedDays["day"+i]= false;
+  }
+
+  // Generar 20 filas por día si están vacías
   for(let i=1;i<=7;i++){
     let dk="day"+i;
     if(!dataStore[dk].pages) dataStore[dk].pages=[];
@@ -785,10 +880,29 @@ window.addEventListener("DOMContentLoaded",()=>{
     }
     if(!dataStore[dk].overlookExtra) dataStore[dk].overlookExtra=[];
   }
+
+  // PIN
   if(pinValidated){
     document.getElementById("pinOverlay").style.display="none";
     document.getElementById("mainContainer").classList.remove("hidden");
   }
+
+  // Ajustar Fechas en la sidebar 
+  let startOfWeek=findMondayOfCurrentWeek();
+  dayMappings.forEach((dm,index)=>{
+    let thisDate=new Date(startOfWeek.getTime());
+    thisDate.setDate(thisDate.getDate()+dm.offset);
+    let dStrTab=formatDateMMDDYYYY(thisDate);
+    let dStrTitle=formatDateDDMMM(thisDate);
+
+    let btn=document.querySelector(`.sidebar button[data-tab="tabDay${index+1}"]`);
+    if(btn) btn.textContent=`${dm.label} (${dStrTab})`;
+
+    let h2title=document.getElementById(`titleDay${index+1}`);
+    if(h2title){
+      h2title.textContent= `Reporte Diario - ${dm.label} - ${dStrTitle}`;
+    }
+  });
 
   initPinOverlay();
   initTabs();
@@ -797,19 +911,39 @@ window.addEventListener("DOMContentLoaded",()=>{
   renderAllDays();
   updateWeeklyView();
   addTabKeyNavigation();
+
+  // Sucursal global => reflejar
   applySucursalToAllFields(dataStore.globalSucursal);
 });
 
+function findMondayOfCurrentWeek(){
+  let now=new Date();
+  let dayOfWeek=now.getDay(); // Sunday=0
+  let diff=(dayOfWeek+6)%7;
+  let monday=new Date(now);
+  monday.setDate(now.getDate()-diff);
+  return monday;
+}
+function formatDateMMDDYYYY(dt){
+  let mm=(dt.getMonth()+1).toString().padStart(2,"0");
+  let dd=dt.getDate().toString().padStart(2,"0");
+  let yyyy=dt.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+function formatDateDDMMM(dt){
+  const day=dt.getDate().toString().padStart(2,"0");
+  const monthAbbrs=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  let m=monthAbbrs[ dt.getMonth() ]||"???";
+  return `${day}/${m}`;
+}
+
 /****************************************************
- * 3) initPinOverlay => filtrar dígitos + ENTER
+ * 2) initPinOverlay => filtrar dígitos
  ****************************************************/
 function initPinOverlay(){
-  const pinInput=document.getElementById("pinInput");
-  const btnPinSubmit=document.getElementById("btnPinSubmit");
-
-  btnPinSubmit.addEventListener("click", ()=>{
-    let val=pinInput.value.trim();
-    val= val.replace(/\D/g,"");
+  document.getElementById("btnPinSubmit").addEventListener("click", ()=>{
+    let val=document.getElementById("pinInput").value.trim();
+    val= val.replace(/\D/g,""); 
     if(val===REAL_PIN){
       localStorage.setItem("pinValidated","true");
       pinValidated=true;
@@ -819,38 +953,30 @@ function initPinOverlay(){
       alert("PIN incorrecto");
     }
   });
-
-  // Soporte ENTER
-  pinInput.addEventListener("keydown",(e)=>{
-    if(e.key==="Enter"){
-      btnPinSubmit.click();
-    }
-  });
 }
 
 /****************************************************
- * 4) initTabs
+ * 3) initTabs => Manejo de tabs
  ****************************************************/
 function initTabs(){
   let tabBtns=document.querySelectorAll(".sidebar .tabBtn");
   tabBtns.forEach(btn=>{
     btn.addEventListener("click",(e)=>{
-      tabBtns.forEach(b=> b.classList.remove("active"));
+      tabBtns.forEach(b=>b.classList.remove("active"));
       e.currentTarget.classList.add("active");
       let targetId=e.currentTarget.dataset.tab;
-      document.querySelectorAll(".tabContent").forEach(tc=> tc.classList.remove("active"));
+      document.querySelectorAll(".tabContent").forEach(tc=>tc.classList.remove("active"));
       document.getElementById(targetId).classList.add("active");
     });
   });
 }
 
 /****************************************************
- * 5) initLockButtons
+ * 4) initLockButtons => candados 
  ****************************************************/
 function initLockButtons(){
   for(let i=1;i<=7;i++){
-    let b=document.getElementById(`lockDay${i}Btn`);
-    if(!b) continue;
+    let b=document.getElementById("lockDay"+i+"Btn");
     b.addEventListener("click",(ev)=>{
       let dk=ev.currentTarget.dataset.day;
       lockedDays[dk]=!lockedDays[dk];
@@ -859,36 +985,30 @@ function initLockButtons(){
       renderDay(dk);
     });
   }
-  const lockAllBtn=document.getElementById("lockAllBtn");
-  const unlockAllBtn=document.getElementById("unlockAllBtn");
-  if(lockAllBtn) lockAllBtn.addEventListener("click",()=>{
+  document.getElementById("lockAllBtn").addEventListener("click",()=>{
     lockedAll=true;
     for(let i=1;i<=7;i++){
       lockedDays["day"+i]=true;
       let b=document.getElementById(`lockDay${i}Btn`);
-      if(b){
-        b.classList.add("locked");
-        b.innerHTML="<i>🔒</i>";
-      }
+      b.classList.add("locked");
+      b.innerHTML="<i>🔒</i>";
     }
     renderAllDays();
   });
-  if(unlockAllBtn) unlockAllBtn.addEventListener("click",()=>{
+  document.getElementById("unlockAllBtn").addEventListener("click",()=>{
     lockedAll=false;
     for(let i=1;i<=7;i++){
       lockedDays["day"+i]=false;
       let b=document.getElementById(`lockDay${i}Btn`);
-      if(b){
-        b.classList.remove("locked");
-        b.innerHTML="<i>🔓</i>";
-      }
+      b.classList.remove("locked");
+      b.innerHTML="<i>🔓</i>";
     }
     renderAllDays();
   });
 }
 
 /****************************************************
- * 6) initToggleTheme => Dark/Light
+ * 5) initToggleTheme => Dark/Light 
  ****************************************************/
 function initToggleTheme(){
   document.getElementById("btnToggleTheme").addEventListener("click",()=>{
@@ -902,172 +1022,161 @@ function initToggleTheme(){
 }
 
 /****************************************************
- * 7) Sucursal Global => update & replicate
+ * 6) Sucursal global => update / replicate
  ****************************************************/
 function updateSucursal(val){
-  dataStore.globalSucursal= val;
+  dataStore.globalSucursal=val;
   storeData();
   applySucursalToAllFields(val);
-  // Actualizar en tiempo real
-  renderAllDays();
-  updateWeeklyView();
 }
 function applySucursalToAllFields(val){
   document.querySelectorAll(".sucursalGlobalInput").forEach(inp=>{
-    if(inp.value!==val) inp.value= val;
+    if(inp.value!==val){
+      inp.value=val;
+    }
   });
 }
 
 /****************************************************
- * 8) RenderAllDays + RenderDay
+ * 7) Render Días => renderAllDays + renderDay
  ****************************************************/
 function renderAllDays(){
   for(let i=1;i<=7;i++){
-    renderDay(`day${i}`);
+    renderDay("day"+i);
   }
   storeData();
-  updateWeeklyView();
 }
 function renderDay(dayKey){
-  let container=document.getElementById(`${dayKey}Container`);
+  let container=document.getElementById(dayKey+"Container");
   if(!container) return;
   let dayData=dataStore[dayKey];
   let locked=(lockedDays[dayKey]||lockedAll);
 
-  // ... (Aquí la misma lógica de la tabla, Overlook, etc.)
-  // Por brevedad, lo omitimos, pero igual que antes:
-
-  let html= buildDayHtml(dayKey, dayData, locked); 
-  container.innerHTML= html;
-}
-
-/** buildDayHtml => para no repetir en texto largo */
-function buildDayHtml(dayKey, dayData, locked){
-  // Genera la tabla, Overlook, Cuadre, etc. (igual al snippet anterior).
-  // Ahorraremos la verborrea, pero sin error de sintaxis.
-  // ...
-
-  // 1) Tabla Páginas
-  let tbl=`
-  <table class="report-table">
-    <thead>
-      <tr>
-        <th>#Página</th>
-        <th>Centenas</th>
-        <th>Pulitos</th>
-        <th>Salidas</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>
+  // --- Tabla de páginas ---
+  let html=`
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>#Página</th>
+          <th>Centenas</th>
+          <th>Pulitos</th>
+          <th>Salidas</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
   `;
   dayData.pages.forEach((p,idx)=>{
     let cVal=(p.centenas||"");
     let puVal=(p.pulitos||"");
-    let sumPend=(p.pendingPrizes||[]).reduce((acc,v)=>acc+v,0);
-    let hasPend=(sumPend>0);
-    let salColor= hasPend?"var(--purple-color)":"var(--danger-color)";
-    let salVal=p.totalSalidas.toFixed(2);
     let totalCP=(p.centenas+p.pulitos);
-    tbl+=`
+    let sumPend=p.pendingPrizes.reduce((acc,v)=>acc+v,0);
+    let hasPend=(sumPend>0);
+    let salidasColor= hasPend?"var(--purple-color)":"var(--danger-color)";
+    let salidasVal=p.totalSalidas.toFixed(2);
+
+    html+=`
       <tr>
         <td>
-          <button class="pageBtn" onclick="deletePageRow('${dayKey}',${idx})"
-            ${locked?'disabled':''}>${p.pageNo}</button>
+          <button class="pageBtn" onclick="deletePageRow('${dayKey}',${idx})" ${locked?'disabled':''}>${p.pageNo}</button>
         </td>
         <td>
-          <input type="number" data-day="${dayKey}" data-pindex="${idx}" data-field="centenas"
-                 max="900000" value="${cVal}"
+          <input type="number" max="900000"
+                 data-day="${dayKey}" data-pindex="${idx}" data-field="centenas"
+                 value="${cVal}"
                  onchange="updatePageField(this)"
                  ${locked?'disabled':''}>
         </td>
         <td>
-          <input type="number" data-day="${dayKey}" data-pindex="${idx}" data-field="pulitos"
-                 max="900000" value="${puVal}"
+          <input type="number" max="900000"
+                 data-day="${dayKey}" data-pindex="${idx}" data-field="pulitos"
+                 value="${puVal}"
                  onchange="updatePageField(this)"
                  ${locked?'disabled':''}>
         </td>
-        <td style="cursor:pointer;color:${salColor};"
+        <td style="cursor:pointer;color:${salidasColor};"
             onclick="openPrizesModal('${dayKey}',${idx})">
-          $${salVal}
+          $${salidasVal}
         </td>
         <td>$${totalCP.toFixed(2)}</td>
       </tr>
     `;
   });
-  tbl+=`</tbody></table>`;
+  html+="</tbody></table>";
 
-  // 2) NetBalance
-  let totalCredPend= dayData.creditTracker.pending
-    .reduce((acc,o)=>acc+(o.amount||0),0);
-  dayData.credito= totalCredPend;
+  // Cálculo de totales para netBal
+  let totalCredPend = (dayData.creditTracker.pending||[]).reduce((acc,obj)=>acc+(obj.amount||0),0);
+  dayData.credito = totalCredPend;
+
   let totalPending=0;
   dayData.pages.forEach(pg=>{
-    totalPending+= pg.pendingPrizes.reduce((acc,v)=>acc+v,0);
+    totalPending+= pg.pendingPrizes.reduce((a,v)=>a+v,0);
   });
-  let t= calcDayTotals(dayKey);
+
+  let t= calcDayTotals(dayKey); 
   let subT=(t.totalVentas - t.totalSalidas);
-  let sumOpt=(dayData.cash+dayData.sucursal+dayData.credito+dayData.descuento+dayData.tickets);
-  let netBal=(subT - sumOpt + totalPending);
+  let sumOptional=(dayData.cash+dayData.sucursal+dayData.credito+dayData.descuento+dayData.tickets);
+  let netBal=subT - sumOptional + totalPending;
   let nbColor="#000";
   if(netBal<0) nbColor="#0f0";
   else if(netBal>0) nbColor="#f33";
 
   // Overlook principal
   let ovVal=(dayData.overlook||"");
-  let ovNote=(dayData.overlookNote||"");
+  let ovNote= dayData.overlookNote||"";
 
-  // TOTALSECTION
-  let totalsSec=`
-  <div class="totals-section">
-    <h3>Totales</h3>
-    <div class="form-group">
-      <label>Total Centenas</label>
-      <input type="text" readonly value="$${t.totalCentenas.toFixed(2)}">
-    </div>
-    <div class="form-group">
-      <label>Total Pulitos</label>
-      <input type="text" readonly value="$${t.totalPulitos.toFixed(2)}">
-    </div>
+  // Totals
+  html+=`
+    <div class="totals-section">
+      <h3>Totales</h3>
+      <div class="form-group">
+        <label>Total Centenas</label>
+        <input type="text" readonly value="$${t.totalCentenas.toFixed(2)}">
+      </div>
+      <div class="form-group">
+        <label>Total Pulitos</label>
+        <input type="text" readonly value="$${t.totalPulitos.toFixed(2)}">
+      </div>
 
-    <div class="form-group" style="align-items:center;">
-      <label>Overlook</label>
-      <input type="number" data-day="${dayKey}" data-field="overlook"
-             max="900000" value="${ovVal}"
-             onchange="updateDayField(this)"
-             ${locked?'disabled':''}>
-      <input type="text" data-day="${dayKey}" data-field="overlookNote"
-             style="margin-left:8px;width:300px;"
-             placeholder="Nota Overlook"
-             value="${ovNote}"
-             oninput="updateDayNoteField(this)"
-             ${locked?'disabled':''}>
-      <button class="pageBtn" style="background:green;margin-left:8px;"
-        onclick="addOverlookRow('${dayKey}')"
-        ${locked?'disabled':''}>Add</button>
-      <button class="pageBtn" style="background:red;margin-left:8px;"
-        onclick="clearMainOverlook('${dayKey}')"
-        ${locked?'disabled':''}>Del</button>
-    </div>
+      <!-- Overlook principal + nota + ADD/DEL -->
+      <div class="form-group" style="align-items:center;">
+        <label>Overlook</label>
+        <input type="number" data-day="${dayKey}" data-field="overlook" max="900000"
+               value="${ovVal}"
+               onchange="updateDayField(this)"
+               ${locked?'disabled':''}>
+        <input type="text" data-day="${dayKey}" data-field="overlookNote"
+               style="margin-left:8px;width:400px;"
+               placeholder="Nota Overlook"
+               value="${ovNote}"
+               oninput="updateDayNoteField(this)"
+               ${locked?'disabled':''}>
+        <button class="pageBtn" style="background:green;margin-left:8px;"
+          onclick="addOverlookRow('${dayKey}')" ${locked?'disabled':''}>Add</button>
+        <button class="pageBtn" style="background:red;margin-left:8px;"
+          onclick="clearMainOverlook('${dayKey}')" ${locked?'disabled':''}>Del</button>
+      </div>
 
-    <!-- Overlook Extra -->
-    <div id="overlookExtraContainer_${dayKey}">
+      <!-- Overlook Extra -->
+      <div id="overlookExtraContainer_${dayKey}">
   `;
-  dayData.overlookExtra.forEach((row, idx)=>{
+  dayData.overlookExtra.forEach((row,idx)=>{
     let val=(row.amount||"");
     let note=(row.note||"");
-    totalsSec+=`
+    html+=`
       <div class="form-group" style="align-items:center;">
         <label>Overlook</label>
         <input type="number" data-day="${dayKey}" data-oidx="${idx}" data-field="amount"
-               max="900000" value="${val}"
+               max="900000"
+               value="${val}"
                onchange="updateOverlookExtra(this)"
-               ${locked?'disabled':''}>
+               ${locked?'disabled':''}
+               style="width:100px;">
         <input type="text" data-day="${dayKey}" data-oidx="${idx}" data-field="note"
-               style="margin-left:8px;width:300px;"
                value="${note}"
                oninput="updateOverlookExtra(this)"
-               ${locked?'disabled':''}>
+               ${locked?'disabled':''}
+               style="margin-left:8px;width:300px;">
         <button class="pageBtn" style="background:green;margin-left:8px;"
           onclick="addOverlookRow('${dayKey}')"
           ${locked?'disabled':''}>Add</button>
@@ -1077,64 +1186,141 @@ function buildDayHtml(dayKey, dayData, locked){
       </div>
     `;
   });
-  totalsSec+=`
-    </div>
+  html+=`
+      </div>
 
-    <div class="form-group">
-      <label>Total Salidas</label>
-      <input type="text" readonly style="color:var(--danger-color);"
-             value="$${t.totalSalidas.toFixed(2)}">
+      <div class="form-group">
+        <label>Total Salidas</label>
+        <input type="text" readonly style="color:var(--danger-color);" 
+               value="$${t.totalSalidas.toFixed(2)}">
+      </div>
+      <div class="form-group">
+        <label>Total Ventas</label>
+        <input type="text" readonly value="$${t.totalVentas.toFixed(2)}">
+      </div>
     </div>
-    <div class="form-group">
-      <label>Total Ventas</label>
-      <input type="text" readonly value="$${t.totalVentas.toFixed(2)}">
-    </div>
-  </div>
   `;
 
-  // CUADRE & CRÉDITOS
-  let isCOpen=accordionStates[dayKey+"_cuadre"]?"block":"none";
-  let isCredOpen=accordionStates[dayKey+"_credit"]?"block":"none";
+  // Cuadre & Créditos
+  let isCuadreOpen=accordionStates[dayKey+"_cuadre"]? "block":"none";
+  let isCreditOpen=accordionStates[dayKey+"_credit"]? "block":"none";
 
-  let cSec=`
-  <div class="accordion">
-    <div class="accordion-header" onclick="toggleSubSection('${dayKey}_cuadre')">
-      Cuadre del Día
+  html+=`
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleSubSection('${dayKey}_cuadre')">
+        Cuadre del Día
+      </div>
+      <div class="accordion-content" id="cuadre_${dayKey}" style="display:${isCuadreOpen};">
+        ${renderCuadreDia(dayKey, netBal, nbColor, totalPending)}
+      </div>
     </div>
-    <div class="accordion-content" style="display:${isCOpen};">
-      ${renderCuadreDia(dayKey, netBal, nbColor, totalPending)}
-    </div>
-  </div>
 
-  <div class="accordion">
-    <div class="accordion-header" onclick="toggleSubSection('${dayKey}_credit')">
-      Créditos Otorgados
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleSubSection('${dayKey}_credit')">
+        Créditos Otorgados
+      </div>
+      <div class="accordion-content" id="credit_${dayKey}" style="display:${isCreditOpen};">
+        ${createCreditSection(dayKey, locked)}
+      </div>
     </div>
-    <div class="accordion-content" style="display:${isCredOpen};">
-      ${createCreditSection(dayKey, locked)}
-    </div>
-  </div>
   `;
 
-  return tbl+ totalsSec + cSec;
+  container.innerHTML=html;
+}
+
+function toggleSubSection(id){
+  accordionStates[id]= !accordionStates[id];
+  renderAllDays();
+}
+function renderCuadreDia(dayKey, netBal, nbColor, totalPending){
+  let dayData=dataStore[dayKey];
+  let t=calcDayTotals(dayKey);
+  let subT=(t.totalVentas-t.totalSalidas);
+
+  return `
+    <div class="cuadre-section">
+      <h3>Cuadre del Día</h3>
+      <div class="form-group">
+        <label>Ventas</label>
+        <input type="text" readonly value="${t.totalVentas.toFixed(2)}">
+      </div>
+      <div class="form-group">
+        <label>Salidas</label>
+        <input type="text" readonly style="color:var(--danger-color);" 
+               value="${t.totalSalidas.toFixed(2)}">
+      </div>
+      <div class="form-group">
+        <label>Sub Total</label>
+        <input type="text" readonly style="color:var(--purple-strong);" 
+               value="${subT.toFixed(2)}">
+      </div>
+      <div class="form-group">
+        <label>Prem. Pend.</label>
+        <input type="text" readonly style="color:var(--purple-color);" 
+               value="${totalPending.toFixed(2)}">
+      </div>
+      <div class="form-group">
+        <label>Cash</label>
+        <input type="number" data-day="${dayKey}" data-field="cash" 
+               max="900000"
+               value="${dayData.cash||0}"
+               onchange="updateDayField(this)">
+      </div>
+      <div class="form-group">
+        <label>Sucursal</label>
+        <input type="number" data-day="${dayKey}" data-field="sucursal" 
+               max="900000"
+               value="${dayData.sucursal||0}"
+               onchange="updateDayField(this)">
+      </div>
+      <div class="form-group">
+        <label>Crédito</label>
+        <input type="number" readonly style="color:var(--purple-color);"
+               value="${dayData.credito||0}">
+      </div>
+      <div class="form-group">
+        <label>Descuento</label>
+        <input type="number" data-day="${dayKey}" data-field="descuento"
+               max="900000"
+               value="${dayData.descuento||0}"
+               onchange="updateDayField(this)">
+      </div>
+      <div class="form-group">
+        <label>Tickets</label>
+        <input type="number" data-day="${dayKey}" data-field="tickets"
+               max="900000"
+               value="${dayData.tickets||0}"
+               onchange="updateDayField(this)">
+      </div>
+      <div class="form-group">
+        <label>NetBalance</label>
+        <input type="text" readonly style="color:${nbColor};"
+               value="${netBal.toFixed(2)}">
+      </div>
+    </div>
+  `;
 }
 
 /****************************************************
- * 9) calcDayTotals
+ * 8) **calcDayTotals** => la función que faltaba
  ****************************************************/
 function calcDayTotals(dayKey){
   let d=dataStore[dayKey];
-  if(!d) return {totalCentenas:0,totalPulitos:0,totalSalidas:0,totalVentas:0};
-  let tc=0,tp=0,ts=0;
+  if(!d) return { totalCentenas:0, totalPulitos:0, totalSalidas:0, totalVentas:0 };
+
+  let tc=0, tp=0, ts=0;
   d.pages.forEach(p=>{
     tc+=(p.centenas||0);
     tp+=(p.pulitos||0);
     ts+=(p.totalSalidas||0);
   });
-  ts+=(d.overlook||0);
+  // Overlook principal
+  ts += (d.overlook||0);
+  // Overlook extra
   d.overlookExtra.forEach(ov=>{
-    ts+=(ov.amount||0);
+    ts += (ov.amount||0);
   });
+
   return {
     totalCentenas: tc,
     totalPulitos: tp,
@@ -1144,87 +1330,12 @@ function calcDayTotals(dayKey){
 }
 
 /****************************************************
- * 10) toggleSubSection => re-render
- ****************************************************/
-function toggleSubSection(id){
-  accordionStates[id]= !accordionStates[id];
-  renderAllDays();
-}
-
-/****************************************************
- * 11) renderCuadreDia
- ****************************************************/
-function renderCuadreDia(dayKey, netBal, nbColor, totalPending){
-  let d=dataStore[dayKey];
-  let t=calcDayTotals(dayKey);
-  let subT=(t.totalVentas - t.totalSalidas);
-
-  return `
-  <div class="cuadre-section">
-    <h3>Cuadre del Día</h3>
-    <div class="form-group">
-      <label>Ventas</label>
-      <input type="text" readonly value="${t.totalVentas.toFixed(2)}">
-    </div>
-    <div class="form-group">
-      <label>Salidas</label>
-      <input type="text" readonly style="color:var(--danger-color);"
-             value="${t.totalSalidas.toFixed(2)}">
-    </div>
-    <div class="form-group">
-      <label>Sub Total</label>
-      <input type="text" readonly style="color:var(--purple-strong);"
-             value="${subT.toFixed(2)}">
-    </div>
-    <div class="form-group">
-      <label>Prem. Pend.</label>
-      <input type="text" readonly style="color:var(--purple-color);"
-             value="${totalPending.toFixed(2)}">
-    </div>
-    <div class="form-group">
-      <label>Cash</label>
-      <input type="number" data-day="${dayKey}" data-field="cash"
-             max="900000" value="${d.cash||0}"
-             onchange="updateDayField(this)">
-    </div>
-    <div class="form-group">
-      <label>Sucursal</label>
-      <input type="number" data-day="${dayKey}" data-field="sucursal"
-             max="900000" value="${d.sucursal||0}"
-             onchange="updateDayField(this)">
-    </div>
-    <div class="form-group">
-      <label>Crédito</label>
-      <input type="number" readonly style="color:var(--purple-color);"
-             value="${d.credito||0}">
-    </div>
-    <div class="form-group">
-      <label>Descuento</label>
-      <input type="number" data-day="${dayKey}" data-field="descuento"
-             max="900000" value="${d.descuento||0}"
-             onchange="updateDayField(this)">
-    </div>
-    <div class="form-group">
-      <label>Tickets</label>
-      <input type="number" data-day="${dayKey}" data-field="tickets"
-             max="900000" value="${d.tickets||0}"
-             onchange="updateDayField(this)">
-    </div>
-    <div class="form-group">
-      <label>NetBalance</label>
-      <input type="text" readonly style="color:${nbColor};"
-             value="${netBal.toFixed(2)}">
-    </div>
-  </div>
-  `;
-}
-
-/****************************************************
- * 12) createCreditSection
+ * 9) createCreditSection => para el acordeón
  ****************************************************/
 function createCreditSection(dayKey, locked){
-  let c=dataStore[dayKey].creditTracker;
+  let c= dataStore[dayKey].creditTracker;
   let pendingHTML="", paidHTML="";
+
   c.pending.forEach((item,idx)=>{
     pendingHTML+=`
       <tr>
@@ -1235,16 +1346,18 @@ function createCreditSection(dayKey, locked){
           </button>
         </td>
         <td>
-          <input type="text" maxlength="10" style="width:100px;"
-            onchange="updateCreditItem('${dayKey}','pending',${idx},'client',this.value)"
-            value="${item.client||''}"
-            ${locked?'disabled':''}>
+          <input type="text" maxlength="10"
+                 onchange="updateCreditItem('${dayKey}','pending',${idx},'client',this.value)"
+                 style="width:100px;"
+                 value="${item.client||''}"
+                 ${locked?'disabled':''}>
         </td>
         <td>
-          <input type="number" max="900000" style="width:100px;"
-            onchange="updateCreditItem('${dayKey}','pending',${idx},'amount',this.value)"
-            value="${item.amount||''}"
-            ${locked?'disabled':''}>
+          <input type="number" max="900000"
+                 onchange="updateCreditItem('${dayKey}','pending',${idx},'amount',this.value)"
+                 style="width:100px;"
+                 value="${item.amount||''}"
+                 ${locked?'disabled':''}>
         </td>
         <td>
           <button class="paidBtn" onclick="moveCreditItem('${dayKey}',${idx},'pending')"
@@ -1264,16 +1377,18 @@ function createCreditSection(dayKey, locked){
           </button>
         </td>
         <td>
-          <input type="text" maxlength="10" style="width:100px;"
-            onchange="updateCreditItem('${dayKey}','paid',${idx},'client',this.value)"
-            value="${item.client||''}"
-            ${locked?'disabled':''}>
+          <input type="text" maxlength="10"
+                 onchange="updateCreditItem('${dayKey}','paid',${idx},'client',this.value)"
+                 style="width:100px;"
+                 value="${item.client||''}"
+                 ${locked?'disabled':''}>
         </td>
         <td>
-          <input type="number" max="900000" style="width:100px;"
-            onchange="updateCreditItem('${dayKey}','paid',${idx},'amount',this.value)"
-            value="${item.amount||''}"
-            ${locked?'disabled':''}>
+          <input type="number" max="900000"
+                 onchange="updateCreditItem('${dayKey}','paid',${idx},'amount',this.value)"
+                 style="width:100px;"
+                 value="${item.amount||''}"
+                 ${locked?'disabled':''}>
         </td>
         <td>
           <button class="pendingBtn" onclick="moveCreditItem('${dayKey}',${idx},'paid')"
@@ -1284,36 +1399,35 @@ function createCreditSection(dayKey, locked){
     `;
   });
 
-  let totalPend=c.pending.reduce((acc,o)=>acc+(o.amount||0),0);
-  let totalPaid=c.paid.reduce((acc,o)=>acc+(o.amount||0),0);
+  let totalPend=c.pending.reduce((acc,obj)=>acc+(obj.amount||0),0);
+  let totalPaid=c.paid.reduce((acc,obj)=>acc+(obj.amount||0),0);
 
   return `
     <div style="padding:1rem;">
-      <div style="display:flex; gap:2rem; flex-wrap:wrap;">
+      <div style="display:flex;gap:2rem;flex-wrap:wrap;">
         <div style="flex:1; min-width:220px;">
           <h4 style="color:var(--purple-color);margin-bottom:0.5rem;">Pendientes</h4>
           <table style="width:100%;border-collapse:collapse;">
-            <thead>
-              <tr><th>#</th><th>Cliente</th><th>Monto</th><th></th></tr>
-            </thead>
+            <thead><tr><th>#</th><th>Cliente</th><th>Monto</th><th></th></tr></thead>
             <tbody>${pendingHTML}</tbody>
           </table>
-          <button class="addPrizeBtn" onclick="addCreditItem('${dayKey}','pending')" ${locked?'disabled':''}>+ Pendiente</button>
+          <button class="addPrizeBtn" onclick="addCreditItem('${dayKey}','pending')"
+            ${locked?'disabled':''}>+ Pendiente
+          </button>
           <p>Total Pend: <span style="color:var(--purple-color);">$${totalPend.toFixed(2)}</span></p>
         </div>
 
         <div style="flex:1; min-width:220px;">
           <h4 style="color:var(--danger-color);margin-bottom:0.5rem;">Pagados</h4>
           <table style="width:100%;border-collapse:collapse;">
-            <thead>
-              <tr><th>#</th><th>Cliente</th><th>Monto</th><th></th></tr>
-            </thead>
+            <thead><tr><th>#</th><th>Cliente</th><th>Monto</th><th></th></tr></thead>
             <tbody>${paidHTML}</tbody>
           </table>
           <button class="addPrizeBtn"
-            style="color:var(--danger-color); border-color:var(--danger-color);"
+            style="color:var(--danger-color);border-color:var(--danger-color);"
             onclick="addCreditItem('${dayKey}','paid')"
-            ${locked?'disabled':''}>+ Pagado</button>
+            ${locked?'disabled':''}>+ Pagado
+          </button>
           <p>Total Paid: <span style="color:var(--danger-color);">$${totalPaid.toFixed(2)}</span></p>
         </div>
       </div>
@@ -1322,36 +1436,36 @@ function createCreditSection(dayKey, locked){
 }
 
 /****************************************************
- * 13) Créditos: add, delete, update, move
+ * 10) Manejo Créditos
  ****************************************************/
-function addCreditItem(dayKey,type){
-  dataStore[dayKey].creditTracker[type].push({client:"",amount:0});
+function addCreditItem(dayKey, type){
+  dataStore[dayKey].creditTracker[type].push({ client:"", amount:0 });
   storeData();
   renderDay(dayKey);
 }
-function deleteCreditRow(dayKey,type,idx){
+function deleteCreditRow(dayKey, type, idx){
   if(!confirm("¿Eliminar este registro de crédito?")) return;
   dataStore[dayKey].creditTracker[type].splice(idx,1);
   storeData();
   renderDay(dayKey);
 }
-function updateCreditItem(dayKey,type,idx,field,valStr){
+function updateCreditItem(dayKey, type, idx, field, valStr){
   let c=dataStore[dayKey].creditTracker[type];
   let item=c[idx];
   if(field==="client"){
     item.client= valStr.substring(0,10);
-  } else {
+  } else if(field==="amount"){
     let n=parseFloat(valStr)||0;
     if(n>900000)n=900000;
     item.amount=n;
   }
-  // Recalc
+  // Recalc total credit
   dataStore[dayKey].credito= dataStore[dayKey].creditTracker.pending
     .reduce((acc,o)=>acc+(o.amount||0),0);
   storeData();
   renderDay(dayKey);
 }
-function moveCreditItem(dayKey,idx,fromType){
+function moveCreditItem(dayKey, idx, fromType){
   let c=dataStore[dayKey].creditTracker;
   let item=c[fromType][idx];
   c[fromType].splice(idx,1);
@@ -1366,14 +1480,14 @@ function moveCreditItem(dayKey,idx,fromType){
 }
 
 /****************************************************
- * 14) Overlook Extra
+ * 11) Manejo Overlook Extra
  ****************************************************/
 function addOverlookRow(dayKey){
   dataStore[dayKey].overlookExtra.push({amount:0,note:""});
   storeData();
   renderDay(dayKey);
 }
-function deleteOverlookRow(dayKey,idx){
+function deleteOverlookRow(dayKey, idx){
   if(!confirm("¿Eliminar fila Overlook?")) return;
   dataStore[dayKey].overlookExtra.splice(idx,1);
   storeData();
@@ -1381,7 +1495,7 @@ function deleteOverlookRow(dayKey,idx){
 }
 function updateOverlookExtra(input){
   let dayKey=input.dataset.day;
-  let idx=+input.dataset.oidx;
+  let idx=parseInt(input.dataset.oidx);
   let field=input.dataset.field;
   let valStr=input.value.trim();
   let row=dataStore[dayKey].overlookExtra[idx];
@@ -1393,8 +1507,6 @@ function updateOverlookExtra(input){
     row.note= valStr;
   }
   storeData();
-  // Re-render => sumarse al momento
-  renderDay(dayKey);
 }
 function clearMainOverlook(dayKey){
   dataStore[dayKey].overlook=0;
@@ -1404,7 +1516,7 @@ function clearMainOverlook(dayKey){
 }
 
 /****************************************************
- * 15) Page Rows => add, delete, update
+ * 12) Page Rows: add/delete + Field updates
  ****************************************************/
 function deletePageRow(dayKey, idx){
   if(!confirm("¿Eliminar esta página?")) return;
@@ -1418,17 +1530,17 @@ function addPageRow(dayKey){
   let nextNo=d.pages.length+1;
   d.pages.push({
     pageNo:nextNo, centenas:0, pulitos:0,
-    pendingPrizes:[], paidPrizes:[],
-    totalSalidas:0
+    pendingPrizes:[], paidPrizes:[], totalSalidas:0
   });
   storeData();
   renderDay(dayKey);
 }
 function updatePageField(input){
   let dayKey=input.dataset.day;
-  let idx=+input.dataset.pindex;
+  let idx=parseInt(input.dataset.pindex);
   let field=input.dataset.field;
-  let val=parseFloat(input.value.trim())||0;
+  let valStr=input.value.trim();
+  let val=parseFloat(valStr)||0;
   if(val>900000) val=900000;
   dataStore[dayKey].pages[idx][field]=val;
   storeData();
@@ -1437,7 +1549,8 @@ function updatePageField(input){
 function updateDayField(input){
   let dayKey=input.dataset.day;
   let field=input.dataset.field;
-  let val=parseFloat(input.value.trim())||0;
+  let valStr=input.value.trim();
+  let val=parseFloat(valStr)||0;
   if(val>900000) val=900000;
   dataStore[dayKey][field]=val;
   storeData();
@@ -1450,15 +1563,16 @@ function updateDayNoteField(input){
 }
 
 /****************************************************
- * 16) SALIDAS (MODAL)
+ * 13) Manejo de SALIDAS (Modal Pend/Pag)
  ****************************************************/
-let currentModalDayKey="", currentModalIndex=0;
+let currentModalDayKey="";
+let currentModalIndex=0;
 function openPrizesModal(dayKey, idx){
   currentModalDayKey=dayKey;
   currentModalIndex=idx;
   document.getElementById("modalOverlay").style.display="flex";
-  let pg=dataStore[dayKey].pages[idx];
-  document.getElementById("prizeModalPageNo").textContent=pg.pageNo;
+  let pageData=dataStore[dayKey].pages[idx];
+  document.getElementById("prizeModalPageNo").textContent=pageData.pageNo;
   paintPrizeLists();
 }
 document.getElementById("closePrizeModal").addEventListener("click",()=>{
@@ -1469,13 +1583,13 @@ function paintPrizeLists(){
   let pendingTbody=document.getElementById("pendingTbody");
   let paidTbody=document.getElementById("paidTbody");
 
-  let pendHTML="", paidHTML="";
+  let pendHTML="";
   pageData.pendingPrizes.forEach((v,i)=>{
     pendHTML+=`
       <tr>
         <td>
           <input type="number" max="900000"
-                 value="${v||0}"
+                 value="${v||''}"
                  onchange="updatePrizeValue(${i},'pending',this.value)">
         </td>
         <td>
@@ -1485,12 +1599,15 @@ function paintPrizeLists(){
       </tr>
     `;
   });
+  pendingTbody.innerHTML=pendHTML;
+
+  let paidHTML="";
   pageData.paidPrizes.forEach((v,i)=>{
     paidHTML+=`
       <tr>
         <td>
           <input type="number" max="900000"
-                 value="${v||0}"
+                 value="${v||''}"
                  onchange="updatePrizeValue(${i},'paid',this.value)">
         </td>
         <td>
@@ -1500,67 +1617,65 @@ function paintPrizeLists(){
       </tr>
     `;
   });
-
-  pendingTbody.innerHTML=pendHTML;
   paidTbody.innerHTML=paidHTML;
 }
 function addPrizeRow(type){
-  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
-  if(type==="pending") pg.pendingPrizes.push(0);
-  else pg.paidPrizes.push(0);
+  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
+  if(type==="pending") pageData.pendingPrizes.push(0);
+  else pageData.paidPrizes.push(0);
   paintPrizeLists();
   recalcPageSalidas();
   storeData();
 }
-function updatePrizeValue(idx,type,valStr){
-  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
+function updatePrizeValue(idx, type, valStr){
+  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
   let n=parseFloat(valStr)||0;
   if(n>900000)n=900000;
   if(type==="pending"){
-    pg.pendingPrizes[idx]=n;
+    pageData.pendingPrizes[idx]=n;
   } else {
-    pg.paidPrizes[idx]=n;
+    pageData.paidPrizes[idx]=n;
   }
   recalcPageSalidas();
   storeData();
 }
-function deletePrize(idx,type){
-  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
+function deletePrize(idx, type){
+  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
   if(type==="pending"){
-    pg.pendingPrizes.splice(idx,1);
+    pageData.pendingPrizes.splice(idx,1);
   } else {
-    pg.paidPrizes.splice(idx,1);
+    pageData.paidPrizes.splice(idx,1);
   }
   paintPrizeLists();
   recalcPageSalidas();
   storeData();
 }
-function movePrize(idx,fromType){
-  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
+function movePrize(idx, fromType){
+  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
   if(fromType==="pending"){
-    let val= pg.pendingPrizes[idx];
-    pg.pendingPrizes.splice(idx,1);
-    pg.paidPrizes.push(val);
+    let val=pageData.pendingPrizes[idx];
+    pageData.pendingPrizes.splice(idx,1);
+    pageData.paidPrizes.push(val);
   } else {
-    let val= pg.paidPrizes[idx];
-    pg.paidPrizes.splice(idx,1);
-    pg.pendingPrizes.push(val);
+    let val=pageData.paidPrizes[idx];
+    pageData.paidPrizes.splice(idx,1);
+    pageData.pendingPrizes.push(val);
   }
   paintPrizeLists();
   recalcPageSalidas();
   storeData();
 }
 function recalcPageSalidas(){
-  let pg=dataStore[currentModalDayKey].pages[currentModalIndex];
-  let sumPend= pg.pendingPrizes.reduce((acc,v)=>acc+v,0);
-  let sumPaid= pg.paidPrizes.reduce((acc,v)=>acc+v,0);
-  pg.totalSalidas=(sumPend+sumPaid);
+  let pageData=dataStore[currentModalDayKey].pages[currentModalIndex];
+  let sumPend= pageData.pendingPrizes.reduce((acc,v)=>acc+v,0);
+  let sumPaid= pageData.paidPrizes.reduce((acc,v)=>acc+v,0);
+  pageData.totalSalidas=(sumPend+sumPaid);
   storeData();
   renderDay(currentModalDayKey);
 }
 
 /****************************************************
- * 17) SEMANAL => updateWeeklyView
+ * 14) SEMANAL => updateWeeklyView
  ****************************************************/
 function updateWeeklyView(){
   let wCont=document.getElementById("weeklyContainer");
@@ -1572,34 +1687,38 @@ function updateWeeklyView(){
   for(let i=1;i<=7;i++){
     let dk="day"+i;
     let t=calcDayTotals(dk);
-    sumCent+= t.totalCentenas;
-    sumPul += t.totalPulitos;
-    sumSal += t.totalSalidas;
-    sumVent+= t.totalVentas;
+    sumCent+=t.totalCentenas;
+    sumPul +=t.totalPulitos;
+    sumSal +=t.totalSalidas;
+    sumVent+=t.totalVentas;
 
+    // sumPend
     let dayPend=0;
     dataStore[dk].pages.forEach(pg=>{
       dayPend+= pg.pendingPrizes.reduce((acc,v)=>acc+v,0);
     });
     sumPendAll+= dayPend;
-    sumCash+= dataStore[dk].cash;
-    sumSuc += dataStore[dk].sucursal;
-    sumCred+= dataStore[dk].credito;
-    sumDesc+= dataStore[dk].descuento;
-    sumTic += dataStore[dk].tickets;
+    sumCash += dataStore[dk].cash;
+    sumSuc  += dataStore[dk].sucursal;
+    sumCred += dataStore[dk].credito;
+    sumDesc += dataStore[dk].descuento;
+    sumTic  += dataStore[dk].tickets;
 
     dayTotals.push(t);
   }
 
-  let c25=(sumCent*0.25);
-  let p10=(sumPul*0.10);
+  let c25=sumCent*0.25;
+  let p10=sumPul*0.10;
   let totalCom=(c25+p10);
   let subTotal=(sumVent - (sumSal+totalCom));
+
   let caidas=dataStore.weekly.caidas||0;
   let adelanto=dataStore.weekly.adelantoOficina||0;
   let balOfic=(subTotal - caidas - adelanto);
   let boColor="#000";
-  if(balOfic>0) boColor="#f33"; else if(balOfic<0) boColor="#0f0";
+  if(balOfic>0) boColor="#f33";
+  else if(balOfic<0) boColor="#0f0";
+
   const dayNames=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 
   let html=`
@@ -1634,7 +1753,7 @@ function updateWeeklyView(){
         <td style="color:var(--danger-color);">$${sumSal.toFixed(2)}</td>
         <td>$${sumVent.toFixed(2)}</td>
       </tr>
-      </tbody>
+    </tbody>
     </table>
 
     <div class="cuadre-section">
@@ -1698,13 +1817,13 @@ function updateWeeklyView(){
       <div class="form-group">
         <label>Caídas (20%)</label>
         <input type="number" max="900000"
-               value="${(dataStore.weekly.caidas||0)}"
+               value="${(dataStore.weekly.caidas||"")}"
                onchange="updateWeeklyField('caidas',this.value)">
       </div>
       <div class="form-group">
         <label>Adelanto Oficina</label>
         <input type="number" max="900000"
-               value="${(dataStore.weekly.adelantoOficina||0)}"
+               value="${(dataStore.weekly.adelantoOficina||"")}"
                onchange="updateWeeklyField('adelantoOficina',this.value)">
       </div>
       <div class="form-group">
@@ -1718,96 +1837,84 @@ function updateWeeklyView(){
 }
 
 /****************************************************
- * 18) updateWeeklyField
- ****************************************************/
-function updateWeeklyField(field, valStr){
-  let n=parseFloat(valStr.trim())||0;
-  if(n>900000)n=900000;
-  dataStore.weekly[field]=n;
-  storeData();
-  updateWeeklyView();
-}
-
-/****************************************************
- * 19) storeData, resetDay, resetWeek, etc.
+ * 15) storeData, sendDay, resetDay, etc.
  ****************************************************/
 function storeData(){
   localStorage.setItem("dailyReportNeonData2", JSON.stringify(dataStore));
 }
 function sendDayToSheets(dayKey){
-  alert("Guardando día: "+dayKey+" (placeholder).");
+  alert("Guardar Día (placeholder): "+dayKey);
 }
 function resetDay(dayKey){
-  if(!confirm("¿Resetear este día por completo?")) return;
+  if(!confirm("¿Resetear todos los datos del día?")) return;
   dataStore[dayKey]={
     pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-    cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
+    cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
     creditTracker:{ pending:[], paid:[] }
   };
   for(let r=1;r<=20;r++){
     dataStore[dayKey].pages.push({
       pageNo:r, centenas:0, pulitos:0,
-      pendingPrizes:[], paidPrizes:[],
-      totalSalidas:0
+      pendingPrizes:[], paidPrizes:[], totalSalidas:0
     });
   }
   storeData();
   renderDay(dayKey);
 }
 function sendWeekToSheets(){
-  alert("Guardando la semana (placeholder).");
+  alert("Guardar Semana (placeholder).");
 }
 function resetWeek(){
-  if(!confirm("¿Resetear TODA la semana?")) return;
+  if(!confirm("¿Resetear toda la semana?")) return;
   for(let i=1;i<=7;i++){
     let dk="day"+i;
     dataStore[dk]={
       pages:[], overlook:0, overlookNote:"", overlookExtra:[],
-      cash:0,sucursal:0,credito:0,descuento:0,tickets:0,
-      creditTracker:{ pending:[], paid:[] }
+      cash:0, sucursal:0, credito:0, descuento:0, tickets:0,
+      creditTracker:{pending:[], paid:[]}
     };
     for(let r=1;r<=20;r++){
       dataStore[dk].pages.push({
         pageNo:r, centenas:0, pulitos:0,
-        pendingPrizes:[], paidPrizes:[],
-        totalSalidas:0
+        pendingPrizes:[], paidPrizes:[], totalSalidas:0
       });
     }
   }
   dataStore.weekly={ caidas:0, adelantoOficina:0 };
   storeData();
   renderAllDays();
+  updateWeeklyView();
 }
 
 /****************************************************
- * 20) “Realizar Captura” => html2canvas
+ * 16) “Realizar Captura” => html2canvas => PNG
  ****************************************************/
 document.getElementById("btnExportPDF").addEventListener("click",()=>{
   let activeTab=document.querySelector(".tabContent.active");
   if(!activeTab){
-    alert("No hay pestaña activa para capturar.");
+    alert("No hay pestaña activa.");
     return;
   }
   let accordions=activeTab.querySelectorAll(".accordion");
-  accordions.forEach(a=> a.style.display="none");
+  accordions.forEach(a=>a.style.display="none");
 
   setTimeout(()=>{
-    html2canvas(activeTab,{ scale:2, useCORS:true }).then(canvas=>{
-      accordions.forEach(a=> a.style.display="");
+    html2canvas(activeTab,{ scale:2 }).then(canvas=>{
+      accordions.forEach(a=>a.style.display="");
       let link=document.createElement("a");
       link.download="Reporte.png";
-      link.href= canvas.toDataURL("image/png");
+      link.href=canvas.toDataURL("image/png");
       link.click();
     }).catch(err=>{
       console.error(err);
       alert("Error al generar la captura.");
-      accordions.forEach(a=> a.style.display="");
+      accordions.forEach(a=>a.style.display="");
     });
   },200);
 });
 
 /****************************************************
- * 21) EXPORT EXCEL => CSV
+ * 17) EXPORT EXCEL => CSV (Centenas/Pulitos)
  ****************************************************/
 document.getElementById("btnExportExcel").addEventListener("click",()=>{
   let activeTab=document.querySelector(".tabContent.active");
@@ -1817,7 +1924,7 @@ document.getElementById("btnExportExcel").addEventListener("click",()=>{
   }
   let tabId=activeTab.id;
   if(!tabId.startsWith("tabDay")){
-    alert("Esta función exporta el reporte diario (Centenas/Pulitos).");
+    alert("Esta función exporta sólo el reporte diario (Centenas/Pulitos).");
     return;
   }
   let dayKey="day"+ tabId.replace("tabDay","");
@@ -1826,23 +1933,24 @@ document.getElementById("btnExportExcel").addEventListener("click",()=>{
     alert("No hay data en "+dayKey);
     return;
   }
-  let lines=["Página,Centenas,Pulitos"];
+  let lines=[];
+  lines.push("Página,Centenas,Pulitos");
   dayData.pages.forEach(p=>{
     lines.push(`${p.pageNo},${p.centenas},${p.pulitos}`);
   });
-  let csv=lines.join("\n");
-  let blob=new Blob([csv],{type:"text/csv"});
+  let csv= lines.join("\n");
+  let blob= new Blob([csv], { type:"text/csv" });
   let url=URL.createObjectURL(blob);
 
   let a=document.createElement("a");
   a.href=url;
-  a.download=`Reporte_${dayKey}.csv`;
+  a.download="Reporte_"+dayKey+".csv";
   a.click();
   URL.revokeObjectURL(url);
 });
 
 /****************************************************
- * 22) TAB/ENTER NAVIGATION
+ * 18) TAB/ENTER NAVIGATION (con SHIFT+Tab)
  ****************************************************/
 function addTabKeyNavigation(){
   document.addEventListener("keydown",(e)=>{
@@ -1853,13 +1961,13 @@ function addTabKeyNavigation(){
 
     e.preventDefault();
     let dayKey=el.dataset.day;
-    let inputs=Array.from(document.querySelectorAll(`#${dayKey}Container input[type='number']`));
+    let inputs= Array.from(document.querySelectorAll(`#${dayKey}Container input[type='number']`));
     let idx= inputs.indexOf(el);
     if(idx<0) return;
 
-    let step=(e.shiftKey)? -1 : +1;
-    let nextIdx= idx+step;
-    if(nextIdx<0) nextIdx= inputs.length-1;
+    let step=(e.shiftKey)?-1:+1;
+    let nextIdx=idx+step;
+    if(nextIdx<0) nextIdx=inputs.length-1;
     if(nextIdx>=inputs.length) nextIdx=0;
 
     inputs[nextIdx].focus();
