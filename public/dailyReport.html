@@ -22,33 +22,17 @@
       --purple-color: #a0f;        /* morado para pendientes */
       --purple-strong: #ff00ff;    /* morado fuerte (subTotal) */
       --shared-tab-bg: #222;       /* fondo secciones / tablas */
-
-      /* Paleta Light (por si quisieras un modo claro) */
-      --light-bg: #f3f0e3;
-      --light-text: #000;
-      --light-accent: #0066cc;
-      --light-border: #999;
-      --light-caja: #fbf9f0;
-      --light-danger: #cc0033;
-      --light-lock: #ccb200;
-      --light-purple: #b57aff;
     }
 
     body {
       background: var(--main-bg);
       color: var(--main-text);
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      font-size: 16px;  /* Ajusta si quieres más grande/pequeño */
+      font-size: 16px;
       overflow: hidden;
     }
 
-    /* (Opcional) si quisieras un interruptor Dark/Light, 
-       tendrías un body.light-mode { ... } 
-       pero aquí lo omitimos para simplificar. */
-
-    .hidden { 
-      display: none !important; 
-    }
+    .hidden { display: none !important; }
 
     /* =============== LAYOUT PRINCIPAL =============== */
     .container {
@@ -136,6 +120,7 @@
       max-width: 90%;
       text-align: center;
       box-shadow: 0 0 10px var(--accent-color);
+      position: relative; /* para colocar el ojito dentro */
     }
     .pin-dialog h2 {
       margin-bottom: 1rem;
@@ -143,11 +128,16 @@
       font-size: 1.5rem;
       text-shadow: 0 0 5px var(--accent-color);
     }
+    .pin-dialog .pinInputWrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
     .pin-dialog input {
       font-size: 2rem;
       text-align: center;
       width: 100%;
-      margin-bottom: 1rem;
       background: #000;
       color: var(--accent-color);
       border: 2px solid var(--accent-color);
@@ -164,10 +154,27 @@
       border-radius: 8px;
       cursor: pointer;
       box-shadow: 0 0 5px var(--accent-color);
+      margin-top: 1rem;
     }
     .pin-dialog button:hover {
       background: var(--accent-color);
       color: #000;
+    }
+
+    /* Botón “ojo” */
+    .eye-toggle {
+      position: absolute;
+      right: 8px;
+      font-size: 1.3rem;
+      background: transparent;
+      border: none;
+      color: var(--accent-color);
+      cursor: pointer;
+      text-shadow: 0 0 3px var(--accent-color);
+      margin-top: 2px;
+    }
+    .eye-toggle:hover {
+      color: #fff;
     }
 
     /* =============== SEMANAS (ACORDEÓN) =============== */
@@ -364,6 +371,7 @@
       background: var(--purple-color);
       box-shadow: 0 0 3px var(--purple-color);
     }
+
   </style>
 </head>
 
@@ -373,14 +381,22 @@
 <div class="pin-overlay" id="pinOverlay">
   <div class="pin-dialog">
     <h2>Ingrese su clave de 4 dígitos</h2>
-    <input 
-      type="password" 
-      id="pinInput"
-      maxlength="4"
-      autocomplete="off"
-      autocorrect="off"
-      onkeyup="if(event.key==='Enter'){ document.getElementById('btnPinSubmit').click(); }"
-    />
+
+    <!-- Contenedor para el input y el ojo -->
+    <div class="pinInputWrapper" style="margin-bottom:1rem;">
+      <input 
+        type="password" 
+        id="pinInput"
+        maxlength="4"
+        autocomplete="off"
+        autocorrect="off"
+        onkeyup="if(event.key==='Enter'){ document.getElementById('btnPinSubmit').click(); }"
+      />
+      <button type="button" class="eye-toggle" id="togglePinView" title="Mostrar/Ocultar PIN">
+        👁
+      </button>
+    </div>
+
     <button id="btnPinSubmit">Acceder</button>
   </div>
 </div>
@@ -460,10 +476,24 @@
   };
 
   /*************************************************************
+   * Ojo: mostrar/ocultar PIN
+   *************************************************************/
+  const pinInput = document.getElementById("pinInput");
+  const toggleBtn = document.getElementById("togglePinView");
+
+  toggleBtn.addEventListener("click", ()=>{
+    if(pinInput.type==="password"){
+      pinInput.type = "text";
+    } else {
+      pinInput.type = "password";
+    }
+    pinInput.focus(); // mantener foco
+  });
+
+  /*************************************************************
    * 3) Overlay login
    *************************************************************/
   const pinOverlay = document.getElementById("pinOverlay");
-  const pinInput   = document.getElementById("pinInput");
   const mainContainer= document.getElementById("mainContainer");
   document.getElementById("btnPinSubmit").addEventListener("click", ()=>{
     let val = pinInput.value.trim();
@@ -785,6 +815,7 @@
     selectDay(i,d); // Re-render
   }
   function openPrizesModal(i,d,idx){
+    // Aquí abrirías tu modal (Pendientes/Pagados).
     alert("Aquí abrirías tu modal (Pendientes/Pagados).");
   }
 
@@ -908,9 +939,7 @@
     \`;
   }
   function updatePartialTotals(i,d){
-    // Actualiza solo las cifras en pantalla (si quisiéramos)
-    let t= calcDayTotals(dataStore.weeks[i].days[d]);
-    // Podríamos “parcialmente” reasignar, pero re-render se hace con selectDay().
+    // Actualiza solo las cifras en pantalla (si quisiéramos).
   }
   function calcDayTotals(dayData){
     let tc=0, tp=0, ts=0;
@@ -1131,8 +1160,6 @@
     // Recalcular “dayData.credito” = sum(pending)
     dayData.credito= dayData.creditTracker.pending.reduce((acc,o)=>acc+(o.amount||0),0);
     storeLocal();
-    // No recargamos toda la vista para no perder foco, pero si quieres:
-    //selectDay(i,d);
   }
   function moveCreditItem(i,d,idx,fromType){
     let dayData= dataStore.weeks[i].days[d];
