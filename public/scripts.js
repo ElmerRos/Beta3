@@ -938,9 +938,9 @@ $(document).ready(function() {
   }
 
   /*
-   ==========================================================
+   =========================================================
    WIZARD (copiado tal cual tu backup)
-   ==========================================================
+   =========================================================
   */
 
   const wizardModal = new bootstrap.Modal(document.getElementById("wizardModal"));
@@ -1639,4 +1639,4 @@ $(document).ready(function() {
     $("#ocrDebugPanel").toggleClass("d-none");
   };
 
-}); 
+});
