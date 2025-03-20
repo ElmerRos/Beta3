@@ -3,232 +3,154 @@
 const path = require("path");
 const express = require("express");
 const multer = require("multer");
-const axios = require("axios");
-const FormData = require("form-data");
 const sharp = require("sharp");
 const { MongoClient } = require("mongodb");
 
-const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+// Importamos la librería oficial de OpenAI
+const { Configuration, OpenAIApi } = require("openai");
 
-// Ajusta según tu entorno
+// Configuración básica
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@cluster/dbName";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
-// Assistant y Organization
-const ASSISTANT_ID = "asst_iPQIGQRDCf1YeQ4P3p9ued6W";
-const OPENAI_ORG_ID = "org-16WwdoiZ4EncYTJ278q6TQoF"; // si hace falta
+// Inicializamos express
+const app = express();
 
-// Mongo
+// Multer para procesar la imagen en memoria
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Conexión a MongoDB
 let db = null;
 (async () => {
   try {
     const client = await new MongoClient(MONGODB_URI, { useUnifiedTopology: true }).connect();
     db = client.db();
-    console.log("Conectado a MongoDB => 'ticketsOCR'.");
+    console.log("Conectado a MongoDB => Colección 'ticketsOCR'.");
   } catch (e) {
     console.error("Error conectando a MongoDB:", e);
   }
 })();
 
-// Servir carpeta public
+// Configurar OpenAI
+const configuration = new Configuration({
+  apiKey: OPENAI_API_KEY
+  // Si tu organización es necesaria, puedes poner: organization: "org-16WwdoiZ4EncYTJ278q6TQoF"
+});
+const openai = new OpenAIApi(configuration);
+
+// Servir carpeta 'public'
 app.use(express.static("public"));
 
+// Ruta GET raíz
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 /**
- * RUTA /ocr
- * 1) Redimensionar imagen.
- * 2) Subirla a /v1/files => con "purpose":"assistants".
- * 3) Crear run en /v1/threads/runs con type: "image_file", image_file: { file_id }.
- * 4) Esperar a que run => completed
- * 5) GET /threads/{threadId}/messages => leer role=assistant
+ * NUEVO ENDPOINT: /chat-ocr
+ * - Recibe la imagen (multipart/form-data, campo "ticket").
+ * - Redimensiona con sharp.
+ * - Convierte a Base64.
+ * - Llama a Chat Completions con un system message y un user message que incluye la imagen en base64.
+ * - Retorna la respuesta parseada.
  */
-app.post("/ocr", upload.single("ticket"), async (req, res) => {
-  if (!req.file) {
-    return res.json({ success: false, error: "No se recibió ninguna imagen." });
-  }
-  if (!OPENAI_API_KEY) {
-    return res.json({ success: false, error: "Falta la OPENAI_API_KEY" });
-  }
-
+app.post("/chat-ocr", upload.single("ticket"), async (req, res) => {
   try {
-    console.log("---- /ocr ----");
+    // Validaciones básicas
+    if (!req.file) {
+      return res.json({ success: false, error: "No se recibió ninguna imagen." });
+    }
+    if (!OPENAI_API_KEY) {
+      return res.json({ success: false, error: "Falta la OPENAI_API_KEY" });
+    }
+
+    console.log("---- /chat-ocr ----");
     console.log("Imagen recibida:", req.file.originalname, "size:", req.file.size);
 
-    // 1) Redimensionar
-    const resizedBuf = await sharp(req.file.buffer)
+    // Redimensionar la imagen con sharp
+    const resizedBuffer = await sharp(req.file.buffer)
       .resize({ width: 2000, height: 2000, fit: "inside" })
       .toBuffer();
 
-    // 2) Subir a /v1/files con multipart/form-data
-    const formData = new FormData();
-    // "assistants" es un purpose válido (o "vision")
-    formData.append("purpose", "assistants");
-    formData.append("file", resizedBuf, {
-      filename: req.file.originalname || "ticket.jpeg",
-      contentType: req.file.mimetype
+    // Convertir a base64
+    const base64Str = resizedBuffer.toString("base64");
+    const mimeType = req.file.mimetype || "image/jpeg";
+    // Generar un dataURL
+    const dataUrl = `data:${mimeType};base64,${base64Str}`;
+
+    // Construir los mensajes para Chat Completions
+    const systemInstructions = `
+Eres un modelo experto en leer e interpretar tickets de lotería escritos a mano. 
+Devuelve la información en formato JSON. Cada jugada debe contener:
+{
+  "numeros": "...",
+  "montoStraight": 0,
+  "montoBox": 0,
+  "montoCombo": 0,
+  "track": "...",
+  "fecha": "YYYY-MM-DD"
+}
+Si no detectas algo, ponlo en 0 o en blanco. No inventes data inexistente.
+`;
+
+    const userMessage = `
+Hola, por favor analiza la siguiente imagen (un ticket manuscrito) y devuélveme 
+un arreglo JSON con las jugadas. Aquí está la imagen en base64:
+${dataUrl}
+`;
+
+    // Llamar a la API de OpenAI => Chat Completions
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo", // o "gpt-4" si tienes acceso
+      temperature: 0.0,
+      messages: [
+        { role: "system", content: systemInstructions },
+        { role: "user", content: userMessage }
+      ]
     });
 
-    const fileUploadResp = await axios.post(
-      "https://api.openai.com/v1/files",
-      formData,
-      {
-        headers: {
-          "Authorization": `Bearer ${OPENAI_API_KEY}`,
-          "OpenAI-Beta": "assistants=v2",
-          "OpenAI-Organization": OPENAI_ORG_ID,
-          ...formData.getHeaders()
-        }
-      }
-    );
+    // Extraer el texto devuelto por el assistant
+    const content = response.data.choices[0].message.content || "";
+    console.log("OpenAI response =>", content);
 
-    console.log("fileUploadResp =>", fileUploadResp.data);
-    const fileId = fileUploadResp.data.id; // "file-xxx"
-
-    // 3) Crear Thread+Run => /v1/threads/runs
-    const runResp = await axios.post(
-      "https://api.openai.com/v1/threads/runs",
-      {
-        assistant_id: ASSISTANT_ID,
-        thread: {
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: "Por favor, analiza este ticket manuscrito y devuélveme un JSON."
-                },
-                {
-                  type: "image_file",
-                  // OJO: sin "filename" ni nada extra
-                  image_file: {
-                    file_id: fileId
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        response_format: { type: "json_object" }
-      },
-      {
-        headers: {
-          "Authorization": `Bearer ${OPENAI_API_KEY}`,
-          "OpenAI-Beta": "assistants=v2",
-          "OpenAI-Organization": OPENAI_ORG_ID,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    const runData = runResp.data;
-    console.log("Creado run =>", JSON.stringify(runData, null, 2));
-
-    const runId = runData.id;
-    const threadId = runData.thread_id;
-    let status = runData.status;
-    const finalStates = new Set(["completed","failed","incomplete","cancelled","cancelling","expired"]);
-
-    // 4) Esperar a que finalice
-    while (!finalStates.has(status)) {
-      console.log(`Run status = ${status}. Esperando 1s...`);
-      await new Promise(r => setTimeout(r, 1000));
-
-      const checkResp = await axios.get(
-        `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
-        {
-          headers: {
-            "Authorization": `Bearer ${OPENAI_API_KEY}`,
-            "OpenAI-Beta": "assistants=v2",
-            "OpenAI-Organization": OPENAI_ORG_ID
-          }
-        }
-      );
-      status = checkResp.data.status;
-    }
-
-    if (status !== "completed") {
-      return res.json({
-        success: false,
-        error: `El run finalizó con estado: ${status}`
-      });
-    }
-
-    // 5) GET /v1/threads/{threadId}/messages => leer respuesta
-    const msgsResp = await axios.get(
-      `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
-      {
-        headers: {
-          "Authorization": `Bearer ${OPENAI_API_KEY}`,
-          "OpenAI-Beta": "assistants=v2",
-          "OpenAI-Organization": OPENAI_ORG_ID
-        }
-      }
-    );
-    const allMessages = msgsResp.data.data;
-    console.log("Mensajes(desc) =>", JSON.stringify(allMessages, null, 2));
-
-    // role="assistant"
-    const assistantMsg = allMessages.find(m => m.role === "assistant");
-    if (!assistantMsg) {
-      return res.json({ success: false, error: "No se encontró mensaje del assistant" });
-    }
-
-    let rawContent = assistantMsg.content || "";
+    // Intentar parsear como JSON
     let jugadas = [];
-    let camposDudosos = [];
-
-    if (typeof rawContent === "string") {
-      try {
-        const parsed = JSON.parse(rawContent);
-        if (Array.isArray(parsed)) {
-          jugadas = parsed;
-        } else if (Array.isArray(parsed.jugadas)) {
-          jugadas = parsed.jugadas;
-          camposDudosos = parsed.camposDudosos || [];
-        } else {
-          jugadas = [parsed];
-        }
-      } catch(e) {
-        console.warn("No parse JSON =>", rawContent);
-      }
-    } else if (typeof rawContent === "object") {
-      if (Array.isArray(rawContent.jugadas)) {
-        jugadas = rawContent.jugadas;
-        camposDudosos = rawContent.camposDudosos || [];
+    let rawOcr = content;
+    try {
+      // Suponemos que GPT devolverá un JSON "puro"
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed)) {
+        jugadas = parsed;
       } else {
-        jugadas = [rawContent];
+        // En caso de que sea un objeto con { jugadas: [...] }
+        if (Array.isArray(parsed.jugadas)) {
+          jugadas = parsed.jugadas;
+        }
       }
+    } catch (e) {
+      console.warn("No se pudo parsear JSON del assistant. Respuesta textual.");
     }
 
-    // (opcional) Guardar en Mongo
+    // Guardar en Mongo (opcional)
     if (db) {
       await db.collection("ticketsOCR").insertOne({
         createdAt: new Date(),
-        rawAssistantOutput: rawContent,
-        jugadas,
-        camposDudosos
+        rawAssistantOutput: content,
+        jugadas
       });
     }
 
     return res.json({
       success: true,
-      resultado: { jugadas, camposDudosos },
+      resultado: { jugadas },
       debug: {
-        runId,
-        threadId,
-        runStatus: status,
-        rawOcr: rawContent
+        rawOcr
       }
     });
 
   } catch (err) {
-    console.error("Error en /ocr =>", err.message);
+    console.error("Error en /chat-ocr =>", err.message);
     if (err.response && err.response.data) {
       console.error("err.response.data =>", JSON.stringify(err.response.data, null, 2));
     }
@@ -239,7 +161,7 @@ app.post("/ocr", upload.single("ticket"), async (req, res) => {
   }
 });
 
-// Iniciar server
+// Iniciar el servidor
 app.listen(PORT, () => {
   console.log("Servidor corriendo en puerto", PORT);
 });
