@@ -1,10 +1,10 @@
- {
+  {
   "name": "openai-ocr-robusto",
   "version": "2.0.0",
   "description": "Módulo OCR robusto con OpenAI, Node, Drag & Drop, Regex advanced",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "TuNombre",
