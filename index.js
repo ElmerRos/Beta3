@@ -1,7 +1,7 @@
  "use strict";
 
-// Cargar variables de entorno desde .env
-require('dotenv').config();
+// Las variables de entorno serán proporcionadas por el entorno de despliegue (ej. Render)
+// No se necesita dotenv.config()
 
 const path = require("path");
 const express = require("express");
