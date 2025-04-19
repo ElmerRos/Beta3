@@ -1,317 +1,214 @@
- /*  index.js – versión optimizada 19‑abr‑2025
-    Principales mejoras (no técnicas):
-    • Procesa las imágenes más rápido y baratas.
-    • Mensajes de error comprensibles.
-    • Barra de progreso real (el cliente recibe porcentajes).
-    • Limpia archivos temporales y cuida la base de datos.
-    • Comprueba variables de entorno al arrancar.
-*/
+ "use strict";
 
-"use strict";
+// Las variables de entorno serán proporcionadas por el entorno de despliegue (ej. Render)
+// No se necesita dotenv.config()
 
-const path           = require("path");
-const express        = require("express");
-const multer         = require("multer");
-const axios          = require("axios");
-const FormData       = require("form-data");
-const sharp          = require("sharp");
-const { MongoClient }= require("mongodb");
-const dayjs          = require("dayjs");
-
-////////////////////////////////////////////////////////////////////////////////
-// 1. Configuración y comprobaciones básicas
-////////////////////////////////////////////////////////////////////////////////
-
-const PORT          = process.env.PORT;
-const MONGODB_URI   = process.env.MONGODB_URI;
-const OPENAI_API_KEY= process.env.OPENAI_API_KEY;
-const OPENAI_ORG_ID = process.env.OPENAI_ORG_ID || "";   // opcional
-const ASSISTANT_ID  = process.env.ASSISTANT_ID  || "asst_iPQIGQRDCf1YeQ4P3p9ued6W";
-
-function ensureEnv(varName, value) {
-  if (!value) {
-    console.error(`❌ Falta la variable de entorno ${varName}. No se puede arrancar.`);
-    process.exit(1);
-  }
-}
-["PORT","MONGODB_URI","OPENAI_API_KEY","ASSISTANT_ID"].forEach(v => ensureEnv(v, process.env[v]));
-
-////////////////////////////////////////////////////////////////////////////////
-// 2. Servidor Express
-////////////////////////////////////////////////////////////////////////////////
+const path = require("path");
+const express = require("express");
+const multer = require("multer");
+const axios = require("axios");
+const FormData = require("form-data");
+const sharp = require("sharp");
+const { MongoClient } = require("mongodb");
+const dayjs = require("dayjs");
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
 
-// límites básicos de seguridad: 8 MB por imagen
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits : { fileSize: 8 * 1024 * 1024 } 
-});
+// --- Middlewares para parsear JSON y form-url-encoded ---
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Servir la carpeta public
-app.use(express.static("public"));
-app.get("/", (_req, res) => res.sendFile(path.join(__dirname,"public","index.html")));
+// Ajusta según tu entorno
+const PORT = process.env.PORT || 3000;
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@cluster/dbName";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+const ASSISTANT_ID = process.env.ASSISTANT_ID || "";        // Se debe configurar en Render
+const OPENAI_ORG_ID = process.env.OPENAI_ORG_ID || "";      // Opcional
 
-////////////////////////////////////////////////////////////////////////////////
-// 3. Cliente HTTP con reintentos automáticos
-////////////////////////////////////////////////////////////////////////////////
+if (!OPENAI_API_KEY || !ASSISTANT_ID) {
+  console.error("❌ Falta OPENAI_API_KEY o ASSISTANT_ID. No se puede arrancar.");
+  process.exit(1);
+}
 
+// --- Cliente API con reintentos ---
 const ApiClient = {
-  async request(cfg, retries = 3, delay = 1000) {
-    let lastErr;
+  async request(config, retries = 3, initialDelay = 1000) {
+    let lastError, delay = initialDelay;
     for (let i = 0; i < retries; i++) {
       try {
-        return await axios(cfg);
+        return await axios(config);
       } catch (err) {
-        lastErr = err;
-        const retriable = !err.response || err.response.status >= 500;
-        if (!retriable || i === retries - 1) break;
-        console.log(`⚠️  Reintento ${i+1}/${retries} en ${delay} ms... (${err.message})`);
+        lastError = err;
+        const shouldRetry = !err.response || err.response.status >= 500;
+        if (!shouldRetry || i === retries - 1) break;
+        console.log(`Reintento ${i+1}/${retries} tras error: ${err.message}, esperando ${delay}ms...`);
         await new Promise(r => setTimeout(r, delay));
         delay *= 2;
       }
     }
-    throw lastErr;
+    throw lastError;
   },
-  openAIHeaders(extra = {}) {
+  getOpenAIHeaders(extra = {}) {
     return {
-      "Authorization"    : `Bearer ${OPENAI_API_KEY}`,
-      "OpenAI-Beta"      : "assistants=v2",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "OpenAI-Beta": "assistants=v2",
       "OpenAI-Organization": OPENAI_ORG_ID,
       ...extra
     };
   }
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// 4. Funciones OCR / OpenAI
-////////////////////////////////////////////////////////////////////////////////
-
-const OCR = {
-
-  /* 4.1 Redimensionar y comprimir (calidad 80, escala de grises) */
-  async optimise(buffer) {
+// --- Servicio de OCR (redimensiona, sube, genera prompt y consulta) ---
+const OcrService = {
+  async resizeImage(buffer) {
     return sharp(buffer)
       .resize({ width: 2000, height: 2000, fit: "inside" })
-      .grayscale()
-      .jpeg({ quality: 80 })
       .toBuffer();
   },
-
-  /* 4.2 Subir la imagen a OpenAI */
-  async upload(buffer, filename) {
-    const fd = new FormData();
-    fd.append("purpose","assistants");
-    fd.append("file", buffer, { filename, contentType: "image/jpeg" });
-
-    const { data } = await ApiClient.request({
-      method : "post",
-      url    : "https://api.openai.com/v1/files",
-      data   : fd,
-      headers: { ...ApiClient.openAIHeaders(), ...fd.getHeaders() }
+  async uploadFileToOpenAI(buffer, filename, mimetype) {
+    const form = new FormData();
+    form.append("purpose", "assistants");
+    form.append("file", buffer, { filename, contentType: mimetype });
+    const resp = await ApiClient.request({
+      method: "post",
+      url: "https://api.openai.com/v1/files",
+      data: form,
+      headers: {
+        ...ApiClient.getOpenAIHeaders(),
+        ...form.getHeaders()
+      }
     });
-    return data.id;                  // ← file_id
+    return resp.data.id;
   },
-
-  /* 4.3 Prompt detallado (verbal, con hora del servidor) */
-  prompt(now) {
-    const stamp = now.format("YYYY-MM-DD HH:mm:ss Z");
-    return `La hora del servidor es ${stamp}. ...
-(Se mantiene el mismo prompt detallado que ya tenías aquí, sin cambios)`;
+  getDetailedPrompt(serverTime) {
+    const formatted = serverTime.format("YYYY-MM-DD HH:mm:ss Z");
+    return `Por favor, analiza la imagen adjunta ... La hora actual del servidor es ${formatted}. Devuelve SOLO JSON válido con la estructura ...`;
+    // (aquí va todo tu prompt detallado tal cual lo tenías)
   },
-
-  /* 4.4 Crear hilo+run */
-  async createRun(fileId, prompt) {
-    const { data } = await ApiClient.request({
-      method : "post",
-      url    : "https://api.openai.com/v1/threads/runs",
-      data   : {
+  async createAndRunAssistant(fileId, prompt) {
+    const resp = await ApiClient.request({
+      method: "post",
+      url: "https://api.openai.com/v1/threads/runs",
+      headers: ApiClient.getOpenAIHeaders({ "Content-Type": "application/json" }),
+      data: {
         assistant_id: ASSISTANT_ID,
-        thread: {
-          messages: [{
-            role: "user",
-            content: [
-              { type:"text", text: prompt },
-              { type:"image_file", image_file:{ file_id:fileId } }
-            ]
-          }]
-        },
-        response_format: { type:"json_object" }
-      },
-      headers: { ...ApiClient.openAIHeaders(), "Content-Type":"application/json" }
+        thread: { messages: [{ role: "user", content: [ { type: "text", text: prompt }, { type: "image_file", image_file: { file_id: fileId } } ] }] },
+        response_format: { type: "json_object" }
+      }
     });
-    return { threadId: data.thread_id, runId:data.id, status:data.status };
+    return { threadId: resp.data.thread_id, runId: resp.data.id, initialStatus: resp.data.status };
   },
-
-  /* 4.5 Esperar hasta que el run termine (polling) */
-  async waitRun(threadId, runId, status, updateProgress) {
-    const done = new Set(["completed","failed","incomplete","cancelled","expired"]);
-    while (!done.has(status)) {
+  async pollRunStatus(threadId, runId, status) {
+    const final = new Set(["completed","failed","incomplete","cancelled","expired"]);
+    while (!final.has(status)) {
       await new Promise(r => setTimeout(r, 1000));
-      const { data } = await ApiClient.request({
-        method : "get",
-        url    : `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
-        headers: ApiClient.openAIHeaders()
+      const resp = await ApiClient.request({
+        method: "get",
+        url: `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
+        headers: ApiClient.getOpenAIHeaders()
       });
-      status = data.status;
-      updateProgress(60);            // ≈ progreso medio mientras espera
+      status = resp.data.status;
     }
     return status;
   },
-
-  /* 4.6 Obtener la respuesta */
-  async fetchAnswer(threadId) {
-    const { data } = await ApiClient.request({
-      method : "get",
-      url    : `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
-      headers: ApiClient.openAIHeaders()
+  async getAssistantResponse(threadId) {
+    const resp = await ApiClient.request({
+      method: "get",
+      url: `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
+      headers: ApiClient.getOpenAIHeaders()
     });
-    const msg = data.data.find(m => m.role==="assistant");
+    const msg = resp.data.data.find(m => m.role === "assistant");
     if (!msg) throw new Error("No se encontró respuesta del assistant");
     return msg.content;
   },
-
-  /* 4.7 Borrar archivo remoto (ahorra espacio y costes) */
-  async deleteFile(fileId) {
-    try {
-      await ApiClient.request({
-        method : "delete",
-        url    : `https://api.openai.com/v1/files/${fileId}`,
-        headers: ApiClient.openAIHeaders()
-      });
-    } catch (e) { console.warn("No se pudo borrar fileId:", fileId); }
+  parseAssistantResponse(raw) {
+    try { return typeof raw === "string" ? JSON.parse(raw) : raw; }
+    catch (e) { return null; }
   },
-
-  /* 4.8 Parseo seguro a JSON */
-  parse(raw) {
-    const tryJson = str => { try { return JSON.parse(str); } catch { return null; } };
-
-    if (Array.isArray(raw)) {
-      const t = raw.find(p => p.type==="text")?.text?.value;
-      return t ? tryJson(t) : null;
-    }
-    if (typeof raw === "string") return tryJson(raw);
-    if (raw?.type==="text")      return tryJson(raw.text?.value);
-    return null;
-  },
-
-  /* 4.9 Transformar a formato amigable */
-  toClient(parsed) {
-    if (!parsed?.jugadas) return { jugadas: [] };
-
-    const jugadas = parsed.jugadas.map(j => {
-      const total   = (j.straight||0)+(j.box||0)+(j.combo||0);
-      const obj = {
-        numeros: j.numero || "",
-        montoApostado: total,
-        straight: j.straight||0,
-        box     : j.box||0,
-        combo   : j.combo||0
-      };
-      if (j.esNumeroDudoso || j.esMontoDudoso || j.esTipoJuegoDudoso || j.esModalidadDudosa) {
-        obj.esDudoso = true;
+  transformResponseForClient(parsed) {
+    if (!parsed || !Array.isArray(parsed.jugadas)) return { jugadas: [] };
+    const jugadas = parsed.jugadas.map((j, i) => {
+      const monto = (j.straight||0)+(j.box||0)+(j.combo||0);
+      const out = { numeros: j.numero||"", montoApostado: monto, straight: j.straight||0, box: j.box||0, combo: j.combo||0 };
+      if (j.esNumeroDudoso||j.esMontoDudoso||j.esTipoJuegoDudoso||j.esModalidadDudosa) {
+        out.esDudoso = true;
+        out.detallesDudas = {
+          numero: !!j.esNumeroDudoso,
+          monto: !!j.esMontoDudoso,
+          tipoJuego: !!j.esTipoJuegoDudoso,
+          modalidad: !!j.esModalidadDudosa
+        };
       }
-      return obj;
+      return out;
     });
-
-    const ticketInfo = parsed.ticketInfo && {
-      fecha   : parsed.ticketInfo.fecha,
-      track   : parsed.ticketInfo.track,
-      esDudoso: parsed.ticketInfo.esFechaDudosa || parsed.ticketInfo.esTrackDudoso
-    };
-
-    return { jugadas, ticketInfo };
+    const info = parsed.ticketInfo || {};
+    return { jugadas, ticketInfo: { fecha: info.fecha||"", track: info.track||"", esDudoso: info.esFechaDudosa||info.esTrackDudoso||false } };
   }
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// 5. MongoDB (conexión única global)
-////////////////////////////////////////////////////////////////////////////////
-
-let db;
+// --- Conexión a MongoDB ---
+let db = null;
 (async () => {
   try {
-    const client = await new MongoClient(MONGODB_URI, { useUnifiedTopology:true }).connect();
+    const client = await new MongoClient(MONGODB_URI, { useUnifiedTopology: true }).connect();
     db = client.db();
-    console.log("✅ Conectado a MongoDB.");
-  } catch(e) {
-    console.error("❌ Error conectando a MongoDB:", e.message);
+    console.log("✅ Conectado a MongoDB");
+  } catch (e) {
+    console.error("❌ Error conectando a MongoDB:", e);
   }
 })();
 
-////////////////////////////////////////////////////////////////////////////////
-// 6. Ruta principal /ocr  (con barra de progreso)
-////////////////////////////////////////////////////////////////////////////////
+// --- Rutas y estáticos ---
+app.use(express.static("public"));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
-app.post("/ocr", upload.single("ticket"), async (req, res) => {
-
-  // 6.1 Función auxiliar para enviar progreso parcial
-  const steps = { VALIDA:5, REDUCE:15, SUBE:25, RUN:60, PARSEA:80, LISTO:100 };
-  const progress = p => {
-    res.write(`data: ${p}\n\n`);    // Server‑Sent Events (SSE)
-  };
-
-  // 6.2 Cabeceras SSE – permite que el frontend actualice la barra en vivo
-  res.set({
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive"
-  });
-
+// Ruta principal de OCR
+app.post("/ocr", upload.single("ticket"), async (req, res, next) => {
+  res.type("application/json");  // <-- forzamos JSON
   try {
-    if (!req.file) throw new Error("No se recibió ninguna imagen.");
-    progress(steps.VALIDA);
+    if (!req.file) return res.status(400).json({ success: false, error: "No se recibió ninguna imagen." });
 
-    const now = dayjs();
-    const optimised = await OCR.optimise(req.file.buffer);
-    progress(steps.REDUCE);
-
-    const fileId = await OCR.upload(optimised, req.file.originalname || "ticket.jpg");
-    progress(steps.SUBE);
-
-    const { threadId, runId, status } = await OCR.createRun(fileId, OCR.prompt(now));
-    const finalStatus = await OCR.waitRun(threadId, runId, status, progress);
-
+    const serverTime = dayjs();
+    const resized = await OcrService.resizeImage(req.file.buffer);
+    const fileId  = await OcrService.uploadFileToOpenAI(resized, req.file.originalname, req.file.mimetype);
+    const prompt  = OcrService.getDetailedPrompt(serverTime);
+    const { threadId, runId, initialStatus } = await OcrService.createAndRunAssistant(fileId, prompt);
+    const finalStatus = await OcrService.pollRunStatus(threadId, runId, initialStatus);
     if (finalStatus !== "completed") {
-      throw new Error(`El análisis terminó con estado: ${finalStatus}`);
+      return res.json({ success: false, error: `OCR terminó con estado: ${finalStatus}` });
     }
-    progress(steps.RUN);
 
-    const raw = await OCR.fetchAnswer(threadId);
-    const parsed = OCR.parse(raw);
-    if (!parsed) throw new Error("No se entendió la respuesta del assistant.");
-    progress(steps.PARSEA);
+    const raw    = await OcrService.getAssistantResponse(threadId);
+    const parsed = OcrService.parseAssistantResponse(raw);
+    if (!parsed) return res.json({ success: false, error: "No se pudo parsear la respuesta del OCR" });
 
-    const resultado = OCR.toClient(parsed);
-
-    // Guardar sólo lo útil en Mongo
+    const resultado = OcrService.transformResponseForClient(parsed);
     if (db) {
       await db.collection("ticketsOCR").insertOne({
-        createdAt : new Date(),
-        raw       : raw,        // para auditoría
+        createdAt: new Date(),
+        serverTime: serverTime.toISOString(),
+        rawAssistantOutput: raw,
+        parsedResponse: parsed,
         resultado
       });
     }
 
-    // Limpiar archivo remoto
-    OCR.deleteFile(fileId).catch(()=>{});
-
-    progress(steps.LISTO);
-    res.write(`event: close\ndata: ${JSON.stringify({ success:true, resultado })}\n\n`);
-    res.end();
+    return res.json({ success: true, resultado, debug: { runId, threadId, rawOcr: raw } });
 
   } catch (err) {
-    console.error("❌ /ocr:", err.message);
-    progress(100);
-    res.write(`event: close\ndata: ${JSON.stringify({ success:false, error: err.message })}\n\n`);
-    res.end();
+    // si algo falla, pasa al manejador global
+    next(err);
   }
 });
 
-////////////////////////////////////////////////////////////////////////////////
-// 7. Arranque del servidor
-////////////////////////////////////////////////////////////////////////////////
+// --- Manejador global de errores: siempre devuelve JSON ---
+app.use((err, req, res, next) => {
+  console.error("💥 Error no controlado:", err);
+  res.status(500).json({ success: false, error: err.message || "Error interno del servidor" });
+});
 
-app.listen(Number(PORT), () => {
-  console.log(`🚀 Servidor listo en http://localhost:${PORT}`);
+// --- Iniciar servidor ---
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
 });
