@@ -1,4 +1,4 @@
- /* =========================================================
+  /* =========================================================
    SCRIPTS.JS COMPLETO
    (Mantiene toda la lógica previa intacta,
     e incorpora spinner moderno, barra de progreso
