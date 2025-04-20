@@ -1,468 +1,1291 @@
- "use strict";
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Beast Reader (BETA) East New York</title>
 
-// Las variables de entorno serán proporcionadas por el entorno de despliegue (ej. Render)
-// No se necesita dotenv.config()
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
 
-const path = require("path");
-const express = require("express");
-const multer = require("multer");
-const axios = require("axios");
-const FormData = require("form-data");
-const sharp = require("sharp");
-const { MongoClient } = require("mongodb");
-const dayjs = require("dayjs");
+  <!-- Flatpickr CSS (tema material_blue) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
+    rel="stylesheet"
+  />
 
-const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+  <!-- Bootstrap Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+  />
 
-// Ajusta según tu entorno
-const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://user:pass@cluster/dbName";
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
 
-// Assistant y Organization
-const ASSISTANT_ID = "asst_iPQIGQRDCf1YeQ4P3p9ued6W";
-const OPENAI_ORG_ID = "org-16WwdoiZ4EncYTJ278q6TQoF"; // si hace falta
+  <!-- Intro.js (CSS + JS para el tutorial) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/intro.js/minified/introjs.min.css"
+  />
+  <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 
-// Funciones auxiliares
-const ApiClient = {
-  // Wrapper para axios con reintentos y manejo de errores
-  async request(config, retries = 3, initialDelay = 1000) {
-    let lastError;
-    let delay = initialDelay;
+  <!-- Custom CSS (con estilos neon, etc.) -->
+  <link href="styles.css" rel="stylesheet" />
 
-    for (let attempt = 0; attempt < retries; attempt++) {
-      try {
-        return await axios(config);
-      } catch (error) {
-        lastError = error;
-        // Solo reintentar en errores 5xx (del servidor) o errores de red
-        const shouldRetry = !error.response || error.response.status >= 500;
-        
-        if (!shouldRetry || attempt === retries - 1) {
-          break; // No reintentar o último intento
-        }
-
-        console.log(`API Reintento ${attempt + 1}/${retries} tras error: ${error.message}. Esperando ${delay}ms...`);
-        await new Promise(r => setTimeout(r, delay));
-        delay *= 2; // Backoff exponencial
-      }
+  <!-- Estilo extra (opcional) para forzar tooltip blanco + texto negro en Intro.js -->
+  <style>
+    .introjs-tooltip {
+      background-color: #fff !important;
+      color: #000 !important;
+      text-align: left;
     }
-    throw lastError;
-  },
-
-  // Headers de OpenAI
-  getOpenAIHeaders(extraHeaders = {}) {
-    return {
-      "Authorization": `Bearer ${OPENAI_API_KEY}`,
-      "OpenAI-Beta": "assistants=v2",
-      "OpenAI-Organization": OPENAI_ORG_ID,
-      ...extraHeaders
-    };
-  }
-};
-
-// Funciones de OCR
-const OcrService = {
-  /**
-   * Redimensiona una imagen para optimizarla para OCR
-   */
-  async resizeImage(buffer) {
-    return sharp(buffer)
-      .resize({ width: 2000, height: 2000, fit: "inside" })
-      .toBuffer();
-  },
-
-  /**
-   * Sube un archivo a OpenAI
-   */
-  async uploadFileToOpenAI(buffer, filename, mimetype) {
-    const formData = new FormData();
-    formData.append("purpose", "assistants");
-    formData.append("file", buffer, {
-      filename: filename || "ticket.jpeg",
-      contentType: mimetype
-    });
-
-    const response = await ApiClient.request({
-      method: "post",
-      url: "https://api.openai.com/v1/files",
-      data: formData,
-      headers: {
-        ...ApiClient.getOpenAIHeaders(),
-        ...formData.getHeaders()
-      }
-    });
-    
-    return response.data.id; // file_id
-  },
-
-  /**
-   * Crea un mensaje con el prompt detallado de OCR para tickets
-   */
-  getDetailedPrompt(serverTime) {
-    // Formato de hora para el prompt
-    const formattedTime = serverTime.format("YYYY-MM-DD HH:mm:ss Z");
-    
-    return `Por favor, analiza la imagen adjunta de un ticket de lotería manuscrito y extrae la información siguiendo estas reglas estrictas. La hora actual del servidor es ${formattedTime}. Devuelve el resultado ÚNICAMENTE como un objeto JSON válido con la estructura definida a continuación. No incluyas ningún texto explicativo fuera del objeto JSON.
-
-Estructura JSON Requerida:
-{
-  "ticketInfo": {
-    "fecha": "MM/DD/YY", "track": "Track Name(s)", "esFechaDudosa": boolean, "esTrackDudoso": boolean
-  },
-  "jugadas": [
-    {
-      "numeroJugada": number, "numero": "string", "straight": number, "box": number, "combo": number,
-      "tipoJuegoInferido": "string", "modalidadInferida": "string",
-      "esNumeroDudoso": boolean, "esMontoDudoso": boolean, "esTipoJuegoDudoso": boolean, "esModalidadDudosa": boolean
+    .introjs-tooltipreferenceLayer,
+    .introjs-overlay {
+      z-index: 99999999 !important;
     }
-    // ... más jugadas
-  ]
-}
 
-Reglas Detalladas de Interpretación y Extracción:
-
-1.  **Objetivo Principal:** Extraer fecha, track, números apostados y montos por modalidad (Straight, Box, Combo) de cada jugada en el ticket. Identificar internamente el tipo de juego y modalidad para aplicar las reglas correctamente. NO calcular premios ni verificar ganadores.
-
-2.  **Tipos de Juego a Reconocer (para aplicar reglas internas):**
-    *   **Peak 3:** 3 dígitos (000-999).
-    *   **Win 4:** 4 dígitos (0000-9999).
-    *   **Venezuela:** Quiniela (2 dígitos, 3 posiciones), Pale (4 dígitos = 2 parejas, Full/Parcial).
-    *   **Santo Domingo (RD):** Quiniela/Patas (2 dígitos, 3 posiciones), Pale (4 dígitos = 2 parejas, Full/Parcial).
-    *   **Pulito:** 2 dígitos asociados a posiciones de Peak 3 o Win 4.
-    *   **Single Action:** 1 dígito (0-9), a veces asociado a posiciones o carreras (NY Horses).
-
-3.  **Modalidades y Montos:**
-    *   **Peak 3:** Straight, Box (3-Way, 6-Way), Combo, Round Down (ej: "12X").
-    *   **Win 4:** Straight, Box (4-Way, Double, Triple, Quad), Round Down (ej: "123X").
-    *   **Venezuela/RD Quiniela/Patas:** Apuesta a 2 dígitos en posiciones (1ra, 2da, 3ra). El monto aplica a la pareja en la posición indicada o en todas si no se especifica.
-    *   **Venezuela/RD Pale:** Apuesta a 2 parejas (4 dígitos). Interpretar si es Full o Parcial según reglas (no necesario en JSON final, pero sí para entender montos).
-    *   **Pulito:** Apuesta a 2 dígitos en posición específica (ej: "(1)" o "(2)" sobre el número Peak3/Win4). Puede ser Straight (defecto) o Box.
-    *   **Single Action:** Apuesta a 1 dígito.
-    *   **Interpretación de Montos:**
-        *   Reconocer $, decimales. Mínimo $0.01. Máximos varían (ej: $100 RD Quiniela, $10 Win4 Straight NY). Usa el contexto del juego inferido.
-        *   Notación "X/Y" (ej: "50/50") = X para Straight, Y para Box. Asignar a \`straight\` y \`box\` respectivamente.
-        *   "Combo" se indica con monto + palabra "Combo". Asignar a \`combo\`.
-        *   Montos sin decimales (ej: "50"): Asumir centavos (0.50) si es bajo y típico. Si hay ambigüedad (ej: "1" puede ser $1.00 o $0.01), usa el contexto. Si persiste, asigna el valor más probable y marca \`esMontoDudoso: true\`.
-        *   Si no hay monto explícito para una modalidad (Straight/Box/Combo), asigna 0.
-
-4.  **Manejo de Datos Faltantes y Defaults:**
-    *   **Fecha:** Busca formato MM/DD/YY. Si falta o es ilegible, usa la fecha actual del servidor (provista al inicio de este prompt) formateada como MM/DD/YY y marca \`esFechaDudosa: true\`.
-    *   **Track/Lotería:** Busca nombres (NY Midday, Evening, Georgia, SantoDomingo, Venezuela, etc.). Si falta o es ilegible:
-        *   Si el contexto sugiere USA, usa la hora del servidor: antes de 2:15 PM -> "NY Midday (Default)", después -> "NY Evening (Default)".
-        *   Si el contexto sugiere RD o Vzla, usa "Desconocido (Default)".
-        *   En cualquier caso de default o ilegibilidad, marca \`esTrackDudoso: true\`.
-    *   **Tipo de Juego / Modalidad:** Infiere basado en dígitos y notas. Si no se puede determinar con confianza, asigna el más probable en \`tipoJuegoInferido\`/\`modalidadInferida\` y marca \`esTipoJuegoDudoso: true\` o \`esModalidadDudosa: true\`.
-
-5.  **Interpretación de Escritura Manual:**
-    *   "X" en Peak 3/Win 4 indica Round Down (ej: "12X", "123X"). Incluye la 'X' en el campo \`numero\`.
-    *   Flechas o líneas aplican un monto a jugadas subsiguientes.
-    *   Quiniela/Patas: "45-1ra", "45 P1" indican posición. Incluir en \`numero\` si es posible (ej: "45 P1") o inferir la modalidad.
-    *   Pulito: "(1)" o "(2)" sobre/cerca del número indican posición. Incluir en \`numero\` si es posible (ej: "123(1)").
-    *   Pale: Dos parejas separadas por "-", "x", "+". Incluir en \`numero\` (ej: "45-67").
-
-6.  **Secuencia y Orden:** Asigna \`numeroJugada\` secuencialmente (1, 2, 3...) leyendo de arriba abajo, izquierda a derecha.
-
-7.  **Manejo de Incertidumbre (IMPORTANTE):**
-    *   Si tienes BAJA CONFIANZA al leer un número/dígito, asigna el valor más probable pero marca \`esNumeroDudoso: true\`.
-    *   Si tienes BAJA CONFIANZA al interpretar un monto o su aplicación (ambigüedad, ilegible), asigna el valor más probable pero marca \`esMontoDudoso: true\`.
-    *   Si tienes BAJA CONFIANZA al clasificar el tipo de juego (Peak 3 vs Win 4 vs Otro), marca \`esTipoJuegoDudoso: true\`.
-    *   Si tienes BAJA CONFIANZA al clasificar la modalidad (Straight vs Box vs Combo vs Pale), marca \`esModalidadDudosa: true\`.
-    *   Si un número es completamente ilegible, usa "ILEGIBLE" en el campo \`numero\` y marca \`esNumeroDudoso: true\`.
-
-8.  **Formato de Salida Final:** La respuesta DEBE SER *exclusivamente* el objeto JSON válido descrito al inicio. Sin explicaciones adicionales.
-
-Analiza cuidadosamente la imagen y aplica estas reglas detalladas para generar el JSON.`;
-  },
-
-  /**
-   * Crea un thread y un run en OpenAI con la imagen y el prompt
-   */
-  async createAndRunAssistant(fileId, prompt) {
-    const response = await ApiClient.request({
-      method: "post",
-      url: "https://api.openai.com/v1/threads/runs",
-      data: {
-        assistant_id: ASSISTANT_ID,
-        thread: {
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: prompt
-                },
-                {
-                  type: "image_file",
-                  image_file: {
-                    file_id: fileId
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        response_format: { type: "json_object" }
-      },
-      headers: {
-        ...ApiClient.getOpenAIHeaders(),
-        "Content-Type": "application/json"
-      }
-    });
-    
-    return {
-      runId: response.data.id,
-      threadId: response.data.thread_id,
-      status: response.data.status
-    };
-  },
-
-  /**
-   * Espera a que un run termine, con polling periódico
-   */
-  async pollRunStatus(threadId, runId, initialStatus) {
-    const finalStates = new Set(["completed", "failed", "incomplete", "cancelled", "cancelling", "expired"]);
-    let status = initialStatus;
-    
-    while (!finalStates.has(status)) {
-      console.log(`Run status = ${status}. Esperando 1s...`);
-      await new Promise(r => setTimeout(r, 1000));
-      
-      const response = await ApiClient.request({
-        method: "get",
-        url: `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
-        headers: ApiClient.getOpenAIHeaders()
-      });
-      
-      status = response.data.status;
+    /* =========================================
+       SPINNER MODERNO + BARRA PROGRESO
+       ========================================= */
+    .modern-spinner {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      border: 8px solid rgba(0,0,0,0.1);
+      border-top: 8px solid #007bff; /* color primario */
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
     }
-    
-    return status;
-  },
 
-  /**
-   * Obtiene la respuesta del asistente
-   */
-  async getAssistantResponse(threadId) {
-    const response = await ApiClient.request({
-      method: "get",
-      url: `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
-      headers: ApiClient.getOpenAIHeaders()
-    });
-    
-    const allMessages = response.data.data;
-    const assistantMsg = allMessages.find(m => m.role === "assistant");
-    
-    if (!assistantMsg) {
-      throw new Error("No se encontró mensaje del assistant");
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
     }
-    
-    return assistantMsg.content || "";
-  },
 
-  /**
-   * Parsea el contenido del asistente a JSON
-   */
-  parseAssistantResponse(rawContent) {
-    function tryParseJSON(str) {
-      try { 
-        return JSON.parse(str); 
-      } catch (e) { 
-        console.error("Error parseando JSON:", e.message);
-        return null; 
-      }
+    /* Barra de progreso “falsa” */
+    .progress-ocr-container {
+      background-color: #e9ecef;
+      border-radius: 4px;
+      height: 8px;
+      width: 100%;
+      overflow: hidden;
+      margin-top: 10px;
     }
-    
-    // Diferentes formatos que puede devolver la API
-    if (Array.isArray(rawContent)) {
-      // Ej: [ { type: "text", text: { value: "..." } }, ... ]
-      const textPart = rawContent.find(p => p.type === "text");
-      if (textPart?.text?.value) {
-        return tryParseJSON(textPart.text.value);
-      }
-    } else if (typeof rawContent === "string") {
-      // Directamente un string JSON
-      return tryParseJSON(rawContent);
-    } else if (typeof rawContent === "object" && rawContent.type === "text") {
-      // Un solo objeto { type: "text", text: { value: "..." } }
-      if (rawContent.text?.value) {
-        return tryParseJSON(rawContent.text.value);
-      }
+    .progress-ocr-bar {
+      height: 8px;
+      background-color: #28a745; /* color verde */
+      width: 0%;
+      transition: width 0.3s ease;
     }
-    
-    return null;
-  },
+  </style>
+</head>
+<body>
+  <!-- Botones del tutorial en 3 idiomas -->
+  <div style="position: absolute; top: 10px; right: 10px; z-index:99999;">
+    <button id="helpEnglish" class="btn btn-secondary">E</button>
+    <button id="helpSpanish" class="btn btn-secondary">S</button>
+    <button id="helpCreole" class="btn btn-secondary">C</button>
+  </div>
 
-  /**
-   * Transforma la respuesta en formato uniforme utilizable por el cliente
-   */
-  transformResponseForClient(parsedResponse) {
-    // Si no hay respuesta válida
-    if (!parsedResponse || !parsedResponse.jugadas || !Array.isArray(parsedResponse.jugadas)) {
-      return { jugadas: [] };
-    }
-    
-    // Transformar cada jugada al formato esperado por el cliente
-    const jugadas = parsedResponse.jugadas.map(j => {
-      // Formato base que siempre devolvemos
-      const jugadaTransformada = {
-        numeros: j.numero || "",
-        montoApostado: (j.straight || 0) + (j.box || 0) + (j.combo || 0),
-        // Añadimos los campos específicos de modalidad
-        straight: j.straight || 0,
-        box: j.box || 0,
-        combo: j.combo || 0
-      };
-      
-      // Flags de incertidumbre (para destacar en el frontend)
-      if (j.esNumeroDudoso || j.esMontoDudoso || j.esTipoJuegoDudoso || j.esModalidadDudosa) {
-        jugadaTransformada.esDudoso = true;
-        
-        // Detalles de las dudas (para debug o UI avanzada)
-        jugadaTransformada.detallesDudas = {
-          numero: j.esNumeroDudoso || false,
-          monto: j.esMontoDudoso || false,
-          tipoJuego: j.esTipoJuegoDudoso || false,
-          modalidad: j.esModalidadDudosa || false
-        };
-      }
-      
-      return jugadaTransformada;
-    });
-    
-    // Información del ticket (opcional, puede ser útil para el frontend)
-    const ticketInfo = parsedResponse.ticketInfo ? {
-      fecha: parsedResponse.ticketInfo.fecha || "",
-      track: parsedResponse.ticketInfo.track || "",
-      esDudoso: parsedResponse.ticketInfo.esFechaDudosa || parsedResponse.ticketInfo.esTrackDudoso || false
-    } : null;
-    
-    return { 
-      jugadas,
-      ticketInfo
-    };
-  }
-};
+  <div class="container my-5">
+    <h2 class="text-center mb-4">Beast Reader (Cricket) East New York</h2>
 
-// Mongo
-let db = null;
-(async () => {
-  try {
-    const client = await new MongoClient(MONGODB_URI, { useUnifiedTopology: true }).connect();
-    db = client.db();
-    console.log("Conectado a MongoDB => 'ticketsOCR'.");
-  } catch (e) {
-    console.error("Error conectando a MongoDB:", e);
-  }
-})();
+    <!-- Main Form -->
+    <form id="lotteryForm">
+      <!-- Date Selection -->
+      <div class="row mb-3">
+        <div class="col-md-4 col-sm-6">
+          <label for="fecha" class="form-label">Bet Dates:</label>
+          <input
+            type="text"
+            id="fecha"
+            class="form-control glow-input"
+            placeholder="Select date(s)"
+            required
+          />
+        </div>
+      </div>
 
-// Servir carpeta public
-app.use(express.static("public"));
+      <!-- Tracks Selection -->
+      <div class="mb-4">
+        <label class="form-label">Select Tracks:</label>
+        <div class="accordion" id="tracksAccordion">
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+          <!-- ================================
+               Sección USA TRACKS
+          ================================== -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingUSA">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseUSA"
+                aria-expanded="false"
+                aria-controls="collapseUSA"
+              >
+                USA
+              </button>
+            </h2>
+            <div
+              id="collapseUSA"
+              class="accordion-collapse collapse"
+              aria-labelledby="headingUSA"
+              data-bs-parent="#tracksAccordion"
+            >
+              <div class="accordion-body">
+                <!-- New York Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New York Mid Day"
+                    id="trackNYMidDay"
+                  />
+                  <label class="track-button" for="trackNYMidDay">
+                    <span class="track-name">New York Mid Day</span>
+                    <span class="cutoff-time" data-track="New York Mid Day"></span>
+                  </label>
+                </div>
+                <!-- New York Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New York Evening"
+                    id="trackNYEvening"
+                  />
+                  <label class="track-button" for="trackNYEvening">
+                    <span class="track-name">New York Evening</span>
+                    <span class="cutoff-time" data-track="New York Evening"></span>
+                  </label>
+                </div>
+                <!-- Georgia Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Mid Day"
+                    id="trackGeorgiaMidDay"
+                  />
+                  <label class="track-button" for="trackGeorgiaMidDay">
+                    <span class="track-name">Georgia Mid Day</span>
+                    <span class="cutoff-time" data-track="Georgia Mid Day"></span>
+                  </label>
+                </div>
+                <!-- Georgia Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Evening"
+                    id="trackGeorgiaEvening"
+                  />
+                  <label class="track-button" for="trackGeorgiaEvening">
+                    <span class="track-name">Georgia Evening</span>
+                    <span class="cutoff-time" data-track="Georgia Evening"></span>
+                  </label>
+                </div>
+                <!-- New Jersey Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New Jersey Mid Day"
+                    id="trackNJMidDay"
+                  />
+                  <label class="track-button" for="trackNJMidDay">
+                    <span class="track-name">New Jersey Mid Day</span>
+                    <span class="cutoff-time" data-track="New Jersey Mid Day"></span>
+                  </label>
+                </div>
+                <!-- New Jersey Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New Jersey Evening"
+                    id="trackNJEvening"
+                  />
+                  <label class="track-button" for="trackNJEvening">
+                    <span class="track-name">New Jersey Evening</span>
+                    <span class="cutoff-time" data-track="New Jersey Evening"></span>
+                  </label>
+                </div>
+                <!-- Florida Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Florida Mid Day"
+                    id="trackFloridaMidDay"
+                  />
+                  <label class="track-button" for="trackFloridaMidDay">
+                    <span class="track-name">Florida Mid Day</span>
+                    <span class="cutoff-time" data-track="Florida Mid Day"></span>
+                  </label>
+                </div>
+                <!-- Florida Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Florida Evening"
+                    id="trackFloridaEvening"
+                  />
+                  <label class="track-button" for="trackFloridaEvening">
+                    <span class="track-name">Florida Evening</span>
+                    <span class="cutoff-time" data-track="Florida Evening"></span>
+                  </label>
+                </div>
+                <!-- Connecticut Mid Day -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Connecticut Mid Day"
+                    id="trackConnecticutMidDay"
+                  />
+                  <label class="track-button" for="trackConnecticutMidDay">
+                    <span class="track-name">Connecticut Mid Day</span>
+                    <span class="cutoff-time" data-track="Connecticut Mid Day"></span>
+                  </label>
+                </div>
+                <!-- Connecticut Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Connecticut Evening"
+                    id="trackConnecticutEvening"
+                  />
+                  <label class="track-button" for="trackConnecticutEvening">
+                    <span class="track-name">Connecticut Evening</span>
+                    <span class="cutoff-time" data-track="Connecticut Evening"></span>
+                  </label>
+                </div>
+                <!-- Georgia Night -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Georgia Night"
+                    id="trackGeorgiaNight"
+                  />
+                  <label class="track-button" for="trackGeorgiaNight">
+                    <span class="track-name">Georgia Night</span>
+                    <span class="cutoff-time" data-track="Georgia Night"></span>
+                  </label>
+                </div>
+                <!-- Pensilvania AM -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Pensilvania AM"
+                    id="trackPennsylvaniaAM"
+                  />
+                  <label class="track-button" for="trackPennsylvaniaAM">
+                    <span class="track-name">Pensilvania AM</span>
+                    <span class="cutoff-time" data-track="Pensilvania AM"></span>
+                  </label>
+                </div>
+                <!-- Pensilvania PM -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Pensilvania PM"
+                    id="trackPennsylvaniaPM"
+                  />
+                  <label class="track-button" for="trackPennsylvaniaPM">
+                    <span class="track-name">Pensilvania PM</span>
+                    <span class="cutoff-time" data-track="Pensilvania PM"></span>
+                  </label>
+                </div>
+                <!-- Venezuela -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Venezuela"
+                    id="trackVenezuela"
+                  />
+                  <label class="track-button" for="trackVenezuela">
+                    <span class="track-name">Venezuela</span>
+                    <span class="cutoff-time" data-track="Venezuela"></span>
+                  </label>
+                </div>
+                <!-- Brooklyn Midday -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Brooklyn Midday"
+                    id="trackBrooklynMidday"
+                  />
+                  <label class="track-button" for="trackBrooklynMidday">
+                    <span class="track-name">Brooklyn Midday</span>
+                    <span class="cutoff-time" data-track="Brooklyn Midday"></span>
+                  </label>
+                </div>
+                <!-- Brooklyn Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Brooklyn Evening"
+                    id="trackBrooklynEvening"
+                  />
+                  <label class="track-button" for="trackBrooklynEvening">
+                    <span class="track-name">Brooklyn Evening</span>
+                    <span class="cutoff-time" data-track="Brooklyn Evening"></span>
+                  </label>
+                </div>
+                <!-- Front Midday -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Front Midday"
+                    id="trackFrontMidday"
+                  />
+                  <label class="track-button" for="trackFrontMidday">
+                    <span class="track-name">Front Midday</span>
+                    <span class="cutoff-time" data-track="Front Midday"></span>
+                  </label>
+                </div>
+                <!-- Front Evening -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Front Evening"
+                    id="trackFrontEvening"
+                  />
+                  <label class="track-button" for="trackFrontEvening">
+                    <span class="track-name">Front Evening</span>
+                    <span class="cutoff-time" data-track="Front Evening"></span>
+                  </label>
+                </div>
 
-/**
- * RUTA /ocr
- * Versión refactorizada con mejor manejo de errores, reintentos y nuevo prompt
- */
-app.post("/ocr", upload.single("ticket"), async (req, res) => {
-  if (!req.file) {
-    return res.json({ success: false, error: "No se recibió ninguna imagen." });
-  }
-  if (!OPENAI_API_KEY) {
-    return res.json({ success: false, error: "Falta la OPENAI_API_KEY" });
-  }
+                <!-- New York Horses -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="New York Horses"
+                    id="trackNYHorses"
+                  />
+                  <label class="track-button" for="trackNYHorses">
+                    <span class="track-name">New York Horses</span>
+                    <span class="cutoff-time" data-track="New York Horses"></span>
+                  </label>
+                </div>
+                <!-- Fin de tracks USA -->
+              </div>
+            </div>
+          </div>
 
-  try {
-    console.log("---- /ocr ----");
-    console.log("Imagen recibida:", req.file.originalname, "size:", req.file.size);
+          <!-- ================================
+               Sección Santo Domingo TRACKS
+          ================================== -->
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingSD">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseSD"
+                aria-expanded="false"
+                aria-controls="collapseSD"
+              >
+                Santo Domingo
+              </button>
+            </h2>
+            <div
+              id="collapseSD"
+              class="accordion-collapse collapse"
+              aria-labelledby="headingSD"
+              data-bs-parent="#tracksAccordion"
+            >
+              <div class="accordion-body">
+                <!-- Real -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Real"
+                    id="trackReal"
+                  />
+                  <label class="track-button" for="trackReal">
+                    <span class="track-name">Real</span>
+                    <span class="cutoff-time" data-track="Real"></span>
+                  </label>
+                </div>
+                <!-- Gana mas -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Gana mas"
+                    id="trackGanamas"
+                  />
+                  <label class="track-button" for="trackGanamas">
+                    <span class="track-name">Gana más</span>
+                    <span class="cutoff-time" data-track="Gana mas"></span>
+                  </label>
+                </div>
+                <!-- Loteka -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Loteka"
+                    id="trackLoteka"
+                  />
+                  <label class="track-button" for="trackLoteka">
+                    <span class="track-name">Loteka</span>
+                    <span class="cutoff-time" data-track="Loteka"></span>
+                  </label>
+                </div>
+                <!-- Nacional -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Nacional"
+                    id="trackNacional"
+                  />
+                  <label class="track-button" for="trackNacional">
+                    <span class="track-name">Nacional</span>
+                    <span class="cutoff-time" data-track="Nacional"></span>
+                  </label>
+                </div>
+                <!-- Quiniela Pale -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Quiniela Pale"
+                    id="trackQuinielaPale"
+                  />
+                  <label class="track-button" for="trackQuinielaPale">
+                    <span class="track-name">Quiniela Pale</span>
+                    <span class="cutoff-time" data-track="Quiniela Pale"></span>
+                  </label>
+                </div>
+                <!-- Primera Día -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Primera Día"
+                    id="trackPrimeraDia"
+                  />
+                  <label class="track-button" for="trackPrimeraDia">
+                    <span class="track-name">Primera Día</span>
+                    <span class="cutoff-time" data-track="Primera Día"></span>
+                  </label>
+                </div>
+                <!-- Suerte Día -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Suerte Día"
+                    id="trackSuerteDia"
+                  />
+                  <label class="track-button" for="trackSuerteDia">
+                    <span class="track-name">Suerte Día</span>
+                    <span class="cutoff-time" data-track="Suerte Día"></span>
+                  </label>
+                </div>
+                <!-- Lotería Real -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Lotería Real"
+                    id="trackLoteriaReal"
+                  />
+                  <label class="track-button" for="trackLoteriaReal">
+                    <span class="track-name">Lotería Real</span>
+                    <span class="cutoff-time" data-track="Lotería Real"></span>
+                  </label>
+                </div>
+                <!-- Suerte Tarde -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Suerte Tarde"
+                    id="trackSuerteTarde"
+                  />
+                  <label class="track-button" for="trackSuerteTarde">
+                    <span class="track-name">Suerte Tarde</span>
+                    <span class="cutoff-time" data-track="Suerte Tarde"></span>
+                  </label>
+                </div>
+                <!-- Lotedom -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Lotedom"
+                    id="trackLotedom"
+                  />
+                  <label class="track-button" for="trackLotedom">
+                    <span class="track-name">Lotedom</span>
+                    <span class="cutoff-time" data-track="Lotedom"></span>
+                  </label>
+                </div>
+                <!-- Primera Noche -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Primera Noche"
+                    id="trackPrimeraNoche"
+                  />
+                  <label class="track-button" for="trackPrimeraNoche">
+                    <span class="track-name">Primera Noche</span>
+                    <span class="cutoff-time" data-track="Primera Noche"></span>
+                  </label>
+                </div>
+                <!-- Panama -->
+                <div class="track-button-container">
+                  <input
+                    class="track-checkbox"
+                    type="checkbox"
+                    value="Panama"
+                    id="trackPanama"
+                  />
+                  <label class="track-button" for="trackPanama">
+                    <span class="track-name">Panamá</span>
+                    <span class="cutoff-time" data-track="Panama"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
 
-    // Obtenemos la hora actual para el prompt y defaults
-    const serverTime = dayjs();
-    
-    // 1) Redimensionar imagen
-    const resizedBuf = await OcrService.resizeImage(req.file.buffer);
-    
-    // 2) Subir a OpenAI Files
-    const fileId = await OcrService.uploadFileToOpenAI(
-      resizedBuf, 
-      req.file.originalname || "ticket.jpeg", 
-      req.file.mimetype
-    );
-    console.log("Archivo subido a OpenAI, fileId =>", fileId);
-    
-    // 3) Crear prompt detallado con reglas de interpretación
-    const detailedPrompt = OcrService.getDetailedPrompt(serverTime);
-    
-    // 4) Crear thread y run con el prompt y la imagen
-    const { threadId, runId, status: initialStatus } = await OcrService.createAndRunAssistant(fileId, detailedPrompt);
-    console.log("Creado run =>", { threadId, runId, initialStatus });
-    
-    // 5) Esperar a que finalice el run
-    const finalStatus = await OcrService.pollRunStatus(threadId, runId, initialStatus);
-    if (finalStatus !== "completed") {
-      return res.json({
-        success: false,
-        error: `El run finalizó con estado: ${finalStatus}`
-      });
-    }
-    
-    // 6) Obtener respuesta del asistente
-    const rawContent = await OcrService.getAssistantResponse(threadId);
-    console.log("Contenido raw del assistant recibido");
-    
-    // 7) Parsear respuesta a JSON
-    const parsedResponse = OcrService.parseAssistantResponse(rawContent);
-    if (!parsedResponse) {
-      return res.json({
-        success: false,
-        error: "No se pudo parsear la respuesta del asistente"
-      });
-    }
-    
-    // 8) Transformar respuesta para el cliente, en formato compatible con frontend existente
-    const resultado = OcrService.transformResponseForClient(parsedResponse);
-    
-    // 9) Guardar en MongoDB
-    if (db) {
-      await db.collection("ticketsOCR").insertOne({
-        createdAt: new Date(),
-        serverTime: serverTime.toISOString(),
-        rawAssistantOutput: rawContent,
-        parsedResponse,
-        resultado
-      });
-    }
-    
-    // 10) Devolver respuesta
-    return res.json({
-      success: true,
-      resultado,
-      debug: {
-        runId,
-        threadId,
-        runStatus: finalStatus,
-        rawOcr: rawContent
-      }
-    });
+        </div>
+      </div>
 
-  } catch (err) {
-    console.error("Error en /ocr =>", err.message);
-    if (err.response && err.response.data) {
-      console.error("err.response.data =>", JSON.stringify(err.response.data, null, 2));
-    }
-    return res.json({
-      success: false,
-      error: err.response?.data?.error?.message || err.message
-    });
-  }
-});
+      <!-- Plays Table (Editable) -->
+      <div class="table-responsive mb-4">
+        <table class="table table-dark table-bordered glow-table" id="jugadasTable">
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>Bet Number</th>
+              <th>Game Mode</th>
+              <th>Straight ($)</th>
+              <th>Box ($)</th>
+              <th>Combo ($)</th>
+              <th>Total ($)</th>
+            </tr>
+          </thead>
+          <tbody id="tablaJugadas">
+            <!-- Rows added dynamically in scripts.js -->
+          </tbody>
+        </table>
+      </div>
 
-// Iniciar server
-app.listen(PORT, () => {
-  console.log("Servidor corriendo en puerto", PORT);
-});
+      <!-- Buttons: Add, Wizard, Remove Last, Reset -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="button-group">
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="agregarJugada"
+          >
+            <i class="bi bi-plus-circle"></i> Add Play
+          </button>
+          <button
+            type="button"
+            class="btn btn-info"
+            id="wizardButton"
+          >
+            <i class="bi bi-magic"></i> Wizard
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            id="eliminarJugada"
+          >
+            <i class="bi bi-dash-circle"></i> Remove Last Play
+          </button>
+          <button
+            type="button"
+            class="btn btn-warning"
+            id="resetForm"
+          >
+            <i class="bi bi-arrow-clockwise"></i> Reset Form
+          </button>
+        </div>
+        <!-- Make total text bigger -->
+        <div class="total-section" style="font-size:1.25rem;">
+          Total Plays: $
+          <span id="totalJugadas">0.00</span>
+        </div>
+      </div>
+
+      <!-- Generate Ticket -->
+      <div class="d-grid gap-2">
+        <button
+          type="button"
+          class="btn btn-success btn-lg"
+          id="generarTicket"
+        >
+          <i class="bi bi-ticket-detailed-fill"></i> Generate Ticket
+        </button>
+      </div>
+
+      <!-- SNIPPET OCR: Insertar JUSTO DEBAJO del botón "Generate Ticket" -->
+      <div class="d-grid gap-2 mt-3">
+        <button 
+          type="button"
+          class="btn btn-warning btn-lg"
+          id="btnOcrModal"
+          onclick="abrirModalOCR()"
+        >
+          <i class="bi bi-camera"></i> Capturar Boleto (OCR)
+        </button>
+      </div>
+
+      <!-- MODAL OCR (Bootstrap) -->
+      <div 
+        class="modal fade" 
+        id="modalOcr" 
+        tabindex="-1" 
+        aria-labelledby="modalOcrLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalOcrLabel">OCR - Subir Imagen</h5>
+              <button 
+                type="button" 
+                class="btn-close" 
+                data-bs-dismiss="modal" 
+                aria-label="Close">
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <!-- Zona drag & drop -->
+              <div 
+                id="ocrDropZone"
+                class="drop-zone"
+                ondragover="handleDragOver(event)"
+                ondragleave="handleDragLeave(event)"
+                ondrop="handleDrop(event)"
+              >
+                Arrastra aquí la imagen...
+              </div>
+
+              <p>O selecciona un archivo:</p>
+              <input 
+                type="file"
+                id="ocrFile"
+                accept="image/*"
+                capture="camera"
+                onchange="handleFileChange(event)"
+              />
+
+              <!-- Vista previa -->
+              <img 
+                id="ocrPreview" 
+                class="preview d-none" 
+                alt="Preview OCR"
+              />
+
+              <!-- Spinner/Cargando + Barra Progreso (moderno) -->
+              <div class="mt-3 d-none" id="ocrLoadingSection">
+                <div class="modern-spinner" id="ocrSpinner"></div>
+                <div class="progress-ocr-container">
+                  <div id="ocrProgressBar" class="progress-ocr-bar"></div>
+                </div>
+                <p id="ocrProgressText" style="margin-top:5px;">
+                  Subiendo/Procesando...
+                </p>
+              </div>
+
+              <!-- Jugadas detectadas (SOLO BetNumber y montos) -->
+              <div id="ocrJugadas" class="mt-3">
+                <!-- Aquí tu scripts.js creará un listado/tabla con betNumber + montos -->
+              </div>
+
+              <!-- SECCIÓN DEBUG OCR (opcional) -->
+              <div class="border p-2 mt-3">
+                <button 
+                  type="button"
+                  class="btn btn-sm btn-secondary"
+                  onclick="toggleOcrDebug()"
+                >
+                  Mostrar/Ocultar Debug
+                </button>
+                <div id="ocrDebugPanel" class="d-none mt-2">
+                  <h6>Raw OCR Response</h6>
+                  <pre 
+                    id="ocrRawResponse"
+                    style="max-height:200px; overflow:auto; background:#f8f9fa; color:#000;"
+                  ></pre>
+
+                  <h6>Texto Completo OCR</h6>
+                  <textarea
+                    id="ocrTextoCompleto"
+                    rows="5"
+                    style="width:100%;"
+                  ></textarea>
+
+                  <p>
+                    Confianza Promedio: 
+                    <span id="ocrConfPct">-</span>%<br/>
+                    Total Palabras: 
+                    <span id="ocrTotalWords">-</span>
+                  </p>
+                </div>
+              </div>
+              <!-- FIN SECCIÓN DEBUG OCR -->
+
+            </div>
+
+            <div class="modal-footer">
+              <!-- Botón para procesar OCR -->
+              <button 
+                type="button" 
+                class="btn btn-primary"
+                onclick="procesarOCR()"
+                id="btnProcesarOCR"
+              >
+                Procesar OCR
+              </button>
+
+              <!-- Botón para cargar las jugadas en el form principal -->
+              <button 
+                type="button" 
+                class="btn btn-info"
+                id="btnCargarJugadas"
+              >
+                Cargar Jugadas al Form
+              </button>
+
+              <button 
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cerrar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <!-- FIN SNIPPET OCR -->
+
+    </form>
+  </div>
+
+  <!-- BOTÓN para abrir dailyReport.html (si lo deseas en otra pestaña) -->
+  <button 
+    class="btn btn-secondary"
+    onclick="window.open('dailyReport.html','_blank')"
+  >
+    Abrir Reporte Diario
+  </button>
+
+  <!-- Ticket Preview Window -->
+  <div
+    class="modal fade"
+    id="ticketModal"
+    tabindex="-1"
+    aria-labelledby="ticketModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ticketModalLabel">Ticket Preview</h5>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div id="preTicket" class="p-3">
+            <h4 class="text-center mb-3">East New York Cricket</h4>
+            <p>
+              <strong>Bet Dates:</strong>
+              <span id="ticketFecha"></span>
+            </p>
+            <p>
+              <strong>Selected Tracks:</strong>
+              <span id="ticketTracks"></span>
+            </p>
+            <div class="table-responsive">
+              <table class="table table-dark table-bordered">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Bet Number</th>
+                    <th>Game Mode</th>
+                    <th>Straight ($)</th>
+                    <th>Box ($)</th>
+                    <th>Combo ($)</th>
+                    <th>Total ($)</th>
+                  </tr>
+                </thead>
+                <tbody id="ticketJugadas">
+                  <!-- Filled dynamically in scripts.js -->
+                </tbody>
+              </table>
+            </div>
+            <div class="total-section">
+              Total Plays: $<span id="ticketTotal">0.00</span>
+            </div>
+            <div class="ticket-number my-3">
+              Ticket Number: <span id="numeroTicket"></span>
+            </div>
+            <div class="transaction-date my-3">
+              Transaction Date & Time:
+              <span id="ticketTransaccion"></span>
+            </div>
+            <div class="barcode text-center">
+              <div id="qrcode"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <!-- Edit (close) => user can come back to edit main table -->
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+            id="editButton"
+          >
+            Edit
+          </button>
+          <!-- Confirm & Print -->
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="confirmarTicket"
+          >
+            Confirm & Print
+          </button>
+          <!-- Share (hidden initially) -->
+          <button
+            type="button"
+            class="btn btn-info d-none"
+            id="shareTicket"
+          >
+            Share Ticket
+          </button>
+          <!-- New red "Close" button for easier tapping -->
+          <button
+            type="button"
+            class="btn btn-danger"
+            data-bs-dismiss="modal"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 
+       =================================
+       WIZARD WINDOW (Quick Entry)
+       =================================
+  -->
+  <div
+    class="modal fade"
+    id="wizardModal"
+    tabindex="-1"
+    aria-labelledby="wizardModalLabel"
+    aria-hidden="true"
+  >
+    <!-- Fullscreen on small devices -->
+    <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
+      <div class="modal-content">
+        <!-- Encabezado con "Close Window" rojo en top-right -->
+        <div class="modal-header">
+          <h5 class="modal-title" id="wizardModalLabel">Quick Entry Window</h5>
+          <button
+            type="button"
+            class="btn btn-danger"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          >
+            Close Window
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- FILA 1: Bet Number + Add & Next -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div class="me-2">
+                <label for="wizardBetNumber" class="form-label">Bet Number</label>
+                <!-- type="text" => permitir "22-55", "11x22", etc. -->
+                <input
+                  type="text"
+                  class="form-control"
+                  id="wizardBetNumber"
+                  placeholder="2–4 digits or Pale (22-50)"
+                  style="width: 180px;"
+                />
+              </div>
+              <div>
+                <button
+                  type="button"
+                  class="btn btn-primary mt-4"
+                  id="wizardAddNext"
+                >
+                  <i class="bi bi-check2-circle"></i> Add & Next
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- FILA 2: Straight + candado (izq) / Add Main (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardStraight" class="form-label">Straight</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="number"
+                    step="1"
+                    class="form-control"
+                    id="wizardStraight"
+                    placeholder="e.g. 5"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="straight"
+                    id="lockStraight"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-warning"
+                id="wizardAddAllToMain"
+              >
+                <i class="bi bi-hdd-fill"></i> Add Main
+              </button>
+            </div>
+          </div>
+
+          <!-- FILA 3: Box (izq) / Generate (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardBox" class="form-label">Box</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="wizardBox"
+                    placeholder="e.g. 1,2"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="box"
+                    id="lockBox"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-success"
+                id="wizardGenerateTicket"
+              >
+                <i class="bi bi-ticket-detailed"></i> Generate
+              </button>
+            </div>
+          </div>
+
+          <!-- FILA 4: Combo (izq) / Edit Main (der) -->
+          <div class="row mb-3">
+            <div class="col-12 col-lg-6 d-flex align-items-end">
+              <div>
+                <label for="wizardCombo" class="form-label">Combo</label>
+                <div class="d-flex align-items-center">
+                  <input
+                    type="number"
+                    step="0.1"
+                    class="form-control"
+                    id="wizardCombo"
+                    placeholder="e.g. 3.00"
+                    style="width: 180px;"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary ms-1 lockBtn"
+                    data-field="combo"
+                    id="lockCombo"
+                  >
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 d-flex justify-content-end align-items-end">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="wizardEditMainForm"
+              >
+                <i class="bi bi-pencil-square"></i> Edit Main
+              </button>
+            </div>
+          </div>
+
+          <!-- Wizard Table (Internal) -->
+          <div class="table-responsive mb-3">
+            <table class="table table-dark table-bordered" id="wizardTable">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th>Bet Number</th>
+                  <th>Game Mode</th>
+                  <th>Straight ($)</th>
+                  <th>Box ($)</th>
+                  <th>Combo ($)</th>
+                  <th>Total ($)</th>
+                </tr>
+              </thead>
+              <tbody id="wizardTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Quick Pick Section -->
+          <div class="border p-2 mb-3">
+            <h6>Quick Pick</h6>
+            <div class="row mb-2">
+              <div class="col-6">
+                <label for="qpGameMode" class="form-label">Game Mode</label>
+                <select class="form-select" id="qpGameMode">
+                  <option value="Pick 3">Pick 3</option>
+                  <option value="Win 4">Win 4</option>
+                  <option value="Venezuela">Venezuela</option>
+                  <option value="Pale-Ven">Pale-Ven</option>
+                  <option value="Pulito">Pulito</option>
+                  <option value="RD-Quiniela">RD-Quiniela</option>
+                  <option value="Pale-RD">Pale-RD</option>
+                  <!-- Nueva modalidad Single Action -->
+                  <option value="Single Action">Single Action</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label for="qpCount" class="form-label">How many plays?</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="qpCount"
+                  placeholder="1–25"
+                  min="1"
+                  max="25"
+                  value="5"
+                />
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-info"
+                id="btnGenerateQuickPick"
+              >
+                Quick Pick
+              </button>
+              <button
+                type="button"
+                class="btn btn-info"
+                id="btnPermute"
+              >
+                Permute
+              </button>
+            </div>
+          </div>
+
+          <!-- Round Down Section -->
+          <div class="border p-2 mb-3">
+            <h6>Round Down</h6>
+            <div class="row mb-2">
+              <div class="col-6">
+                <label for="rdFirstNumber" class="form-label">First Number</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rdFirstNumber"
+                  placeholder="e.g. 120"
+                />
+              </div>
+              <div class="col-6">
+                <label for="rdLastNumber" class="form-label">Last Number</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="rdLastNumber"
+                  placeholder="e.g. 129"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-info"
+              id="btnGenerateRoundDown"
+            >
+              Round Down
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Popper.js (for Bootstrap) -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+  ></script>
+  <!-- Bootstrap JS -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
+  ></script>
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css"
+  ></script>
+  <!-- QRCode.js -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+  ></script>
+  <!-- Day.js -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/customParseFormat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/arraySupport.js"></script>
+  <script>
+    dayjs.extend(dayjs_plugin_customParseFormat);
+    dayjs.extend(dayjs_plugin_arraySupport);
+  </script>
+  <!-- html2canvas -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+  ></script>
+
+  <!-- Tu scripts.js con todas las funciones globales (OCR incl.) -->
+  <script src="scripts.js"></script>
+
+  <!-- 
+       =====================
+       MANUAL / INSTRUCTIONS
+       =====================
+  -->
+  <div class="container mb-5">
+    <div class="accordion" id="manualAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingManual">
+          <button
+            class="accordion-button collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseManual"
+            aria-expanded="false"
+            aria-controls="collapseManual"
+          >
+            Manual / Instructions
+          </button>
+        </h2>
+        <div
+          id="collapseManual"
+          class="accordion-collapse collapse"
+          aria-labelledby="headingManual"
+          data-bs-parent="#manualAccordion"
+        >
+          <div class="accordion-body">
+            <!-- Botones para cambiar el idioma del manual -->
+            <div class="d-flex gap-2 mb-3">
+              <button class="btn btn-secondary" id="manualEnglishBtn">English</button>
+              <button class="btn btn-secondary" id="manualSpanishBtn">Español</button>
+              <button class="btn btn-secondary" id="manualCreoleBtn">Kreyòl</button>
+            </div>
+
+            <!-- Texto en Inglés -->
+            <div id="manualEnglishText">
+              <h4>Lottery App Manual (English)</h4>
+              <p><strong>Date Selection:</strong> The date input lets you pick one or multiple betting dates. Today is automatically assigned.</p>
+              <p><strong>Tracks:</strong> Expand the “USA” or “Santo Domingo” sections. Mark the tracks you want. Some tracks will disable after cutoff time. If you pick “Venezuela,” combine it with a USA track to do Venezuelan plays. For “NY Horses,” you can enter 1–4 digits and it will appear as “NY Horses.”</p>
+              <p><strong>Plays Table:</strong> Each row has a Bet Number, which determines the game mode (Pulito, Pick 3, Win 4, Single Action, etc.). Straight/Box/Combo amounts can be added. The total for that row is displayed. The overall total is multiplied by your selected dates and tracks.</p>
+              <p><strong>Single Action:</strong> If you pick a normal USA track (not Venezuela, not NY Horses) and enter exactly 1 digit in Bet Number.</p>
+              <p><strong>NY Horses:</strong> If track is “New York Horses,” 1–4 digits becomes that mode.</p>
+              <p><strong>Buttons:</strong> Add Play, Wizard, Remove Last, Reset, Generate Ticket.</p>
+              <p><strong>Quick Entry Window (Wizard):</strong> You can lock amounts (Straight, Box, Combo), generate Quick Picks, Round Down, or Permute digits. Then “Add Main” or “Generate Ticket.”</p>
+              <p><strong>Ticket Preview:</strong> Shows your plays, total, and a QR code. You can confirm & print/share. A unique Ticket Number is assigned once confirmed.</p>
+            </div>
+
+            <!-- Texto en Español (oculto por defecto) -->
+            <div id="manualSpanishText" class="d-none">
+              <h4>Manual Completo de la App de Lotería (Español)</h4>
+              <p><strong>Selección de Fechas:</strong> Puede elegir una o varias fechas. “Hoy” se asigna por defecto.</p>
+              <p><strong>Tracks:</strong> Expanda “USA” o “Santo Domingo.” Marque los que desee. “Venezuela” requiere un track de USA. “NY Horses” permite 1–4 dígitos.</p>
+              <p><strong>Tabla de Jugadas:</strong> Cada fila con Bet Number define el modo (Pulito, Win4, Pick3, etc.). Los montos Straight/Box/Combo se suman en la fila. Luego se multiplica por fechas y tracks.</p>
+              <p><strong>Single Action:</strong> 1 dígito en track USA (no Venezuela, no Horses). “NY Horses” => 1–4 dígitos.</p>
+              <p><strong>Botones:</strong> Add Play, Wizard, Remove Last, Reset, Generate Ticket.</p>
+              <p><strong>Ventana Wizard:</strong> Permite “lock” Straight/Box/Combo, Quick Picks, Round Down, Permute. Después “Add Main” o “Generate Ticket.”</p>
+              <p><strong>Vista Previa del Ticket:</strong> Muestra jugadas, total, QR. Al confirmar, asigna número único y se descarga imagen. Puede compartirla.</p>
+            </div>
+
+            <!-- Texto en Criollo (oculto por defecto) -->
+            <div id="manualCreoleText" class="d-none">
+              <h4>Manyèl Aplikasyon Lòtri (Kreyòl)</h4>
+              <p><strong>Chwazi Dat:</strong> Ou ka pran youn oswa plizyè dat, “jodia” default.</p>
+              <p><strong>Tracks:</strong> “USA” / “Santo Domingo.” “Venezuela” bezwen track USA. “NY Horses” se 1–4 chif.</p>
+              <p><strong>Tab Pari:</strong> Chak ranje gen Bet Number => Pulito, Win4, Pick3, etc. Mete montan Straight/Box/Combo. Total la miltipliye pa dat ak tracks.</p>
+              <p><strong>Single Action:</strong> 1 chif si se track USA (pa Venezuela, pa Horses). “NY Horses” => 1–4 chif.</p>
+              <p><strong>Bouton:</strong> Add Play, Wizard, Remove Last, Reset, Generate Ticket.</p>
+              <p><strong>Fenèt Wizard:</strong> “lock” Straight/Box/Combo, Quick Picks, Round Down, Permute. Apre sa “Add Main” oswa “Generate Ticket.”</p>
+              <p><strong>Preview Ticket:</strong> Montre parye yo, total la, ak kòd QR. Konfime => bay tikè a yon nimewo inik, telechaje imaj, ka pataje li.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
