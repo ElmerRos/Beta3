@@ -1,6 +1,6 @@
  {
   "name": "openai-ocr-robusto",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "OCR de tickets con redundancia OpenAI + Google Vision, API REST en Node",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   "author": "TuNombre",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/vision": "^4.5.0",
+    "@google-cloud/vision": "4.x",   // ← siempre tomará la última 4.* publicada
     "axios": "^1.6.7",
     "dayjs": "^1.11.10",
     "express": "^4.19.2",
