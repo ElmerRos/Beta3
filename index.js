@@ -1,216 +1,248 @@
- /*
-  index.js – versión 2025‑04 ‑ OCR híbrido (OpenAI → fallback Google Vision)
-  ----------------------------------------------------------------------
-  ▸ Reescribe completamente la ruta /ocr para que primero intente el
-    flujo asistente (OpenAI Assistants v2) y, si algo falla (error HTTP,
-    runStatus ≠ "completed" o respuesta malformada), haga un segundo
-    intento con Google Cloud Vision v1.
-  ▸ El resto de tu aplicación (Mongo, frontend, rutas) permanece igual:
-    solo se movió toda la lógica OCR a una función `processOCR` que
-    decide el proveedor.
-  ▸ Dependencias nuevas que debes instalar **una sola vez**:
-      npm i @google-cloud/vision form-data sharp axios dayjs multer express
-  ▸ Variables de entorno requeridas (en Render, Railway o local):
-      OPENAI_API_KEY           → tu clave OpenAI
-      ASSISTANT_ID             → ID del assistant que ya creaste
-      OPENAI_ORG_ID (opcional) → org‑ID si lo usas
-      GCLOUD_PROJECT           → ID del proyecto GCP
-      GOOGLE_APPLICATION_CREDENTIALS → ruta al JSON de servicio (Render: usa
-                                        Secret + disco, o pega el JSON en
-                                        la variable y escribe a /tmp)
-*/
+ "use strict";
 
-'use strict';
+/* ------------------------------------------------------------------
+   ▸ 1. DEPENDENCIAS
+--------------------------------------------------------------------*/
+const path   = require("path");
+const fs     = require("fs");
+const express= require("express");
+const multer = require("multer");
+const axios  = require("axios");
+const FormData = require("form-data");
+const sharp  = require("sharp");
+const { MongoClient } = require("mongodb");
+const dayjs  = require("dayjs");
+const vision = require("@google-cloud/vision");
 
-const path          = require('path');
-const express       = require('express');
-const multer        = require('multer');
-const axios         = require('axios');
-const FormData      = require('form-data');
-const sharp         = require('sharp');
-const dayjs         = require('dayjs');
-const { MongoClient } = require('mongodb');
+/* ------------------------------------------------------------------
+   ▸ 2. VARIABLES DE ENTORNO
+--------------------------------------------------------------------*/
+const PORT            = process.env.PORT             || 3000;
+const MONGODB_URI     = process.env.MONGODB_URI      || "";
+const OPENAI_API_KEY  = process.env.OPENAI_API_KEY   || "";
+const ASSISTANT_ID    = process.env.ASSISTANT_ID     || "";
+const OPENAI_ORG_ID   = process.env.OPENAI_ORG_ID    || "";
+const GOOGLE_CRED_JSON= process.env.GOOGLE_CREDENTIALS_JSON || "";
 
-// ────────────────────────────────  CONSTANTES  ────────────────────────────────
-const PORT            = process.env.PORT               || 3000;
-const MONGODB_URI     = process.env.MONGODB_URI        || '';
-const OPENAI_API_KEY  = process.env.OPENAI_API_KEY     || '';
-const ASSISTANT_ID    = process.env.ASSISTANT_ID       || '';
-const OPENAI_ORG_ID   = process.env.OPENAI_ORG_ID      || '';
+/* ------------------------------------------------------------------
+   ▸ 3. CONFIG APP
+--------------------------------------------------------------------*/
+const app    = express();
+const upload = multer({ storage: multer.memoryStorage() });
+app.use(express.static("public"));          //  archivos estáticos
 
-// Google
-const { v1: Vision }  = require('@google-cloud/vision');
-const hasGCloudCreds  = !!process.env.GOOGLE_APPLICATION_CREDENTIALS;
-const visionClient    = hasGCloudCreds ? new Vision.ImageAnnotatorClient() : null;
-
-if (!OPENAI_API_KEY || !ASSISTANT_ID) {
-  console.error('❌  Debes definir OPENAI_API_KEY y ASSISTANT_ID en tus variables de entorno');
-  process.exit(1);
-}
-
-// ────────────────────────────────  EXPRESS APP  ───────────────────────────────
-const app     = express();
-const upload  = multer({ storage: multer.memoryStorage() });
-app.use(express.static('public'));
-app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-
-// ───────────────────────────────  API CLIENT WRAPPER  ─────────────────────────
+/* ------------------------------------------------------------------
+   ▸ 4. CLIENTES API
+--------------------------------------------------------------------*/
 const ApiClient = {
-  async request (config, retries = 3, backoff = 1000) {
-    let lastErr;
+  async request(config, retries = 3, delay = 1000) {
+    let e;
     for (let i = 0; i < retries; i++) {
-      try { return await axios(config); } catch (err) {
-        lastErr = err;
-        const retriable = !err.response || err.response.status >= 500;
-        if (!retriable || i === retries - 1) break;
-        await new Promise(r => setTimeout(r, backoff * Math.pow(2, i)));
+      try { return await axios(config); }
+      catch (err) {
+        e = err;
+        const retryable = !err.response || err.response.status >= 500;
+        if (!retryable || i === retries - 1) break;
+        console.log(`[OpenAI] Reintento ${i + 1}/${retries} …`);
+        await new Promise(r => setTimeout(r, delay));
+        delay *= 2;
       }
     }
-    throw lastErr;
+    throw e;
   },
-  openaiHeaders (extra = {}) {
+  headers(extra = {}) {
     return {
       Authorization: `Bearer ${OPENAI_API_KEY}`,
-      'OpenAI-Beta'      : 'assistants=v2',
-      'OpenAI-Organization': OPENAI_ORG_ID,
+      "OpenAI-Beta": "assistants=v2",
+      "OpenAI-Organization": OPENAI_ORG_ID,
       ...extra
     };
   }
 };
 
-// ───────────────────────────────  OCR HELPERS  ───────────────────────────────
+// Google Vision – cliente con credenciales en memoria
+let visionClient = null;
+if (GOOGLE_CRED_JSON) {
+  try {
+    const creds = JSON.parse(GOOGLE_CRED_JSON);
+    visionClient = new vision.ImageAnnotatorClient({ credentials: creds });
+  } catch (err) {
+    console.error("❌ Credenciales JSON de Google Vision mal formateadas.", err);
+  }
+}
+
+/* ------------------------------------------------------------------
+   ▸ 5. SERVICIO OCR (OpenAI + fallback Vision)
+--------------------------------------------------------------------*/
 const OcrService = {
-  async resize (buffer) {
-    return sharp(buffer).resize({ width: 2000, height: 2000, fit: 'inside' }).toBuffer();
+
+  /* -------- Utilidades -------- */
+  async resizeImage(buf) {
+    return sharp(buf).resize({ width: 2000, height: 2000, fit: "inside" }).toBuffer();
   },
-  async uploadToOpenAI (buffer, filename, type) {
-    const fd = new FormData();
-    fd.append('purpose', 'assistants');
-    fd.append('file', buffer, { filename, contentType: type });
-    const r = await ApiClient.request({
-      method : 'post',
-      url    : 'https://api.openai.com/v1/files',
-      data   : fd,
-      headers: { ...ApiClient.openaiHeaders(), ...fd.getHeaders() }
+
+  /* -------- 5.1 OpenAI -------- */
+  async runOpenAI(buf, filename, mime, serverTime) {
+    // 1 subir
+    const form = new FormData();
+    form.append("purpose", "assistants");
+    form.append("file", buf, { filename, contentType: mime });
+    const up = await ApiClient.request({
+      method: "post",
+      url: "https://api.openai.com/v1/files",
+      data: form,
+      headers: { ...ApiClient.headers(), ...form.getHeaders() }
     });
-    return r.data.id;
-  },
-  detailedPrompt (serverTime) {
-    const t = serverTime.format('YYYY-MM-DD HH:mm:ss Z');
-    return `Analiza la imagen adjunta… La hora del servidor es ${t}. Devuelve SOLO el objeto JSON pedido…`;
-  },
-  async runAssistant (fileId, prompt) {
-    const r = await ApiClient.request({
-      method : 'post',
-      url    : 'https://api.openai.com/v1/threads/runs',
-      headers: { ...ApiClient.openaiHeaders(), 'Content-Type': 'application/json' },
-      data   : {
-        assistant_id   : ASSISTANT_ID,
-        thread         : { messages: [{ role: 'user', content: [ { type: 'text', text: prompt }, { type: 'image_file', image_file: { file_id: fileId } } ] }] },
-        response_format: { type: 'json_object' }
-      }
+    const fileId = up.data.id;
+
+    // 2 prompt
+    const prompt = this.buildPrompt(serverTime);
+
+    // 3 crear run
+    const run = await ApiClient.request({
+      method: "post",
+      url: "https://api.openai.com/v1/threads/runs",
+      data: {
+        assistant_id: ASSISTANT_ID,
+        thread: {
+          messages: [
+            { role: "user",
+              content: [
+                { type: "text", text: prompt },
+                { type: "image_file", image_file: { file_id: fileId } }
+              ]}
+          ]
+        },
+        response_format: { type: "json_object" }
+      },
+      headers: ApiClient.headers({ "Content-Type": "application/json" })
     });
-    return { runId: r.data.id, threadId: r.data.thread_id, status: r.data.status };
-  },
-  async poll (threadId, runId, status) {
-    const finals = new Set(['completed','failed','incomplete','cancelled','expired']);
-    while (!finals.has(status)) {
+
+    const { thread_id: threadId, id: runId, status } = run.data;
+
+    // 4 esperar
+    const finalStates = new Set(["completed", "failed", "cancelled", "expired", "incomplete"]);
+    let cur = status;
+    while (!finalStates.has(cur)) {
       await new Promise(r => setTimeout(r, 1000));
-      const r = await ApiClient.request({
-        method : 'get',
-        url    : `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
-        headers: ApiClient.openaiHeaders()
+      const st = await ApiClient.request({
+        method: "get",
+        url: `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
+        headers: ApiClient.headers()
       });
-      status = r.data.status;
+      cur = st.data.status;
     }
-    return status;
-  },
-  async assistantResponse (threadId) {
-    const r = await ApiClient.request({
-      method : 'get',
-      url    : `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
-      headers: ApiClient.openaiHeaders()
+    if (cur !== "completed") throw new Error(`Run terminó en estado ${cur}`);
+
+    // 5 respuesta
+    const resp = await ApiClient.request({
+      method: "get",
+      url: `https://api.openai.com/v1/threads/${threadId}/messages?order=desc`,
+      headers: ApiClient.headers()
     });
-    const msg = r.data.data.find(m => m.role === 'assistant');
-    if (!msg) throw new Error('assistant vacío');
-    return msg.content;
+    const msg = resp.data.data.find(m => m.role === "assistant");
+    if (!msg) throw new Error("Assistant no devolvió mensaje");
+
+    return { provider: "openai", raw: msg.content };
   },
-  safeJson (raw) {
-    try {
-      if (typeof raw === 'string') return JSON.parse(raw);
-      if (Array.isArray(raw)) {
-        const p = raw.find(x => x.type === 'text');
-        return p?.text?.value ? JSON.parse(p.text.value) : null;
+
+  /* -------- 5.2 Google Vision -------- */
+  async runVision(buf) {
+    if (!visionClient) throw new Error("Google Vision no configurado");
+    const [result] = await visionClient.annotateImage({
+      image: { content: buf },
+      features: [{ type: "DOCUMENT_TEXT_DETECTION" }]
+    });
+    const fullText = result.fullTextAnnotation?.text || "";
+    return { provider: "gvision", raw: fullText };
+  },
+
+  /* -------- 5.3 Prompt (igual al tuyo) -------- */
+  buildPrompt(now) {
+    const ts = now.format("YYYY-MM-DD HH:mm:ss Z");
+    return `Por favor, analiza la imagen adjunta de un ticket de lotería manuscrito… La hora actual del servidor es ${ts}. Devuelve SOLO el JSON…`; //  ⚠ pon aquí tu prompt completo
+  },
+
+  /* -------- 5.4 Parser / Transform -------- */
+  parse(content) {
+    if (typeof content === "string") {
+      try { return JSON.parse(content); } catch { return null; }
+    }
+    if (Array.isArray(content)) {
+      const part = content.find(c => c.type === "text");
+      if (part?.text?.value) {
+        try { return JSON.parse(part.text.value); } catch { /* ignore */ }
       }
-      if (raw && raw.type === 'text') return JSON.parse(raw.text.value);
-    } catch { /* fallthrough */ }
+    }
     return null;
+  },
+
+  toClient(parsed) {
+    if (!parsed?.jugadas) return { jugadas: [] };
+    const jugadas = parsed.jugadas.map(j => ({
+      numeros: j.numero || "",
+      montoApostado: (j.straight||0)+(j.box||0)+(j.combo||0),
+      straight: j.straight||0,
+      box:      j.box||0,
+      combo:    j.combo||0,
+      esDudoso: !!(j.esNumeroDudoso||j.esMontoDudoso||j.esTipoJuegoDudoso||j.esModalidadDudosa)
+    }));
+    return { jugadas };
   }
 };
 
-// ────────────────────────────  GOOGLE VISION FALLBACK  ───────────────────────
-async function googleVisionOCR (buffer) {
-  if (!visionClient) throw new Error('Google Vision no está configurado');
-  const [result] = await visionClient.textDetection({ image: { content: buffer } });
-  const text = result.fullTextAnnotation?.text || '';
-  // ↳ TODO: aquí podrías aplicar regex/IA para convertir el texto libre a la
-  // estructura { ticketInfo, jugadas }. Por ahora enviamos todo el texto.
-  return {
-    ticketInfo: null,
-    jugadas   : [{ numero: text.slice(0, 60).replace(/\n/g, ' '), straight: 0, box: 0, combo: 0 }]
-  };
-}
-
-// ─────────────────────────────  WORKER PRINCIPAL  ────────────────────────────
-async function processOCR (file) {
-  const resized = await OcrService.resize(file.buffer);
-  const serverTime = dayjs();
-
-  // —— PRIMER INTENTO : OpenAI Assistant ————————————————————————————
-  try {
-    const fileId               = await OcrService.uploadToOpenAI(resized, file.originalname, file.mimetype);
-    const prompt               = OcrService.detailedPrompt(serverTime);
-    const { threadId, runId, status } = await OcrService.runAssistant(fileId, prompt);
-    const finalStatus          = await OcrService.poll(threadId, runId, status);
-    if (finalStatus !== 'completed') throw new Error(`Assistant terminó con estado ${finalStatus}`);
-    const raw                  = await OcrService.assistantResponse(threadId);
-    const parsed               = OcrService.safeJson(raw);
-    if (!parsed)               throw new Error('JSON inválido de assistant');
-    return { provider: 'openai', resultado: parsed, debug: { threadId, runId } };
-  } catch (err) {
-    console.warn('⚠️  OpenAI OCR falló, usando fallback →', err.message);
-  }
-
-  // —— SEGUNDO INTENTO : Google Vision  ————————————————————————————
-  const parsed = await googleVisionOCR(resized);
-  return { provider: 'gcloud', resultado: parsed, debug: {} };
-}
-
-// ───────────────────────────────  RUTA /ocr  ────────────────────────────────
-app.post('/ocr', upload.single('ticket'), async (req, res) => {
-  if (!req.file) return res.json({ success: false, error: 'No se recibió ninguna imagen' });
-  try {
-    const { provider, resultado, debug } = await processOCR(req.file);
-
-    // Guarda en Mongo si existe conexión
-    if (MONGODB_URI && db) {
-      await db.collection('ticketsOCR').insertOne({ createdAt: new Date(), provider, resultado, debug });
-    }
-
-    res.json({ success: true, provider, resultado, debug });
-  } catch (e) {
-    console.error('❌  OCR error →', e);
-    res.json({ success: false, error: e.message });
-  }
-});
-
-// ───────────────────────────────  MONGODB  ───────────────────────────────────
+/* ------------------------------------------------------------------
+   ▸ 6. MONGODB (igual que antes, opcional)
+--------------------------------------------------------------------*/
 let db = null;
 if (MONGODB_URI) {
   MongoClient.connect(MONGODB_URI, { useUnifiedTopology: true })
-    .then(client => { db = client.db(); console.log('✓ Mongo conectado'); })
-    .catch(err   => console.error('Mongo error', err.message));
+    .then(cli => { db = cli.db(); console.log("✓ Conectado a MongoDB"); })
+    .catch(e  => console.error("Mongo error:", e.message));
 }
 
-// ───────────────────────────────  SERVER  ────────────────────────────────────
-app.listen(PORT, () => console.log('Servidor en puerto', PORT));
+/* ------------------------------------------------------------------
+   ▸ 7. RUTA /ocr  (OpenAI → Vision fallback)
+--------------------------------------------------------------------*/
+app.post("/ocr", upload.single("ticket"), async (req, res) => {
+  if (!req.file) return res.json({ success:false, error:"No se recibió imagen" });
+  const now = dayjs();
+
+  try {
+    const resized = await OcrService.resizeImage(req.file.buffer);
+    let result;
+    try {
+      result = await OcrService.runOpenAI(resized, req.file.originalname, req.file.mimetype, now);
+    } catch (err) {
+      console.warn("⚠ OpenAI falló, intentando Google Vision…", err.message);
+      result = await OcrService.runVision(resized);        // puede lanzar error si Vision no está listo
+    }
+
+    let parsed = OcrService.parse(result.raw);
+    if (!parsed && result.provider === "gvision") {
+      // Vision devuelve texto plano; aquí podrías aplicar RegEx para números.
+      parsed = { jugadas: [] };
+    }
+    const out = OcrService.toClient(parsed);
+
+    // guarda en DB
+    db && db.collection("ticketsOCR").insertOne({
+      createdAt:   new Date(),
+      provider:    result.provider,
+      rawResponse: result.raw,
+      parsed
+    });
+
+    return res.json({ success:true, provider:result.provider, resultado:out });
+
+  } catch (err) {
+    console.error("❌ OCR error:", err);
+    return res.json({ success:false, error:err.message });
+  }
+});
+
+/* ------------------------------------------------------------------
+   ▸ 8. HOME + SERVER
+--------------------------------------------------------------------*/
+app.get("/", (_, res)=> res.sendFile(path.join(__dirname,"public","index.html")));
+app.listen(PORT, ()=> console.log(`🚀  Server on ${PORT}`));
