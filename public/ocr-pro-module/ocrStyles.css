@@ -1,0 +1,114 @@
+/*  OCR Pro-Module  •  Neon Dark Theme
+    ======================================================== */
+
+/* ---------- Variables globales ---------- */
+:root {
+  --clr-bg: #0a0a0a;
+  --clr-panel: #131313;
+  --clr-neon: #00ffff;
+  --clr-text: #ffffff;
+  --clr-accent: #ff00ff;
+  --clr-border: #222;
+}
+
+/* ---------- Layout general ---------- */
+body {
+  background: var(--clr-bg);
+  color: var(--clr-text);
+  font-family: "Montserrat", sans-serif;
+}
+
+/* header */
+header {
+  border-bottom: 1px solid var(--clr-border);
+  background: var(--clr-panel);
+  box-shadow: 0 0 8px var(--clr-neon);
+}
+header h4 {
+  text-shadow: 0 0 6px var(--clr-neon);
+}
+
+/* panes */
+#leftPane,
+#rightPane {
+  background: var(--clr-panel);
+}
+#leftPane {
+  border-right: 1px solid var(--clr-border);
+}
+
+/* ---------- Drop-zone ---------- */
+#dropZone {
+  border: 3px dashed var(--clr-neon);
+  color: #888;
+  transition: background 0.3s, color 0.3s;
+}
+#dropZone.dragover {
+  background: rgba(0, 255, 255, 0.05);
+  color: #ccc;
+}
+
+/* ---------- Botones ---------- */
+.btn-primary,
+.btn-success,
+.btn-info,
+.btn-secondary {
+  border: none;
+  box-shadow: 0 0 8px var(--clr-neon);
+}
+.btn-primary { background: var(--clr-neon); color: #000; }
+.btn-success { background: #39ff14; color: #000; }
+.btn-info    { background: #00bfff; color: #000; }
+.btn-secondary { background: #6c757d; }
+.btn:disabled {
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* ---------- Progress ---------- */
+.progress {
+  background: #333;
+}
+.progress-bar {
+  background: var(--clr-neon);
+}
+
+/* ---------- Tabla ---------- */
+table {
+  border: 1px solid var(--clr-border);
+}
+th {
+  background: #1d1d1d !important;
+  color: var(--clr-neon) !important;
+  text-shadow: 0 0 4px var(--clr-neon);
+}
+td {
+  background: #111;
+}
+.dudoso {
+  background: var(--clr-accent) !important;
+  color: #000 !important;
+}
+
+/* Checkbox center */
+td input[type="checkbox"] {
+  transform: scale(1.3);
+  cursor: pointer;
+}
+
+/* ---------- Scrollbar sutil ---------- */
+#rightPane::-webkit-scrollbar {
+  width: 8px;
+}
+#rightPane::-webkit-scrollbar-track {
+  background: #111;
+}
+#rightPane::-webkit-scrollbar-thumb {
+  background: var(--clr-neon);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  #mainWrap { flex-direction: column; }
+  #leftPane { border-right: none; border-bottom: 1px solid var(--clr-border); }
+}
