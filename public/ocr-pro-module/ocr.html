@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OCR Pro-Module | Beast Reader</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet"/>
+
+  <!-- Módulo styles (opcional: extra) -->
+  <style>
+    :root {
+      --c-neon:#00ffff;
+      --c-bg:#0a0a0a;
+      --c-text:#ffffff;
+    }
+    body{
+      background:var(--c-bg);color:var(--c-text);
+      font-family:'Montserrat',sans-serif;
+      overflow:hidden;height:100vh;
+      display:flex;flex-direction:column;
+    }
+    /* Layout */
+    #mainWrap{flex:1;display:flex;flex-wrap:wrap;height:100%;}
+    #leftPane,#rightPane{padding:1rem;}
+    #leftPane{flex:1 1 380px;border-right:1px solid #222;}
+    #rightPane{flex:2 1 480px;overflow-y:auto;}
+    /* Drop zone */
+    #dropZone{
+      border:3px dashed var(--c-neon);border-radius:8px;
+      height:250px;display:flex;align-items:center;justify-content:center;
+      text-align:center;color:#888;cursor:pointer;transition:.3s;
+    }
+    #dropZone.dragover{background:rgba(0,255,255,.05);color:#ccc;}
+    #previewImg{max-width:100%;max-height:220px;border-radius:6px;display:none;}
+    /* Progress */
+    #progressWrap{display:none;margin-top:.75rem;}
+    .progress{height:.5rem;}
+    /* Table */
+    table{width:100%;}
+    th{color:var(--c-neon);}
+    .dudoso{background:#ff00ff33;}
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="p-2 d-flex justify-content-between align-items-center" style="border-bottom:1px solid #222;">
+    <h4 class="m-0" style="color:var(--c-neon);">OCR Pro-Module</h4>
+    <button class="btn btn-sm btn-outline-light" onclick="window.close()">
+      <i class="bi bi-x-lg"></i> Cerrar
+    </button>
+  </header>
+
+  <!-- MAIN -->
+  <div id="mainWrap">
+    <!-- LEFT PANE : imagen + controles -->
+    <section id="leftPane">
+      <div id="dropZone">
+        Arrastra la imagen aquí<br/>o haz clic para seleccionar
+        <input type="file" id="fileInput" accept="image/*" capture="environment" hidden>
+      </div>
+
+      <img id="previewImg" alt="Preview"/>
+
+      <!-- botones -->
+      <div class="mt-3 d-grid gap-2">
+        <button class="btn btn-primary" id="btnSelect"><i class="bi bi-images"></i> Elegir imagen</button>
+        <button class="btn btn-success" id="btnProcess" disabled><i class="bi bi-gear"></i> Procesar OCR</button>
+        <button class="btn btn-secondary" id="btnReset" disabled><i class="bi bi-trash"></i> Reset</button>
+      </div>
+
+      <!-- progreso -->
+      <div id="progressWrap" class="mt-3">
+        <div class="progress"><div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div></div>
+        <small id="progressTxt">Subiendo…</small>
+      </div>
+    </section>
+
+    <!-- RIGHT PANE : tabla jugadas -->
+    <section id="rightPane">
+      <h5>Jugadas detectadas</h5>
+      <div class="table-responsive">
+        <table class="table table-dark table-bordered align-middle" id="tblJugadas">
+          <thead class="table-secondary text-dark">
+            <tr>
+              <th style="width:40px;">#</th>
+              <th>Números</th>
+              <th>Modalidad</th>
+              <th>Monto $</th>
+              <th style="width:60px;">Ok</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- acciones -->
+      <div class="d-grid gap-2 mt-3">
+        <button class="btn btn-info" id="btnAddToForm" disabled>
+          <i class="bi bi-download"></i> Añadir seleccionadas al formulario
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Front-end logic -->
+  <script src="ocrModule.js"></script>
+</body>
+</html>
