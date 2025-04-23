@@ -1,44 +1,52 @@
-// models/Thread.js
+ // routes/threads.js
 
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
+const express = require('express');
+const Thread = require('../models/Thread');
+const router = express.Router();
 
 /**
- * Esquema para almacenar threads de OpenAI Assistant por usuario.
- * userId: identificador único del usuario en tu sistema (puede ser string o ObjectId).
- * threadId: ID retornado por OpenAI para reutilizar conversaciones.
- * metadata: cualquier dato adicional (fecha de último uso, etc.).
+ * 1) Obtener o crear un registro de thread por usuario
+ *    POST /api/threads  { userId }
+ *    →  { threadId }  (puede ser null la primera vez)
  */
-const ThreadSchema = new Schema({
-  userId: {
-    type: String,
-    required: true,
-    index: true
-  },
-  threadId: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  },
-  metadata: {
-    type: Schema.Types.Mixed,
-    default: {}
+router.post('/', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+    let thread = await Thread.findOne({ userId });
+    if (!thread) {
+      thread = new Thread({ userId, threadId: null });
+      await thread.save();
+    }
+    res.json({ threadId: thread.threadId });
+  } catch (err) {
+    console.error('Error POST /api/threads', err);
+    res.status(500).json({ error: 'server_error' });
   }
 });
 
-// Middleware para actualizar updatedAt
-ThreadSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
+/**
+ * 2) Actualizar el threadId cuando crees uno nuevo en OpenAI
+ *    PATCH /api/threads/:userId  { threadId }
+ *    →  { threadId }
+ */
+router.patch('/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { threadId } = req.body;
+    if (!threadId) return res.status(400).json({ error: 'threadId is required' });
+
+    const thread = await Thread.findOneAndUpdate(
+      { userId },
+      { threadId, updatedAt: Date.now() },
+      { new: true, upsert: true }
+    );
+    res.json({ threadId: thread.threadId });
+  } catch (err) {
+    console.error('Error PATCH /api/threads/:userId', err);
+    res.status(500).json({ error: 'server_error' });
+  }
 });
 
-module.exports = mongoose.model('Thread', ThreadSchema);
+module.exports = router;
