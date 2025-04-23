@@ -45,6 +45,17 @@ const upload  = multer({ storage: multer.memoryStorage() });
 app.use(express.static("public"));
 app.get("/", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
+
+// ────────────────────────────────────────────────────────────────
+// 3.1 ▸ Rutas de memoria de threads y Assistant API
+//      (se añaden una sola vez)
+const threadsRouter   = require("./routes/threads");
+const assistantRouter = require("./routes/assistant");
+app.use("/api/threads",    threadsRouter);
+app.use("/api/assistant",  assistantRouter);
+
+
+
 // ──────────────────────────────────────────────────────────────────
 // 4 ▸  API CLIENT genérico con reintentos
 // ──────────────────────────────────────────────────────────────────
