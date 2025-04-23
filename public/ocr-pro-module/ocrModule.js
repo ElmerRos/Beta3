@@ -5,7 +5,7 @@
  *    • POST /​api/ocr  → recibe jugadas, pinta tabla
  *    • Checkbox por jugada  →  "Añadir al formulario" usa window.opener
  *  --------------------------------------------------------------- */
-
+ 
 (() => {
   /* ------------- refs DOM ---------------- */
   const dropZone   = document.getElementById("dropZone");
