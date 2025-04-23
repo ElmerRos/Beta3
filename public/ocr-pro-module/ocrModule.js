@@ -81,7 +81,7 @@
       const fd = new FormData();
       fd.append("ticket", selectedFile);
 
-      const res = await fetch("/api/ocr", { method: "POST", body: fd });
+      const res = await fetch("/ocr", { method: "POST", body: fd });
       clearInterval(int);
       progressB.style.width = "100%";
       progressT.innerText = "Procesando…";
