@@ -535,6 +535,28 @@
       display: none;
       padding: 1rem;
     }
+/* =================== TABLA SEMANAL (NUEVO) =================== */
+.weekly-table{
+  width: 100%;            /*  Hace que la tabla use todo el ancho disponible  */
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  color: var(--main-text);
+}
+.weekly-table thead th,
+.weekly-table tbody td{
+  font-size: 1.3rem;
+  text-align: center;
+  border-bottom: 1px solid #444;
+  vertical-align: middle;
+  padding: 0.5rem;
+}
+.weekly-table thead th{
+  background: rgba(0,0,0,0.4);
+  color: var(--accent-color);
+  border-bottom: 2px solid var(--accent-color);
+  text-shadow: 0 0 3px var(--accent-color);
+}
+   
   </style>
 </head>
 <body>
