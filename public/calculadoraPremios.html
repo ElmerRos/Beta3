@@ -1,717 +1,1143 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Calculadora de Premios</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>USA Lottery Hub - Your Complete Lottery Resource</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* ======== Variables estilo (Neón vs Light) ======== */
     :root {
-      --main-bg: #111;
-      --main-text: #eee;
-      --accent-color: #0ff; /* cian neón */
-      --danger-color: #f33;
-      --purple-color: #a0f;
-      --lock-color: #fb0;
-
-      --light-bg: #f3f0e3; 
-      --light-text: #000;
-      --light-accent: #0066cc;
-      --light-border: #999;
-      --light-caja: #fbf9f0;
-      --light-danger: #cc0033;
-      --light-purple: #b57aff;
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --secondary: #10b981;
+      --dark: #1e293b;
+      --light: #f8fafc;
+      --gray: #64748b;
+      --danger: #ef4444;
     }
 
-    body {
-      margin: 0; 
-      padding: 0;
-      background: var(--main-bg);
-      color: var(--main-text);
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      font-size: 18px;
-    }
-    body.light-mode {
-      background: var(--light-bg);
-      color: var(--light-text);
+    /* State Colors */
+    .tx-bg { background-color: #ffd6e0; border-color: #b374a3; }
+    .ga-bg { background-color: #d6f0ff; border-color: #7aa3c2; }
+    .ny-bg { background-color: #e6ffe6; border-color: #7fbf7f; }
+    .fl-bg { background-color: #fff2d8; border-color: #bfa974; }
+    .pa-bg { background-color: #e6e6ff; border-color: #9999cc; }
+    .nj-bg { background-color: #ffe6f0; border-color: #b37ab3; }
+    .ct-bg { background-color: #f0fff0; border-color: #99cc99; }
+    .sc-bg { background-color: #fff0e6; border-color: #c4a377; }
+    .de-bg { background-color: #f2f2f2; border-color: #999999; }
+    .ca-bg { background-color: #fffbe6; border-color: #ccc270; }
+
+    .tx-text { color: #b374a3; }
+    .ga-text { color: #7aa3c2; }
+    .ny-text { color: #7fbf7f; }
+    .fl-text { color: #bfa974; }
+    .pa-text { color: #9999cc; }
+    .nj-text { color: #b37ab3; }
+    .ct-text { color: #99cc99; }
+    .sc-text { color: #c4a377; }
+    .de-text { color: #999999; }
+    .ca-text { color: #ccc270; }
+
+    /* Smooth transitions */
+    * {
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    /* Barra superior */
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      background: #000;
-      border-bottom: 2px solid var(--accent-color);
-    }
-    .top-bar button {
-      background: #000;
-      color: var(--accent-color);
-      border: 2px solid var(--accent-color);
-      border-radius: 8px;
-      padding: 0.3rem 1rem;
-      cursor: pointer;
-      box-shadow: 0 0 5px var(--accent-color);
-      font-size: 1rem;
-      transition: transform 0.2s;
-    }
-    .top-bar button:hover {
-      background: var(--accent-color);
-      color: #000;
-      transform: scale(1.05);
-    }
-    body.light-mode .top-bar {
-      background: var(--light-border);
-      border-bottom: 2px solid var(--light-accent);
-    }
-    body.light-mode .top-bar button {
-      background: var(--light-caja);
-      color: var(--light-accent);
-      border: 2px solid var(--light-accent);
-      box-shadow: none;
-    }
-    body.light-mode .top-bar button:hover {
-      background: var(--light-accent);
-      color: #fff;
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
     }
 
-    /* Contenedor principal */
-    .container {
-      max-width: 1200px;
-      margin: 1rem auto;
-      padding: 1rem;
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
     }
 
-    /* Botón "Agregar fila" etc. */
-    .btnNeon {
-      background: #000;
-      color: var(--accent-color);
-      border: 2px solid var(--accent-color);
-      border-radius: 6px;
-      padding: 0.4rem 0.8rem;
-      cursor: pointer;
-      box-shadow: 0 0 5px var(--accent-color);
-      transition: transform 0.2s;
-    }
-    .btnNeon:hover {
-      background: var(--accent-color);
-      color: #000;
-      transform: scale(1.05);
-    }
-    body.light-mode .btnNeon {
-      background: var(--light-caja);
-      color: var(--light-accent);
-      border: 2px solid var(--light-accent);
-      box-shadow: none;
-    }
-    body.light-mode .btnNeon:hover {
-      background: var(--light-accent);
-      color: #fff;
-    }
-
-    /* Tabla principal */
-    .calc-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-    }
-    .calc-table thead th {
-      background: rgba(0,0,0,0.4);
-      color: var(--accent-color);
-      border-bottom: 2px solid var(--accent-color);
-      text-shadow: 0 0 3px var(--accent-color);
-      padding: 0.5rem;
-    }
-    .calc-table tbody td {
-      border-bottom: 1px solid #444;
-      text-align: center;
-      padding: 0.4rem;
-    }
-    body.light-mode .calc-table thead th {
-      background: #ddd;
-      color: var(--light-accent);
-      text-shadow: none;
-      border-bottom: 2px solid var(--light-accent);
-    }
-    body.light-mode .calc-table tbody td {
-      border-bottom: 1px solid #ccc;
-      color: #000;
-    }
-
-    /* Inputs */
-    .calc-input {
-      width: 140px;
-      font-size: 1rem;
-      background: #000;
-      color: var(--accent-color);
-      border: 1px solid var(--accent-color);
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
       border-radius: 4px;
-      text-align: center;
-      box-shadow: inset 0 0 5px var(--accent-color);
-      padding: 0.3rem;
-    }
-    .calc-input:focus {
-      outline: none;
-      border-color: #fff;
-    }
-    body.light-mode .calc-input {
-      background: #fff;
-      color: #000;
-      border: 1px solid #999;
-      box-shadow: none;
     }
 
-    /* Modalidad y Premio (readonly) */
-    .readonlyCell {
-      color: #0f0; /* verde */
-      font-weight: bold;
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
     }
 
-    /* Sección "Config Base" */
-    .base-config {
-      margin-top: 2rem;
-      border: 2px solid var(--accent-color);
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 0 8px var(--accent-color);
-      background: #000;
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
-    .base-config h3 {
-      color: var(--accent-color);
-      text-shadow: 0 0 3px var(--accent-color);
-      margin-bottom: 1rem;
+
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
-    body.light-mode .base-config {
-      background: var(--light-caja);
-      border-color: var(--light-accent);
-      box-shadow: none;
+
+    .animate-fade {
+      animation: fadeIn 0.5s ease-out;
     }
-    body.light-mode .base-config h3 {
-      color: var(--light-accent);
-      text-shadow: none;
+
+    .animate-slide {
+      animation: slideIn 0.5s ease-out;
     }
-    .base-config table {
+
+    /* Modal backdrop */
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+    }
+
+    /* State cards hover effect */
+    .state-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Accordion styling */
+    .accordion-item {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .accordion-header {
+      transition: all 0.3s ease;
+    }
+
+    .accordion-header:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+    }
+
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+
+    .accordion-item.active .accordion-content {
+      max-height: 500px;
+    }
+
+    /* Tab styling */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .tab-button.active {
+      border-bottom: 3px solid var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Gradient buttons */
+    .btn-gradient {
+      background-image: linear-gradient(to right, var(--primary), var(--secondary));
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    .btn-gradient:hover {
+      background-image: linear-gradient(to right, var(--primary-dark), #059669);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Responsive table */
+    .responsive-table {
       width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
+      white-space: nowrap;
+      overflow-x: auto;
     }
-    .base-config table thead th {
-      background: rgba(0,0,0,0.4);
-      color: var(--accent-color);
-      border-bottom: 2px solid var(--accent-color);
-      text-shadow: 0 0 3px var(--accent-color);
-      padding: 0.5rem;
+    
+    /* Improved buttons */
+    .btn-capture {
+      background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
     }
-    .base-config table tbody td {
-      border-bottom: 1px solid #444;
-      text-align: center;
-      padding: 0.3rem;
+    
+    .btn-capture:hover {
+      background: linear-gradient(135deg, #4338ca, #7c3aed);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 8px rgba(79, 70, 229, 0.3);
     }
-    body.light-mode .base-config table thead th {
-      background: #ddd;
-      color: var(--light-accent);
-      border-bottom: 2px solid var(--light-accent);
-      text-shadow: none;
+    
+    .btn-export {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      color: white;
+      box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
     }
-    body.light-mode .base-config table tbody td {
-      border-bottom: 1px solid #ccc;
-      color: #000;
+    
+    .btn-export:hover {
+      background: linear-gradient(135deg, #0d9e6e, #2dba87);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 8px rgba(16, 185, 129, 0.3);
     }
-
   </style>
 </head>
-
-<body>
-  <!-- Barra Superior -->
-  <div class="top-bar">
-    <button id="btnToggleTheme">Dark/Light</button>
-    <button onclick="location.href='reportes.html'">Regresar a Reportes</button>
-  </div>
-
-  <div class="container">
-    <h1 style="color: var(--accent-color); text-shadow: 0 0 5px var(--accent-color);">
-      Calculadora de Premios
-    </h1>
-
-    <!-- Botones de acción -->
-    <div style="margin-bottom:1rem;">
-      <button class="btnNeon" onclick="addRow()">+ Agregar Fila</button>
-      <button class="btnNeon" onclick="calculateAll()">Calcular Todo</button>
-      <button class="btnNeon" onclick="resetTable()" style="background:var(--danger-color);box-shadow:0 0 5px var(--danger-color);">
-        Resetear
-      </button>
+<body class="bg-gray-50 text-gray-800 font-sans">
+  <!-- Navigation -->
+  <nav class="bg-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 flex items-center">
+            <i class="fas fa-ticket-alt text-2xl text-blue-500 mr-2"></i>
+            <span class="text-xl font-bold text-gray-900">USA Lottery Hub</span>
+          </div>
+        </div>
+        <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+          <a href="#" class="text-gray-900 hover:text-blue-500 px-3 py-2 text-sm font-medium tab-button active" onclick="showTab('home')">Home</a>
+          <a href="#" class="text-gray-900 hover:text-blue-500 px-3 py-2 text-sm font-medium tab-button" onclick="showTab('about')">About</a>
+          <a href="#" class="text-gray-900 hover:text-blue-500 px-3 py-2 text-sm font-medium tab-button" onclick="showTab('winning-numbers')">Winning Numbers</a>
+          <a href="#" class="text-gray-900 hover:text-blue-500 px-3 py-2 text-sm font-medium tab-button" onclick="showTab('rules')">Game Rules</a>
+          <a href="#" class="text-gray-900 hover:text-blue-500 px-3 py-2 text-sm font-medium tab-button" onclick="showTab('contact')">Contact</a>
+        </div>
+        <div class="-mr-2 flex items-center md:hidden">
+          <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" aria-expanded="false" id="mobile-menu-button">
+            <span class="sr-only">Open main menu</span>
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- TABLA DE JUGADAS -->
-    <table class="calc-table" id="calcTable">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Track</th>
-          <th>Bet Number</th>
-          <th>Straight</th>
-          <th>Box</th>
-          <th>Combo</th>
-          <th>Modalidad</th>
-          <th>Premio</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="calcTbody">
-        <!-- Se generan filas por JS -->
-      </tbody>
-    </table>
+    <!-- Mobile menu -->
+    <div class="hidden md:hidden bg-white shadow-lg" id="mobile-menu">
+      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-blue-500 bg-blue-50" onclick="showTab('home')">Home</a>
+        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-blue-500 hover:bg-gray-50" onclick="showTab('about')">About</a>
+        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-blue-500 hover:bg-gray-50" onclick="showTab('winning-numbers')">Winning Numbers</a>
+        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-blue-500 hover:bg-gray-50" onclick="showTab('rules')">Game Rules</a>
+        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 hover:text-blue-500 hover:bg-gray-50" onclick="showTab('contact')">Contact</a>
+      </div>
+    </div>
+  </nav>
 
-    <!-- Sección de "Config Base" para editar los montos base -->
-    <div class="base-config">
-      <h3>Configuración de Bases de Premio</h3>
-      <p style="margin-bottom:1rem;">
-        Aquí puedes editar los montos base por Track + Modalidad.
-        Cuando cambies un valor, te pedirá confirmación para guardarlo.
-      </p>
-      <div id="baseConfigContainer"></div>
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Home Tab -->
+    <div id="home" class="tab-content active">
+      <div class="text-center py-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-6">Your Complete USA Lottery Resource</h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">Find all the information you need about state lotteries across the USA, including winning numbers, game rules, draw times, and more.</p>
+        <div class="mt-8">
+          <button onclick="showTab('winning-numbers')" class="btn-gradient px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition duration-300">
+            Check Latest Results <i class="fas fa-arrow-right ml-2"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8 mt-12">
+        <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition duration-300">
+          <div class="text-blue-500 text-4xl mb-4">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Draw Schedules</h3>
+          <p class="text-gray-600">Find out when each state lottery draws their winning numbers so you never miss a draw.</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition duration-300">
+          <div class="text-green-500 text-4xl mb-4">
+            <i class="fas fa-trophy"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Winning Numbers</h3>
+          <p class="text-gray-600">Check the latest winning numbers for all major state lotteries in one convenient place.</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition duration-300">
+          <div class="text-purple-500 text-4xl mb-4">
+            <i class="fas fa-book"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Game Rules</h3>
+          <p class="text-gray-600">Learn how to play each lottery game and understand the odds and prize structures.</p>
+        </div>
+      </div>
+
+      <div class="mt-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Featured State Lotteries</h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md transition duration-300">
+            <div class="tx-bg w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2">
+              <span class="text-xl font-bold tx-text">TX</span>
+            </div>
+            <p class="font-medium">Texas</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md transition duration-300">
+            <div class="ny-bg w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2">
+              <span class="text-xl font-bold ny-text">NY</span>
+            </div>
+            <p class="font-medium">New York</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md transition duration-300">
+            <div class="ca-bg w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2">
+              <span class="text-xl font-bold ca-text">CA</span>
+            </div>
+            <p class="font-medium">California</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md transition duration-300">
+            <div class="fl-bg w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2">
+              <span class="text-xl font-bold fl-text">FL</span>
+            </div>
+            <p class="font-medium">Florida</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md transition duration-300">
+            <div class="pa-bg w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2">
+              <span class="text-xl font-bold pa-text">PA</span>
+            </div>
+            <p class="font-medium">Pennsylvania</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- About Tab -->
+    <div id="about" class="tab-content">
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="md:flex">
+          <div class="md:flex-shrink-0">
+            <img class="h-64 w-full object-cover md:w-64" src="https://images.unsplash.com/photo-1518455022959-b108c0bf028d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Lottery tickets">
+          </div>
+          <div class="p-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">About USA Lottery Hub</h1>
+            <p class="text-gray-600 mb-4">
+              USA Lottery Hub was created to provide lottery enthusiasts with a comprehensive resource for all state lottery information in one convenient location. Our mission is to make it easy for players to find the information they need to participate in their favorite lottery games.
+            </p>
+            <p class="text-gray-600 mb-4">
+              We aggregate winning numbers, draw schedules, game rules, and other relevant information from official state lottery sources to ensure accuracy and reliability.
+            </p>
+            <p class="text-gray-600">
+              Whether you're a casual player or a serious lottery participant, USA Lottery Hub is your one-stop destination for all things lottery-related across the United States.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Our Features</h2>
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-xl font-semibold mb-3 text-blue-500"><i class="fas fa-check-circle mr-2"></i> Comprehensive Coverage</h3>
+            <p class="text-gray-600">We cover all major state lotteries with detailed information about each game, including Pick 3, Pick 4, and other popular lottery games.</p>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-xl font-semibold mb-3 text-green-500"><i class="fas fa-bolt mr-2"></i> Fast Updates</h3>
+            <p class="text-gray-600">Our team works diligently to update winning numbers as soon as they're available from official sources.</p>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-xl font-semibold mb-3 text-purple-500"><i class="fas fa-history mr-2"></i> Historical Data</h3>
+            <p class="text-gray-600">Access historical winning numbers to analyze patterns or check past results for your tickets.</p>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-xl font-semibold mb-3 text-yellow-500"><i class="fas fa-info-circle mr-2"></i> Detailed Game Rules</h3>
+            <p class="text-gray-600">Learn exactly how to play each game, understand the odds, and know what prizes you can win.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Winning Numbers Tab (Main Content) -->
+    <div id="winning-numbers" class="tab-content">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Lottery Results</h1>
+          <p class="text-gray-600">Latest winning numbers from state lotteries across the USA</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex space-x-3">
+          <button onclick="captureScreen()" class="btn-capture px-6 py-3 rounded-lg font-medium flex items-center transition-all duration-300">
+            <i class="fas fa-camera mr-2"></i> Realizar Captura
+          </button>
+          <button onclick="exportExcel()" class="btn-export px-6 py-3 rounded-lg font-medium flex items-center transition-all duration-300">
+            <i class="fas fa-file-excel mr-2"></i> Exportar Excel
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold text-gray-800">Last Updated: <span id="last-updated" class="font-normal">Loading...</span></h2>
+          <div class="flex items-center">
+            <label for="search" class="sr-only">Search</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-search text-gray-400"></i>
+              </div>
+              <input type="text" id="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Search states...">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="dashboard"></div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-6">
+          <h2 class="text-xl font-semibold mb-4">Historical Results (Last 30 Days)</h2>
+          <div class="accordion" id="historyAccordion"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Rules Tab -->
+    <div id="rules" class="tab-content">
+      <div class="bg-white rounded-xl shadow-md p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Lottery Game Rules</h1>
+        
+        <div class="mb-10">
+          <h2 class="text-2xl font-semibold mb-4 text-blue-500">Pick 3 & Pick 4 Games</h2>
+          <div class="space-y-4">
+            <p>Most state lotteries offer daily Pick 3 and Pick 4 games with multiple draws throughout the day. Here's how they work:</p>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-semibold mb-2">Pick 3 Rules:</h3>
+              <ul class="list-disc pl-5 space-y-1">
+                <li>Choose 3 numbers from 0 to 9</li>
+                <li>Select your play type: Straight, Box, Straight/Box, or Combination</li>
+                <li>Choose your wager amount (typically $0.50 or $1.00 per play)</li>
+                <li>Select which draw(s) to play (morning, day, evening, night)</li>
+                <li>Prizes vary by state and play type</li>
+              </ul>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <h3 class="font-semibold mb-2">Pick 4 Rules:</h3>
+              <ul class="list-disc pl-5 space-y-1">
+                <li>Choose 4 numbers from 0 to 9</li>
+                <li>Select your play type: Straight, Box, Straight/Box, or Combination</li>
+                <li>Choose your wager amount (typically $0.50 or $1.00 per play)</li>
+                <li>Select which draw(s) to play (midday, evening, night)</li>
+                <li>Prizes vary by state and play type</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-10">
+          <h2 class="text-2xl font-semibold mb-4 text-green-500">Draw Times by State</h2>
+          <div class="responsive-table">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pick 3 Draws</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pick 4 Draws</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap font-medium">Texas</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Morning (10:12 AM), Day (12:27 PM), Evening (6:25 PM), Night (10:12 PM)</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Same as Pick 3</td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap font-medium">New York</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Midday (2:30 PM), Evening (10:30 PM)</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Same as Pick 3</td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap font-medium">California</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Midday (1:00 PM), Evening (6:30 PM)</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Same as Pick 3</td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap font-medium">Florida</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Midday (1:15 PM), Evening (9:45 PM)</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Same as Pick 3</td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap font-medium">Pennsylvania</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Midday (1:35 PM), Evening (7:35 PM)</td>
+                  <td class="px-6 py-4 whitespace-nowrap">Same as Pick 3</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div>
+          <h2 class="text-2xl font-semibold mb-4 text-purple-500">Prize Information</h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <h3 class="font-semibold mb-2 text-blue-600">Straight Play</h3>
+              <p>Win by matching the numbers in the exact order drawn. Example: You play 123 and the winning number is 123.</p>
+              <p class="mt-2 font-medium">Typical prize: $500 per $1 wagered</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg">
+              <h3 class="font-semibold mb-2 text-green-600">Box Play</h3>
+              <p>Win by matching all the numbers in any order. Example: You play 123 and the winning number is 321.</p>
+              <p class="mt-2 font-medium">Typical prize: $80 per $1 wagered (for 3-way box)</p>
+            </div>
+            <div class="bg-yellow-50 p-4 rounded-lg">
+              <h3 class="font-semibold mb-2 text-yellow-600">Straight/Box Combo</h3>
+              <p>Combines both Straight and Box play types for more chances to win.</p>
+              <p class="mt-2 font-medium">Typical prize: Varies based on wager split</p>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-lg">
+              <h3 class="font-semibold mb-2 text-purple-600">Combination Play</h3>
+              <p>Covers all possible Straight combinations of your selected numbers.</p>
+              <p class="mt-2 font-medium">Typical prize: $500 per $1 wagered (divided by number of combinations)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Tab -->
+    <div id="contact" class="tab-content">
+      <div class="bg-white rounded-xl shadow-md p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Contact Us</h1>
+        
+        <div class="grid md:grid-cols-2 gap-8">
+          <div>
+            <h2 class="text-xl font-semibold mb-4">Get in Touch</h2>
+            <form class="space-y-4">
+              <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                <input type="text" id="name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label for="subject" class="block text-sm font-medium text-gray-700">Subject</label>
+                <select id="subject" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                  <option>General Inquiry</option>
+                  <option>Report an Issue</option>
+                  <option>Data Correction</option>
+                  <option>Partnership</option>
+                </select>
+              </div>
+              <div>
+                <label for="message" class="block text-sm font-medium text-gray-700">Message</label>
+                <textarea id="message" rows="4" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+              </div>
+              <button type="submit" class="btn-gradient px-6 py-2 rounded-md font-medium">Send Message</button>
+            </form>
+          </div>
+          
+          <div>
+            <h2 class="text-xl font-semibold mb-4">Our Information</h2>
+            <div class="space-y-6">
+              <div class="flex items-start">
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <i class="fas fa-map-marker-alt text-blue-500"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-gray-900">Address</h3>
+                  <p class="text-sm text-gray-500">123 Lottery Lane, Las Vegas, NV 89101</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <i class="fas fa-phone-alt text-green-500"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-gray-900">Phone</h3>
+                  <p class="text-sm text-gray-500">(702) 555-1234</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <i class="fas fa-envelope text-purple-500"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-gray-900">Email</h3>
+                  <p class="text-sm text-gray-500">info@usalotteryhub.com</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <i class="fas fa-clock text-yellow-500"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-gray-900">Hours</h3>
+                  <p class="text-sm text-gray-500">Monday - Friday: 9:00 AM - 5:00 PM PST</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-8">
+              <h3 class="text-sm font-medium text-gray-900 mb-3">Follow Us</h3>
+              <div class="flex space-x-4">
+                <a href="#" class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white hover:bg-blue-700">
+                  <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="h-10 w-10 rounded-full bg-blue-400 flex items-center justify-center text-white hover:bg-blue-500">
+                  <i class="fab fa-twitter"></i>
+                </a>
+                <a href="#" class="h-10 w-10 rounded-full bg-pink-600 flex items-center justify-center text-white hover:bg-pink-700">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="#" class="h-10 w-10 rounded-full bg-red-600 flex items-center justify-center text-white hover:bg-red-700">
+                  <i class="fab fa-youtube"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- SCRIPT con toda la lógica -->
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-lg font-semibold mb-4">USA Lottery Hub</h3>
+          <p class="text-gray-400">Your complete resource for lottery information across the United States.</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white" onclick="showTab('home')">Home</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white" onclick="showTab('winning-numbers')">Winning Numbers</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white" onclick="showTab('rules')">Game Rules</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white" onclick="showTab('contact')">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Popular States</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white">Texas</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">New York</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">California</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">Florida</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Newsletter</h3>
+          <p class="text-gray-400 mb-2">Subscribe to get the latest lottery results and updates.</p>
+          <div class="flex">
+            <input type="email" placeholder="Your email" class="px-4 py-2 rounded-l-md w-full text-gray-900 focus:outline-none">
+            <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-r-md">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+        <p>&copy; 2023 USA Lottery Hub. All rights reserved. For entertainment purposes only.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal for Lottery Results -->
+  <div class="fixed inset-0 z-50 hidden modal-backdrop" id="detailsModal">
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 animate-slide" id="modalContent">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4">
+            <h2 class="text-2xl font-bold" id="modalTitle"></h2>
+            <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-times text-2xl"></i>
+            </button>
+          </div>
+          <div class="responsive-table">
+            <table class="min-w-full divide-y divide-gray-200" id="modalTable">
+              <thead>
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Draw</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Pick 3</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Pick 4</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200" id="modalTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu Script -->
   <script>
-    /*****************************************************
-     * MODO OSCURO/CLARO
-     *****************************************************/
-    let isDark = true;
-    document.getElementById("btnToggleTheme").addEventListener("click", ()=>{
-      isDark = !isDark;
-      if(isDark){
-        document.body.classList.remove("light-mode");
-      } else {
-        document.body.classList.add("light-mode");
-      }
+    document.getElementById('mobile-menu-button').addEventListener('click', function() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
     });
+  </script>
 
-    /*****************************************************
-     * ESTRUCTURA DE DATOS "BASE PAYS"
-     * Ejemplo: para "Win 4" + "New York" => straight=5000, box=200
-     *****************************************************/
-    // Puedes añadir tantas combinaciones como quieras
-    // track shortName => "NY", "FL", "GA", "VEN", "SD", "USA-other", etc.
-    // mode => "Win 4", "Pick 3", "Pulito", etc.
-    let basePays = {
-      "Win 4": {
-        "New York":    { straight: 5000, box: 200, combo: 0 },
-        "USA-other":   { straight: 2500, box: 100, combo: 0 },
-        "Venezuela":   { straight: 1200, box: 100, combo: 0 },
-        "SantoDomingo":{ straight: 1000, box: 80, combo: 0 },
-      },
-      "Pick 3": {
-        "New York":    { straight: 500, box: 80, combo: 50 },
-        "USA-other":   { straight: 250, box: 40, combo: 25 },
-        "Venezuela":   { straight: 100, box: 10, combo: 5 },
-        "SantoDomingo":{ straight: 120, box: 20, combo: 10 },
-      },
-      "Venezuela": {
-        "Venezuela":   { straight: 80, box: 0, combo: 0 },
-        "New York":    { straight: 0, box: 0, combo: 0 }, 
-        "USA-other":   { straight: 0, box: 0, combo: 0 },
-        "SantoDomingo":{ straight: 0, box: 0, combo: 0 }
-      },
-      "Pulito": {
-        "Venezuela":   { straight: 0, box: 20, combo: 0 },
-        "New York":    { straight: 0, box: 10, combo: 0 },
-        "USA-other":   { straight: 0, box: 10, combo: 0 },
-        "SantoDomingo":{ straight: 0, box: 15, combo: 0 }
-      },
-      "Pale-Ven": {
-        "Venezuela":   { straight: 500, box: 0, combo: 0 },
-        "New York":    { straight: 0, box: 0, combo: 0 },
-        "USA-other":   { straight: 0, box: 0, combo: 0 },
-        "SantoDomingo":{ straight: 0, box: 0, combo: 0 }
-      },
-      "Pale-RD": {
-        "SantoDomingo":{ straight: 600, box: 0, combo: 0 },
-        "Venezuela":   { straight: 0, box: 0, combo: 0 },
-        "New York":    { straight: 0, box: 0, combo: 0 },
-        "USA-other":   { straight: 0, box: 0, combo: 0 }
-      },
-      "RD-Quiniela": {
-        "SantoDomingo":{ straight: 70, box: 0, combo: 0 },
-        "Venezuela":   { straight: 0, box: 0, combo: 0 },
-        "New York":    { straight: 0, box: 0, combo: 0 },
-        "USA-other":   { straight: 0, box: 0, combo: 0 }
-      },
-      "Single Action": {
-        "New York":    { straight: 5, box: 5, combo: 5 },
-        "USA-other":   { straight: 3, box: 3, combo: 3 },
-        "Venezuela":   { straight: 0, box: 0, combo: 0 },
-        "SantoDomingo":{ straight: 0, box: 0, combo: 0 }
+  <!-- Lottery Results Script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    // Tab navigation
+    function showTab(tabId) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+        tab.classList.add('hidden');
+      });
+      
+      // Show selected tab content
+      document.getElementById(tabId).classList.remove('hidden');
+      document.getElementById(tabId).classList.add('active');
+      
+      // Update active tab button
+      document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active', 'border-blue-500', 'text-blue-500');
+      });
+      
+      // Set mobile menu to hidden when a tab is selected
+      document.getElementById('mobile-menu').classList.add('hidden');
+      
+      // Add active class to clicked tab button
+      const buttons = document.querySelectorAll(`[onclick="showTab('${tabId}')"]`);
+      buttons.forEach(button => {
+        button.classList.add('active', 'border-blue-500', 'text-blue-500');
+      });
+
+      // If showing winning numbers tab, update the dashboard
+      if (tabId === 'winning-numbers') {
+        updateDashboard();
+        createHistoryAccordion();
       }
+    }
+
+    // Initialize with Home tab shown
+    showTab('home');
+
+    // Lottery data
+    const STATES = {
+      "Texas": { class: "tx", draws: { Morning: "123-4567", Day: "456-7890", Evening: "789-0123", Night: "012-3456" } },
+      "Georgia": { class: "ga", draws: { Midday: "321-6543", Evening: "654-3210", Night: "987-6543" } },
+      "New York": { class: "ny", draws: { Midday: "111-2222", Evening: "333-4444" } },
+      "Florida": { class: "fl", draws: { Midday: "555-6666", Evening: "777-8888" } },
+      "Pennsylvania": { class: "pa", draws: { Midday: "123-4567", Evening: "456-7890" } },
+      "New Jersey": { class: "nj", draws: { Midday: "999-0000", Evening: "111-2222" } },
+      "Connecticut": { class: "ct", draws: { Midday: "789-0123", Evening: "012-3456" } },
+      "South Carolina": { class: "sc", draws: { Midday: "789-0123", Evening: "012-3456" } },
+      "Delaware": { class: "de", draws: { Midday: "321-6543", Evening: "654-3210" } },
+      "California": { class: "ca", draws: { Midday: "999-0000", Evening: "111-2222" } }
     };
 
-    /*****************************************************
-     * CARGAR Y GUARDAR basePays en localStorage
-     *****************************************************/
-    function loadBasePays(){
-      let stor = localStorage.getItem("calcBasePays");
-      if(stor){
-        basePays = JSON.parse(stor);
-      }
-    }
-    function saveBasePays(){
-      localStorage.setItem("calcBasePays", JSON.stringify(basePays));
-    }
-
-    /*****************************************************
-     * CREAR / ACTUALIZAR UI para la config de "basePays"
-     *****************************************************/
-    function renderBasePaysConfig(){
-      let container = document.getElementById("baseConfigContainer");
-      container.innerHTML = "";
-      let html = `<table>
-        <thead>
-          <tr>
-            <th>Modalidad</th>
-            <th>Track</th>
-            <th>Straight</th>
-            <th>Box</th>
-            <th>Combo</th>
-          </tr>
-        </thead>
-        <tbody>`;
-      let modeKeys = Object.keys(basePays);
-      modeKeys.forEach(mode=>{
-        let trackObj = basePays[mode];
-        let trackKeys = Object.keys(trackObj);
-        trackKeys.forEach(track=>{
-          let vals = trackObj[track];
-          html += `
-          <tr>
-            <td>${mode}</td>
-            <td>${track}</td>
-            <td><input type="number" 
-                       style="width:80px" 
-                       value="${vals.straight||0}"
-                       onchange="onBasePayChange('${mode}','${track}','straight',this.value)"
-                ></td>
-            <td><input type="number"
-                       style="width:80px" 
-                       value="${vals.box||0}"
-                       onchange="onBasePayChange('${mode}','${track}','box',this.value)"
-                ></td>
-            <td><input type="number"
-                       style="width:80px" 
-                       value="${vals.combo||0}"
-                       onchange="onBasePayChange('${mode}','${track}','combo',this.value)"
-                ></td>
-          </tr>
-          `;
-        });
-      });
-      html += `</tbody></table>`;
-      container.innerHTML = html;
-    }
-    function onBasePayChange(mode, track, field, newValStr){
-      let newVal = parseFloat(newValStr)||0;
-      if(confirm(`¿Actualizar base de ${mode} - ${track} - ${field} a ${newVal}?`)){
-        basePays[mode][track][field] = newVal;
-        saveBasePays();
-      } else {
-        // re-render para revertir
-        renderBasePaysConfig();
-      }
-    }
-
-    /*****************************************************
-     * TABLA PRINCIPAL DE JUGADAS
-     *****************************************************/
-    let rowCount = 0;
-    let maxInitialRows = 4;
-
-    // Tracks
-    const trackOptions = [
-      { value:"New York", label:"New York" },
-      { value:"USA-other", label:"USA-other" },
-      { value:"Venezuela", label:"Venezuela" },
-      { value:"SantoDomingo", label:"Santo Domingo" }
-      // Agrega más si gustas (Florida, Georgia, etc.),
-      // y decide si los tratas como "USA-other" en la base.
-    ];
-
-    function initTable(){
-      for(let i=0;i<maxInitialRows;i++){
-        addRow();
-      }
-      loadTableState();
-      calculateAll(); // recalc
-    }
-
-    function addRow(){
-      rowCount++;
-      let tb = document.getElementById("calcTbody");
-      let newTr = document.createElement("tr");
-      newTr.setAttribute("data-rowid", rowCount);
-
-      // Armar <select> track
-      let selectHTML = `<select class="calc-input trackSel" onchange="onFieldChange(${rowCount})">`;
-      trackOptions.forEach(opt=>{
-        selectHTML += `<option value="${opt.value}">${opt.label}</option>`;
-      });
-      selectHTML += `</select>`;
-
-      // Estructura celdas
-      newTr.innerHTML = `
-        <td>${rowCount}</td>
-        <td>${selectHTML}</td>
-        <td><input type="text" class="calc-input betNumber" oninput="onFieldChange(${rowCount})"></td>
-        <td><input type="number" class="calc-input straight" oninput="onFieldChange(${rowCount})"></td>
-        <td><input type="text" class="calc-input box" oninput="onFieldChange(${rowCount})" 
-                   placeholder="(ej. 1,2)"></td>
-        <td><input type="number" class="calc-input combo" oninput="onFieldChange(${rowCount})"></td>
-        <td class="readonlyCell modeCell">-</td>
-        <td class="readonlyCell prizeCell">$0.00</td>
-        <td>
-          <button class="btnNeon" style="background:var(--danger-color);box-shadow:0 0 5px var(--danger-color)"
-                  onclick="removeRow(${rowCount})">X</button>
-        </td>
-      `;
-      tb.appendChild(newTr);
-    }
-
-    function removeRow(rid){
-      let tr = document.querySelector(`tr[data-rowid='${rid}']`);
-      if(!tr) return;
-      tr.remove();
-      saveTableState();
-    }
-
-    function onFieldChange(rid){
-      // Al editar cualquier campo => recalc fila
-      recalcRow(rid);
-      saveTableState();
-    }
-
-    function recalcRow(rid){
-      let tr = document.querySelector(`tr[data-rowid='${rid}']`);
-      if(!tr) return;
-
-      let trackSel   = tr.querySelector(".trackSel");
-      let betNumber  = tr.querySelector(".betNumber").value.trim();
-      let straight   = tr.querySelector(".straight").value.trim();
-      let box        = tr.querySelector(".box").value.trim();
-      let combo      = tr.querySelector(".combo").value.trim();
-
-      let track = trackSel.value||"USA-other";
-      // Determina modalidad
-      let mode = determineGameMode(betNumber, track, straight, box, combo);
-      tr.querySelector(".modeCell").textContent = mode;
-
-      // Calcula premio
-      let prize = calculateRowTotal(betNumber, mode, straight, box, combo, track);
-      tr.querySelector(".prizeCell").textContent = `$${prize.toFixed(2)}`;
-    }
-
-    function calculateAll(){
-      let rows = document.querySelectorAll("#calcTbody tr");
-      rows.forEach(r=>{
-        let rid = r.getAttribute("data-rowid");
-        recalcRow(rid);
-      });
-    }
-
-    function resetTable(){
-      if(!confirm("¿Borrar todas las filas y reiniciar?")) return;
-      let tb = document.getElementById("calcTbody");
-      tb.innerHTML = "";
-      rowCount=0;
-      initTable();
-    }
-
-    /*****************************************************
-     * LÓGICA DE DETERMINACIÓN DE MODALIDAD (adaptación)
-     * Basada en tu scripts.js, ajustada para 1 track.
-     *****************************************************/
-    function determineGameMode(betNumber, track, stVal, bxVal, coVal){
-      if(!betNumber) return "-";
-      // Pale => "XX-XX" o "XXxXX"
-      if(/^\d{2}(\-|x)\d{2}$/.test(betNumber)){
-        // track=Venezuela => "Pale-Ven"
-        if(track==="Venezuela"){
-          return "Pale-Ven";
-        }
-        // track=SantoDomingo => "Pale-RD"
-        if(track==="SantoDomingo"){
-          return "Pale-RD";
-        }
-        // Sino => "-" (o podrías manejar "Pale-other" si gustas)
-        return "-";
-      }
-      // 1 dígito => Single Action
-      if(betNumber.length===1){
-        return "Single Action";
-      }
-      // 2 dígitos
-      if(betNumber.length===2){
-        if(track==="SantoDomingo"){
-          // "RD-Quiniela"
-          return "RD-Quiniela";
-        }
-        if(track==="Venezuela"){
-          // Pulito vs Venezuela
-          if(!bxVal || bxVal.trim()===""){
-            return "Venezuela";
-          } else {
-            // Si Box=1,2 or 1,2,3 => "Pulito"
-            return "Pulito";
+    // Generate 30 days of historical data grouped by weeks
+    function generateHistoricalData() {
+      const history = {};
+      const today = new Date();
+      
+      // Generate 4 weeks (28 days) plus 2 extra days
+      for (let week = 0; week < 4; week++) {
+        for (let day = 0; day < 7; day++) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - (week * 7 + day));
+          const dateStr = date.toISOString().split("T")[0];
+          
+          history[dateStr] = {};
+          for (const [state, config] of Object.entries(STATES)) {
+            // Generate some variation in the numbers
+            const variation = Math.floor(Math.random() * 100);
+            const draws = {};
+            
+            for (const [drawTime, numbers] of Object.entries(config.draws)) {
+              const [p3, p4] = numbers.split("-");
+              const newP3 = (parseInt(p3) + variation).toString().padStart(3, '0').slice(-3);
+              const newP4 = (parseInt(p4) + variation).toString().padStart(4, '0').slice(-4);
+              draws[drawTime] = `${newP3}-${newP4}`;
+            }
+            
+            history[dateStr][state] = draws;
           }
         }
-        // Sino => "Pulito" si es track=USA-other o NY
-        return "Pulito";
       }
-      // 3 dígitos => Pick 3
-      if(betNumber.length===3){
-        return "Pick 3";
+      
+      // Add 2 more days to make it 30 days
+      for (let day = 28; day < 30; day++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - day);
+        const dateStr = date.toISOString().split("T")[0];
+        
+        history[dateStr] = {};
+        for (const [state, config] of Object.entries(STATES)) {
+          const variation = Math.floor(Math.random() * 100);
+          const draws = {};
+          
+          for (const [drawTime, numbers] of Object.entries(config.draws)) {
+            const [p3, p4] = numbers.split("-");
+            const newP3 = (parseInt(p3) + variation).toString().padStart(3, '0').slice(-3);
+            const newP4 = (parseInt(p4) + variation).toString().padStart(4, '0').slice(-4);
+            draws[drawTime] = `${newP3}-${newP4}`;
+          }
+          
+          history[dateStr][state] = draws;
+        }
       }
-      // 4 dígitos => Win 4
-      if(betNumber.length===4){
-        return "Win 4";
-      }
-      return "-";
+      
+      return history;
     }
 
-    /*****************************************************
-     * Cálculo de Premio (adaptación)
-     *****************************************************/
-    function calculateRowTotal(bn, mode, stValStr, bxValStr, coValStr, track){
-      if(!mode || mode==="-" || !bn) return 0;
-      let st = parseFloat(stValStr)||0;
-      let co = parseFloat(coValStr)||0;
-      // Box en caso Pulito => a veces es "1,2" => no es un number directo
-      // en otras mod. => parseFloat(bxValStr)
-      let bx = 0;
-      // Ejemplo: si "Pulito" => la box son posiciones "1,2,3"
-      if(mode==="Pulito"){
-        let positions = bxValStr.split(",").map(x=> x.trim()).filter(Boolean);
-        bx = positions.length; // p.ej. 1,2 => 2
-      } else if(mode==="Pale-Ven" || mode==="Pale-RD" || mode==="RD-Quiniela" || mode==="Venezuela"){
-        // usualmente no se usa box= a numeric
-        bx = parseFloat(bxValStr)||0; 
-      } else {
-        // normal parse
-        bx = parseFloat(bxValStr)||0;
-      }
+    // Store history in localStorage
+    const lotteryHistory = generateHistoricalData();
+    localStorage.setItem("lotteryHistory", JSON.stringify(lotteryHistory));
 
-      // Tomar base de la "mode" + "track"
-      let baseObj = (basePays[mode] && basePays[mode][track]) 
-                    ? basePays[mode][track]
-                    : { straight: 0, box: 0, combo: 0 };
-      let baseStraight = baseObj.straight||0;
-      let baseBox      = baseObj.box||0;
-      let baseCombo    = baseObj.combo||0;
-
-      // Calculamos
-      // p.ej: total = (st * baseStraight) + (bx * baseBox) + (co * baseCombo)
-      // Si es Pick3 y combo => a veces multiplican combosCount => depende de tu scripts.js
-      let combosCount = 1; // si quieres factor de combos
-      if(mode==="Pick 3" || mode==="Win 4"){
-        // Ejemplo: combos = factorial(len) / product factorial repetidos
-        combosCount = calcCombos(bn);
-      }
-
-      let total = (st * baseStraight) 
-                + (bx * baseBox) 
-                + (co * baseCombo * combosCount);
-
-      return total;
-    }
-
-    // Copia de tu scripts.js para combos
-    function calcCombos(str){
-      // Factorial
-      function factorial(n){
-        return n<=1 ? 1 : n*factorial(n-1);
-      }
-      let freq={};
-      for(let c of str){
-        freq[c] = (freq[c]||0)+1;
-      }
-      let denom=1;
-      for(let k in freq){
-        denom*= factorial(freq[k]);
-      }
-      return factorial(str.length)/denom;
-    }
-
-    /*****************************************************
-     * GUARDAR/CARGAR TABLA EN LOCALSTORAGE
-     *****************************************************/
-    function saveTableState(){
-      let data = [];
-      let rows = document.querySelectorAll("#calcTbody tr");
-      rows.forEach(r=>{
-        let rid = r.getAttribute("data-rowid");
-        let trackSel = r.querySelector(".trackSel").value;
-        let bnVal = r.querySelector(".betNumber").value.trim();
-        let stVal = r.querySelector(".straight").value.trim();
-        let bxVal = r.querySelector(".box").value.trim();
-        let coVal = r.querySelector(".combo").value.trim();
-        let md = r.querySelector(".modeCell").textContent;
-        let pr = r.querySelector(".prizeCell").textContent;
-        data.push({
-          rid, track: trackSel, betNumber: bnVal,
-          straight: stVal, box: bxVal, combo: coVal,
-          mode: md, prize: pr
-        });
+    // Update dashboard with latest results
+    async function updateDashboard() {
+      const now = new Date().toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZoneName: 'short'
       });
-      localStorage.setItem("calcPremiosData", JSON.stringify(data));
+      
+      document.getElementById("last-updated").textContent = now;
+      const dashboard = document.getElementById("dashboard");
+      dashboard.innerHTML = "";
+
+      const history = JSON.parse(localStorage.getItem("lotteryHistory"));
+      const latestDate = Object.keys(history).sort((a, b) => new Date(b) - new Date(a))[0];
+      const data = history[latestDate];
+
+      for (const [state, config] of Object.entries(STATES)) {
+        const card = document.createElement("div");
+        card.className = `state-card ${config.class}-bg border rounded-xl shadow-md hover:shadow-lg transition duration-300 animate-fade`;
+        card.onclick = () => openDetails(state, latestDate);
+
+        // Get first 2 draw times to show in the card
+        const drawTimes = Object.keys(data[state]);
+        const firstDraw = drawTimes[0];
+        const secondDraw = drawTimes.length > 1 ? drawTimes[1] : null;
+        
+        const [firstP3, firstP4] = data[state][firstDraw].split("-");
+        const [secondP3, secondP4] = secondDraw ? data[state][secondDraw].split("-") : ["", ""];
+
+        card.innerHTML = `
+          <div class="p-4">
+            <div class="flex justify-between items-center mb-3">
+              <h2 class="text-xl font-bold ${config.class}-text">${state}</h2>
+              <span class="text-xs bg-white px-2 py-1 rounded-full ${config.class}-text border ${config.class}-bg">${latestDate}</span>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-600">${firstDraw}</span>
+                <div class="flex space-x-4">
+                  <span class="font-mono font-bold">${firstP3}</span>
+                  <span class="font-mono font-bold">${firstP4}</span>
+                </div>
+              </div>
+              ${secondDraw ? `
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium text-gray-600">${secondDraw}</span>
+                <div class="flex space-x-4">
+                  <span class="font-mono font-bold">${secondP3}</span>
+                  <span class="font-mono font-bold">${secondP4}</span>
+                </div>
+              </div>
+              ` : ''}
+              <div class="text-right mt-2">
+                <span class="text-xs text-blue-500 hover:text-blue-700 cursor-pointer">View all results →</span>
+              </div>
+            </div>
+          </div>
+        `;
+        dashboard.appendChild(card);
+      }
     }
 
-    function loadTableState(){
-      let stor = localStorage.getItem("calcPremiosData");
-      if(!stor) return;
-      let arr = JSON.parse(stor);
-      let tb = document.getElementById("calcTbody");
-      tb.innerHTML="";
-      rowCount=0;
-      arr.forEach(obj=>{
-        rowCount++;
-        let newTr = document.createElement("tr");
-        newTr.setAttribute("data-rowid", rowCount);
-        let selectHTML = `<select class="calc-input trackSel" onchange="onFieldChange(${rowCount})">`;
-        trackOptions.forEach(opt=>{
-          let sel = (opt.value===obj.track)? "selected" : "";
-          selectHTML += `<option value="${opt.value}" ${sel}>${opt.label}</option>`;
+    // Create history accordion grouped by weeks
+    function createHistoryAccordion() {
+      const history = JSON.parse(localStorage.getItem("lotteryHistory"));
+      const dates = Object.keys(history).sort((a, b) => new Date(b) - new Date(a));
+      const accordion = document.getElementById("historyAccordion");
+      accordion.innerHTML = "";
+      
+      // Group dates by weeks (7 days per week)
+      const weeks = [];
+      for (let i = 0; i < dates.length; i += 7) {
+        weeks.push(dates.slice(i, i + 7));
+      }
+      
+      // Create accordion items for each week
+      weeks.forEach((weekDates, weekIndex) => {
+        const weekStart = new Date(weekDates[0]);
+        const weekEnd = new Date(weekDates[weekDates.length - 1]);
+        
+        const weekTitle = `Week ${weeks.length - weekIndex} (${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})`;
+        
+        const item = document.createElement("div");
+        item.className = "accordion-item bg-gray-50 mb-3";
+        item.innerHTML = `
+          <div class="accordion-header px-4 py-3 flex justify-between items-center cursor-pointer">
+            <h3 class="font-semibold">${weekTitle}</h3>
+            <i class="fas fa-chevron-down transition-transform duration-300"></i>
+          </div>
+          <div class="accordion-content bg-white">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4" id="week-${weekIndex}-content"></div>
+          </div>
+        `;
+        
+        const content = item.querySelector(`#week-${weekIndex}-content`);
+        
+        weekDates.forEach(date => {
+          const dateBtn = document.createElement("button");
+          dateBtn.className = "text-left p-3 rounded-lg border hover:shadow-md transition duration-300";
+          dateBtn.innerHTML = `
+            <div class="font-medium">${new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</div>
+            <div class="text-sm text-gray-500 mt-1">${Object.keys(STATES).length} states</div>
+          `;
+          dateBtn.onclick = () => {
+            // Show all states for this date in the modal
+            openDateDetails(date);
+          };
+          content.appendChild(dateBtn);
         });
-        selectHTML += `</select>`;
+        
+        item.querySelector(".accordion-header").onclick = () => {
+          item.classList.toggle("active");
+          const icon = item.querySelector(".fa-chevron-down");
+          icon.classList.toggle("rotate-180");
+          
+          if (item.classList.contains("active")) {
+            // Load content when expanded
+            setTimeout(() => {
+              item.querySelector(".accordion-content").style.maxHeight = `${item.querySelector(".accordion-content").scrollHeight}px`;
+            }, 10);
+          } else {
+            item.querySelector(".accordion-content").style.maxHeight = "0";
+          }
+        };
+        
+        accordion.appendChild(item);
+      });
+    }
 
-        newTr.innerHTML=`
-          <td>${rowCount}</td>
-          <td>${selectHTML}</td>
-          <td><input type="text" class="calc-input betNumber" value="${obj.betNumber||""}"
-                     oninput="onFieldChange(${rowCount})"></td>
-          <td><input type="number" class="calc-input straight" value="${obj.straight||""}"
-                     oninput="onFieldChange(${rowCount})"></td>
-          <td><input type="text" class="calc-input box" value="${obj.box||""}"
-                     oninput="onFieldChange(${rowCount})"></td>
-          <td><input type="number" class="calc-input combo" value="${obj.combo||""}"
-                     oninput="onFieldChange(${rowCount})"></td>
-          <td class="readonlyCell modeCell">${obj.mode||"-"}</td>
-          <td class="readonlyCell prizeCell">${obj.prize||"$0.00"}</td>
-          <td>
-            <button class="btnNeon" style="background:var(--danger-color);box-shadow:0 0 5px var(--danger-color)"
-                    onclick="removeRow(${rowCount})">X</button>
+    // Open modal with all states for a specific date
+    function openDateDetails(date) {
+      const modal = document.getElementById("detailsModal");
+      const modalContent = document.getElementById("modalContent");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalTableBody = document.getElementById("modalTableBody");
+      
+      const history = JSON.parse(localStorage.getItem("lotteryHistory"));
+      const dateData = history[date];
+      
+      modalTitle.textContent = `All Results - ${new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+      modalTableBody.innerHTML = "";
+      
+      for (const [state, stateData] of Object.entries(dateData)) {
+        const stateConfig = STATES[state];
+        
+        for (const [drawTime, numbers] of Object.entries(stateData)) {
+          const [p3, p4] = numbers.split("-");
+          
+          const row = document.createElement("tr");
+          row.className = `${stateConfig.class}-bg`;
+          row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="ml-4">
+                  <div class="text-sm font-medium ${stateConfig.class}-text">${state}</div>
+                  <div class="text-sm text-gray-500">${drawTime}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-mono font-bold">${p3}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-mono font-bold">${p4}</div>
+            </td>
+          `;
+          modalTableBody.appendChild(row);
+        }
+      }
+      
+      // Apply state class to modal header
+      modalContent.className = "bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 animate-slide";
+      
+      modal.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    // Open modal with details for a specific state and date
+    function openDetails(state, date) {
+      const modal = document.getElementById("detailsModal");
+      const modalContent = document.getElementById("modalContent");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalTableBody = document.getElementById("modalTableBody");
+      
+      const stateData = STATES[state];
+      const history = JSON.parse(localStorage.getItem("lotteryHistory"));
+      const data = history[date][state];
+      
+      modalTitle.textContent = `${state} - ${new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+      modalTableBody.innerHTML = "";
+      
+      for (const [drawTime, numbers] of Object.entries(data)) {
+        const [p3, p4] = numbers.split("-");
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-gray-900">${drawTime}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-mono font-bold">${p3}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-mono font-bold">${p4}</div>
           </td>
         `;
-        tb.appendChild(newTr);
+        modalTableBody.appendChild(row);
+      }
+      
+      // Apply state class to modal header
+      modalContent.className = `bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 animate-slide ${stateData.class}-bg`;
+      
+      modal.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeModal() {
+      document.getElementById("detailsModal").classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById("detailsModal");
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+
+    // Capture screen function
+    function captureScreen() {
+      const element = document.getElementById("dashboard");
+      
+      // Show a loading indicator
+      const oldCursor = document.body.style.cursor;
+      document.body.style.cursor = 'wait';
+      
+      html2canvas(element, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      }).then(canvas => {
+        document.body.style.cursor = oldCursor;
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.download = 'lottery-results.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        // Show a success message
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center';
+        notification.innerHTML = `
+          <i class="fas fa-check-circle mr-2"></i>
+          <span>Capture saved successfully!</span>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
+      }).catch(err => {
+        document.body.style.cursor = oldCursor;
+        console.error('Error capturing screen:', err);
+        
+        // Show error message
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center';
+        notification.innerHTML = `
+          <i class="fas fa-exclamation-circle mr-2"></i>
+          <span>Error capturing screen. Please try again.</span>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
       });
     }
 
-    /*****************************************************
-     * Iniciar
-     *****************************************************/
-    window.addEventListener("DOMContentLoaded", ()=>{
-      loadBasePays();
-      renderBasePaysConfig();
-      initTable();
+    // Export to Excel function
+    function exportExcel() {
+      const history = JSON.parse(localStorage.getItem("lotteryHistory"));
+      const latestDate = Object.keys(history).sort((a, b) => new Date(b) - new Date(a))[0];
+      const data = history[latestDate];
+      
+      // Prepare data for Excel
+      const excelData = [];
+      
+      for (const [state, stateData] of Object.entries(data)) {
+        for (const [drawTime, numbers] of Object.entries(stateData)) {
+          const [p3, p4] = numbers.split("-");
+          excelData.push({
+            "State": state,
+            "Date": latestDate,
+            "Draw Time": drawTime,
+            "Pick 3": p3,
+            "Pick 4": p4
+          });
+        }
+      }
+      
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Lottery Results");
+      
+      // Export to Excel
+      XLSX.writeFile(wb, `lottery_results_${latestDate}.xlsx`);
+      
+      // Show a success message
+      const notification = document.createElement('div');
+      notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center';
+      notification.innerHTML = `
+        <i class="fas fa-file-excel mr-2"></i>
+        <span>Excel file exported successfully!</span>
+      `;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Search functionality
+    document.getElementById('search').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const cards = document.querySelectorAll('#dashboard .state-card');
+      
+      cards.forEach(card => {
+        const stateName = card.querySelector('h2').textContent.toLowerCase();
+        if (stateName.includes(searchTerm)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
     });
+
+    // Initialize the page
+    updateDashboard();
+    createHistoryAccordion();
+    
+    // Auto-refresh every 5 minutes
+    setInterval(updateDashboard, 5 * 60 * 1000);
   </script>
 </body>
 </html>
